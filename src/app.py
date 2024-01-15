@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 def sentry_init():
-    if sentry_dns := os.getenv("SENTRY_DSN"):  # pragma: no cover
+    if sentry_dsn := os.getenv("SENTRY_DSN"):  # pragma: no cover
         # Initialize Sentry SDK for error logging
         sentry_sdk.init(
-            dsn=sentry_dns,
+            dsn=sentry_dsn,
             # Set traces_sample_rate to 1.0 to capture 100%
             # of transactions for performance monitoring.
             traces_sample_rate=1.0,
@@ -33,7 +33,7 @@ def sentry_init():
         logger.info("Sentry initialized")
 
 
-app = Flask("Bartholomew Smith")
+app = Flask(__name__)
 sentry_init()
 webhook_handler.handle_with_flask(app)
 
