@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def sentry_init():
-    if sentry_dsn := os.getenv("SENTRY_DSN"):  # pragma: no cover
+    """Initialize sentry only if SENTRY_DSN is present"""
+    if sentry_dsn := os.getenv("SENTRY_DSN"):
         # Initialize Sentry SDK for error logging
         sentry_sdk.init(
             dsn=sentry_dsn,
@@ -40,5 +41,9 @@ webhook_handler.handle_with_flask(app)
 
 @webhook_handler.webhook_handler(CheckSuiteRequestedEvent)
 def handle(event: CheckSuiteRequestedEvent):
+    """
+    Handle the Check Suite Requested Event, doing:
+     - Creates a Pull Request, if not exists, and/or enable the auto merge flag
+    """
     repository = event.repository
     handle_create_pull_request(repository, event.check_suite.head_branch)
