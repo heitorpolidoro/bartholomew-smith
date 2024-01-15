@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -14,6 +14,8 @@ def pull_request_helper():
 def test_handle_create_pull_request(pull_request_helper):
     repository = Mock()
     handle_create_pull_request(repository, "branch")
-    pull_request_helper.get_or_create_pull_request.assert_called_once_with(repository, "branch")
+    pull_request_helper.get_or_create_pull_request.assert_called_once_with(
+        repository, "branch"
+    )
     pr = pull_request_helper.get_or_create_pull_request.return_value
     pull_request_helper.enable_auto_merge.assert_called_once_with(pr)

@@ -18,7 +18,9 @@ Closes #$issue_num
 """
 
 
-def get_existing_pull_request(repository: Repository, head: str) -> Optional[PullRequest]:
+def get_existing_pull_request(
+    repository: Repository, head: str
+) -> Optional[PullRequest]:
     """
     Returns an existing PR if it exists.
     :param repository: The Repository to get the PR from.
@@ -61,7 +63,10 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
         )
         return pr
     except GithubException as ghe:
-        if ghe.message == f"No commits between '{repository.default_branch}' and '{branch}'":
+        if (
+            ghe.message
+            == f"No commits between '{repository.default_branch}' and '{branch}'"
+        ):
             logger.warning(
                 "No commits between '%s' and '%s'", repository.default_branch, branch
             )
@@ -70,14 +75,18 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
     return None
 
 
-def get_or_create_pull_request(repository: Repository, branch: str) -> Optional[PullRequest]:
+def get_or_create_pull_request(
+    repository: Repository, branch: str
+) -> Optional[PullRequest]:
     """
     Get a existing PR or create a new one if none exists
     :param repository:
     :param branch:
     :return: The created or recovered PR or None if no commits between 'master' and 'branch'
     """
-    if pr := get_existing_pull_request(repository, f"{repository.owner.login}:{branch}"):
+    if pr := get_existing_pull_request(
+        repository, f"{repository.owner.login}:{branch}"
+    ):
         print(
             f"PR already exists for '{repository.owner.login}:{branch}' into "
             f"'{repository.default_branch} (PR#{pr.number})'"
@@ -99,5 +108,3 @@ def enable_auto_merge(pr: PullRequest) -> None:
     :param pr: The PR to enable auto merge for.
     """
     pr.enable_automerge(merge_method="SQUASH")
-
-

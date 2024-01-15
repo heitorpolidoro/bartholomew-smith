@@ -1,15 +1,14 @@
 from unittest.mock import Mock, patch
 
+import pytest
 from github import GithubException
 
 from src.helpers.pull_request import (
-    get_existing_pull_request,
     create_pull_request,
-    get_or_create_pull_request,
     enable_auto_merge,
+    get_existing_pull_request,
+    get_or_create_pull_request,
 )
-
-import pytest
 
 
 def test_get_existing_pull_request_when_there_is_none(repository):

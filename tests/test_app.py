@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from src.app import sentry_init, handle
+from src.app import handle, sentry_init
 
 
 def test_sentry_init(monkeypatch):
