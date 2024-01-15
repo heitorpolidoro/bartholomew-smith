@@ -57,7 +57,8 @@ Closes #42
 
 def test_create_pull_request_when_there_is_no_commits(repository):
     repository.create_pull.side_effect = GithubException(
-        status=400, message="No commits between 'master' and 'branch'"
+        status=400,
+        data={"errors": [{"message": "No commits between master and branch"}]},
     )
     assert create_pull_request(repository, "branch") is None
 
@@ -69,6 +70,15 @@ def test_create_pull_request_when_other_errors(repository):
     with pytest.raises(GithubException) as err:
         create_pull_request(repository, "branch")
     assert err.value.message == "other error"
+
+
+def test_create_pull_request_when_other_errors2(repository):
+    repository.create_pull.side_effect = GithubException(
+        status=400, data={"errors": [{"message": "other error"}]}
+    )
+    with pytest.raises(GithubException) as err:
+        create_pull_request(repository, "branch")
+    assert err.value.data["errors"][0]["message"] == "other error"
 
 
 def test_get_or_create_pull_request_when_there_is_no_pull_request(repository):
