@@ -1,28 +1,21 @@
-# PROJECT_NAME
+# Bartholomew "The Butler" Smith
 Description
 
-[![Code Quality](https://github.com/heitorpolidoro/project_name/actions/workflows/code_quality.yml/badge.svg)](https://github.com/heitorpolidoro/project_name/actions/workflows/code_quality.yml)
-[![Upload Python Package](https://github.com/heitorpolidoro/project_name/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/heitorpolidoro/project_name/actions/workflows/pypi-publish.yml)
+[![Code Quality](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml/badge.svg)](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml)
+[![Upload Python Package](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/pypi-publish.yml/badge.svg)](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/pypi-publish.yml)
 <br>
-[![Latest Version](https://img.shields.io/github/v/release/heitorpolidoro/project_name?label=Latest%20Version)](https://github.com/heitorpolidoro/project_name/releases/latest)
-![GitHub Release Date](https://img.shields.io/github/release-date/heitorpolidoro/project_name)
-![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/heitorpolidoro/project_name/latest)
-![GitHub last commit](https://img.shields.io/github/last-commit/heitorpolidoro/project_name)
+[![Latest Version](https://img.shields.io/github/v/release/heitorpolidoro/bartholomew-smith?label=Latest%20Version)](https://github.com/heitorpolidoro/bartholomew-smith/releases/latest)
+![GitHub Release Date](https://img.shields.io/github/release-date/heitorpolidoro/bartholomew-smith)
+![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/heitorpolidoro/bartholomew-smith/latest)
+![GitHub last commit](https://img.shields.io/github/last-commit/heitorpolidoro/bartholomew-smith)
 <br>
-[![GitHub issues](https://img.shields.io/github/issues/heitorpolidoro/project_name)](https://github.com/heitorpolidoro/project_name/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/heitorpolidoro/project_name)](https://github.com/heitorpolidoro/project_name/pulls)
+[![GitHub issues](https://img.shields.io/github/issues/heitorpolidoro/bartholomew-smith)](https://github.com/heitorpolidoro/bartholomew-smith/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/heitorpolidoro/bartholomew-smith)](https://github.com/heitorpolidoro/bartholomew-smith/pulls)
 
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=coverage)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=coverage)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 <br>
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-<br>
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_project_name&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_project_name)
-<br>
-[![DeepSource](https://app.deepsource.com/gh/heitorpolidoro/project_name.svg/?label=active+issues&show_trend=true&token=hZuHoQ-gd4kIPgNuSX0X_QT2)](https://app.deepsource.com/gh/heitorpolidoro/project_name/)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
