@@ -6,8 +6,11 @@ import sentry_sdk
 from flask import Flask
 
 from githubapp import webhook_handler
-from githubapp.events import CreateBranchEvent
-from src.pull_request_handler import get_or_create_pr, enable_auto_merge
+from githubapp.events import CreateBranchEvent, CheckSuiteRequestedEvent
+
+from src.handlers.create_pull_request import handle_create_pull_request
+from src.pull_request_handler import enable_auto_merge
+from src.helpers.pull_request import get_or_create_pull_request
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -38,3 +41,9 @@ sentry_init()
 webhook_handler.handle_with_flask(app)
 
 
+@webhook_handler.webhook_handler(CheckSuiteRequestedEvent)
+def handle(event: CheckSuiteRequestedEvent):
+    repository = event.repository
+    if head_commit := event.check_suite.head_commit:
+        commit = repository.get_commit(head_commit.sha)
+        handle_create_pull_request(repository, commit)
