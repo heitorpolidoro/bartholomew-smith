@@ -1,6 +1,9 @@
+from unittest import TestCase
 from unittest.mock import patch
 
-from app import handle, sentry_init
+import markdown
+
+from app import handle, sentry_init, app
 
 
 def test_sentry_init(monkeypatch):
@@ -26,3 +29,37 @@ def test_handle_check_suite_requested(event, repository):
         mock_handle_create_pull_request.assert_called_once_with(
             repository, event.check_suite.head_branch
         )
+
+
+class TestApp(TestCase):
+    def setUp(self):
+        self.app = app
+        self.client = app.test_client()
+
+    def test_index(self):
+        with patch("app.render_template") as mock_render_template:
+            response = self.client.get("/")
+            assert response.status_code == 200
+            with open("README.md") as f:
+                md = f.read()
+            body = markdown.markdown(md)
+            mock_render_template.assert_called_once_with(
+                "index.html", title="Bartholomew Smith", body=body
+            )
+
+    def test_file(self):
+        with patch("app.render_template") as mock_render_template:
+            response = self.client.get("/pull-request.md")
+            assert response.status_code == 200
+            with open("pull-request.md") as f:
+                md = f.read()
+            body = markdown.markdown(md)
+            mock_render_template.assert_called_once_with(
+                "index.html", title="Bartholomew Smith - Pull Request", body=body
+            )
+
+    def test_file_security(self):
+        with patch("app.render_template") as mock_render_template:
+            response = self.client.get("/other.txt")
+            assert response.status_code == 404
+            mock_render_template.assert_not_called()
