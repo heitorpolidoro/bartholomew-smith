@@ -2,8 +2,9 @@ import logging
 import os
 import sys
 
+import markdown
 import sentry_sdk
-from flask import Flask
+from flask import Flask, render_template
 from githubapp import webhook_handler
 from githubapp.events import CheckSuiteRequestedEvent
 
@@ -36,7 +37,7 @@ def sentry_init():
 
 app = Flask(__name__)
 sentry_init()
-webhook_handler.handle_with_flask(app)
+webhook_handler.handle_with_flask(app, use_default_index=False)
 
 
 @webhook_handler.webhook_handler(CheckSuiteRequestedEvent)
@@ -47,3 +48,16 @@ def handle(event: CheckSuiteRequestedEvent):
     """
     repository = event.repository
     handle_create_pull_request(repository, event.check_suite.head_branch)
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return file("README.md")
+
+
+@app.route("/<path:filename>", methods=["GET"])
+def file(filename):
+    with open(filename) as f:
+        md = f.read()
+    body = markdown.markdown(md)
+    return render_template("index.html", title="Bartholomew Smith", body=body)

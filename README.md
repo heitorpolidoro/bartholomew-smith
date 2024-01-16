@@ -1,5 +1,5 @@
 <div align="center">
-<img src="img/bartholomew-logo.png" width="200" height="200">
+<img src="static/bartholomew-logo.png" width="200" height="200">
 </div>
 
 # Bartholomew "The Butler" Smith
