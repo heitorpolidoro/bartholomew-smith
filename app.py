@@ -59,10 +59,10 @@ def index():
 @app.route("/<path:filename>", methods=["GET"])
 def file(filename):
     """Convert a md file into HTML and return it"""
-    allowed_files = ["README.md", "pull-request.md"]
+    allowed_files = {f: f for f in ["README.md", "pull-request.md"]}
     if filename not in allowed_files:
         abort(404)
-    with open(filename) as f:
+    with open(allowed_files[filename]) as f:
         md = f.read()
     body = markdown.markdown(md)
     title = "Bartholomew Smith"
