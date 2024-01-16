@@ -8,7 +8,8 @@ from flask import Flask, abort, render_template
 from githubapp import webhook_handler
 from githubapp.events import CheckSuiteRequestedEvent
 
-from src.handlers.create_pull_request import handle_create_pull_request
+from src.handlers.pull_request import handle_create_pull_request
+from src.handlers.release import handle_release
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -47,7 +48,8 @@ def handle(event: CheckSuiteRequestedEvent):
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
     repository = event.repository
-    handle_create_pull_request(repository, event.check_suite.head_branch)
+    # handle_create_pull_request(repository, event.check_suite.head_branch)
+    handle_release(event)
 
 
 @app.route("/", methods=["GET"])
