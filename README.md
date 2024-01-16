@@ -32,12 +32,12 @@ It’s like having a butler for your GitHub repository! :tophat:
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 
 ## Thanks to
-@gabriellamas for helping me with logo ideas
+[gabriellamas](https://github.com/gabriellamas) for helping me with logo ideas
 
 ## TODOs
-- [ ] heitorpolidoro/bartholomew-smith#4
-- [ ] heitorpolidoro/bartholomew-smith#5
-- [ ] heitorpolidoro/bartholomew-smith#6
+- [ ] Self-Approver heitorpolidoro/bartholomew-smith#4
+- [ ] Auto Release heitorpolidoro/bartholomew-smith#5
+- [ ] Issue Manager heitorpolidoro/bartholomew-smith#6
 - [ ] Auto-fix linter
 - [ ] Check for TODOs in repository (create issues?)
 - [ ] Dont Merge Yet if WiP or has a not checked item in the checklist
