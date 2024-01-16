@@ -32,9 +32,7 @@ def test_handle_check_suite_requested(event, repository):
         mock_handle_create_pull_request.assert_called_once_with(
             repository, event.check_suite.head_branch
         )
-        mock_handle_release.assert_called_once_with(
-            event
-        )
+        mock_handle_release.assert_called_once_with(event)
 
 
 class TestApp(TestCase):

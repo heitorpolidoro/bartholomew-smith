@@ -14,6 +14,7 @@ def head_commit():
     commit.commit.message = "message"
     return commit
 
+
 @pytest.fixture
 def pull_request(head_commit):
     """
