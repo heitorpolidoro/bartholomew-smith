@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import markdown
 
-from app import handle, sentry_init, app
+from app import app, handle, sentry_init
 
 
 def test_sentry_init(monkeypatch):
