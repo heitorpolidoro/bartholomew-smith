@@ -6,9 +6,7 @@ def handle_release(event: CheckSuiteRequestedEvent):
 
     head_sha = event.check_suite.head_sha
 
-    event.start_check_run(
-        "Releaser", head_sha, title="Checking for release command"
-    )
+    event.start_check_run("Releaser", head_sha, title="Checking for release command")
 
     while True:
         head_commit = repository.get_commit(head_sha)
