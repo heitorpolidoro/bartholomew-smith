@@ -9,6 +9,8 @@ This app automates repetitive tasks, helping you save time and focus on what’s
 Here’s what GitHub Butler can do for you:
 - **[Pull Request Management](pull-request.md)**: Automatically creates a pull request on the repository's default branch
 	when a branch is created among other things.
+- Releaser WiP
+- Issue Manager WiP
 
 With Bartholomew "The Butler" Smith, you can spend less time managing your repository and more time writing great code. 
 It’s like having a butler for your GitHub repository! :tophat:
