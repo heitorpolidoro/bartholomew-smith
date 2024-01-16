@@ -59,7 +59,8 @@ def index():
 @app.route("/<path:filename>", methods=["GET"])
 def file(filename):
     """Convert a md file into HTML and return it"""
-    if not filename.endswith(".md") or "/" in filename:
+    allowed_files = ["README.md", "pull-request.md"]
+    if filename not in allowed_files:
         abort(404)
     with open(filename) as f:
         md = f.read()
