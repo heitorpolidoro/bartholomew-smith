@@ -24,10 +24,16 @@ def test_sentry_dont_init(monkeypatch):
 
 
 def test_handle_check_suite_requested(event, repository):
-    with patch("app.handle_create_pull_request") as mock_handle_create_pull_request:
+    with (
+        patch("app.handle_create_pull_request") as mock_handle_create_pull_request,
+        patch("app.handle_release") as mock_handle_release,
+    ):
         handle(event)
         mock_handle_create_pull_request.assert_called_once_with(
             repository, event.check_suite.head_branch
+        )
+        mock_handle_release.assert_called_once_with(
+            event
         )
 
 

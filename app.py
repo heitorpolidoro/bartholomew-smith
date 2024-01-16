@@ -48,7 +48,7 @@ def handle(event: CheckSuiteRequestedEvent):
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
     repository = event.repository
-    # handle_create_pull_request(repository, event.check_suite.head_branch)
+    handle_create_pull_request(repository, event.check_suite.head_branch)
     handle_release(event)
 
 

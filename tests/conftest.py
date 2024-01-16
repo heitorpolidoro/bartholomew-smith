@@ -11,11 +11,22 @@ def head_commit():
     """
     commit = Mock()
     commit.sha = "sha"
+    commit.commit.message = "message"
     return commit
+
+@pytest.fixture
+def pull_request(head_commit):
+    """
+    This fixture returns a mock PullRequest object with default values for the attributes.
+    :return: Mocked PullRequest
+    """
+    pull_request = Mock()
+    pull_request.get_commits.return_value.reversed = [head_commit]
+    return pull_request
 
 
 @pytest.fixture
-def repository(head_commit):
+def repository(head_commit, pull_request):
     """
     This fixture returns a mock repository object with default values for the attributes.
     :return: Mocked Repository
@@ -24,7 +35,7 @@ def repository(head_commit):
     repository.default_branch = "master"
     repository.full_name = "heitorpolidoro/bartholomew-smith"
     repository.owner.login = "heitorpolidoro"
-    repository.get_pulls.return_value = []
+    repository.get_pulls.return_value = [pull_request]
     repository.get_commit.return_value = head_commit
     return repository
 
