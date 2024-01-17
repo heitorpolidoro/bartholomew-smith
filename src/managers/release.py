@@ -32,7 +32,7 @@ def handle_release(event: CheckSuiteRequestedEvent):
                 return
 
             event.update_check_run(
-                title=f"Prepared to release {version_to_release}",
+                title=f"Ready to release {version_to_release}",
                 summary="Release command found ✅",
             )
 

@@ -32,17 +32,30 @@ def repository(head_commit, pull_request):
     This fixture returns a mock repository object with default values for the attributes.
     :return: Mocked Repository
     """
-    repository = Mock()
-    repository.default_branch = "master"
-    repository.full_name = "heitorpolidoro/bartholomew-smith"
-    repository.owner.login = "heitorpolidoro"
+    repository = Mock(
+        default_branch="master",
+        full_name="heitorpolidoro/bartholomew-smith",
+        owner=Mock(login="heitorpolidoro"),
+    )
     repository.get_pulls.return_value = [pull_request]
     repository.get_commit.return_value = head_commit
     return repository
 
 
 @pytest.fixture
-def event(repository, head_commit):
+def issue():
+    """
+    This fixture returns a mock Issue object with default values for the attributes.
+    :return: Mocked Issue
+    """
+    issue = Mock()
+    issue.title = "Issue Title"
+    issue.body = "Issue Body"
+    return issue
+
+
+@pytest.fixture
+def event(repository, head_commit, issue):
     """
     This fixture returns a mock event object with default values for the attributes.
     :return: Mocked Event
@@ -51,4 +64,5 @@ def event(repository, head_commit):
     event.repository = repository
     event.ref = "issue-42"
     event.check_suite.head_sha = head_commit.sha
+    event.issue = issue
     return event
