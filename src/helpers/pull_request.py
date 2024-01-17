@@ -47,7 +47,7 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
         body = ""
         for issue_num in re.findall(r"issue-(\d+)", branch, re.IGNORECASE):
             issue = repository.get_issue(int(issue_num))
-            title = title or issue.title
+            title = title or issue.title.strip()
             body += Template(BODY_ISSUE_TEMPLATE).substitute(
                 title=issue.title,
                 repo_full_name=repository.full_name,
