@@ -45,7 +45,7 @@ def handle_tasklist(event: IssuesEvent):
                 issue_repository = repository
                 title = task
 
-            created_issue = issue_repository.create_issue(title=title)
+            created_issue = issue_repository.create_issue(title=title, milestone=issue.milestone)
             issue_body = issue_body.replace(task, issue_ref(created_issue))
     if issue_body != issue.body:
         issue.edit(body=issue_body)
