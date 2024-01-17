@@ -10,7 +10,9 @@ def handle_release(event: CheckSuiteRequestedEvent):
     head_sha = event.check_suite.head_sha
     head_branch = event.check_suite.head_branch
 
-    event.start_check_run("Bartholomew - Releaser", head_sha, title="Checking for release command")
+    event.start_check_run(
+        "Bartholomew - Releaser", head_sha, title="Checking for release command"
+    )
 
     if head_branch == repository.default_branch:
         # repository.create_git_release(
