@@ -24,7 +24,9 @@ def handle_tasklist(event: IssuesEvent):
     repository = event.repository
     issue = event.issue
     issue_body = issue.body
+    all_checked = []
     for checked, task in get_tasklist(issue_body):
+        all_checked.append(checked)
         if task_issue := get_issue(gh, repository, task):
             handle_issue_state(checked, task_issue)
 
@@ -47,3 +49,5 @@ def handle_tasklist(event: IssuesEvent):
             issue_body = issue_body.replace(task, issue_ref(created_issue))
     if issue_body != issue.body:
         issue.edit(body=issue_body)
+    if all_checked and all(all_checked):
+        issue.edit(state="closed")
