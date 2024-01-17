@@ -2,7 +2,7 @@ import re
 
 from githubapp.events import IssuesEvent
 
-from src.helpers.issue import get_tasklist, issue_ref
+from src.helpers.issue import get_issue, get_tasklist, handle_issue_state, issue_ref
 from src.helpers.repository import get_repository
 
 
@@ -25,19 +25,25 @@ def handle_tasklist(event: IssuesEvent):
     issue = event.issue
     issue_body = issue.body
     for checked, task in get_tasklist(issue_body):
-        if repository_and_title := re.match(r"\[(.+?)] (.+)", task):
-            repository_name = repository_and_title.group(1)
-            title = repository_and_title.group(2)
+        if task_issue := get_issue(gh, repository, task):
+            handle_issue_state(checked, task_issue)
+
         else:
-            repository_name = task
-            title = issue.title
+            if repository_and_title := re.match(r"\[(.+?)] (.+)", task):
+                repository_name = repository_and_title.group(1)
+                title = repository_and_title.group(2)
+            else:
+                repository_name = task
+                title = issue.title
 
-        issue_repository = get_repository(gh, repository_name, repository.owner.login)
-        if issue_repository is None:
-            issue_repository = repository
-            title = task
+            issue_repository = get_repository(
+                gh, repository_name, repository.owner.login
+            )
+            if issue_repository is None:
+                issue_repository = repository
+                title = task
 
-        created_issue = issue_repository.create_issue(title=title)
-        issue_body = issue_body.replace(task, issue_ref(created_issue))
+            created_issue = issue_repository.create_issue(title=title)
+            issue_body = issue_body.replace(task, issue_ref(created_issue))
     if issue_body != issue.body:
         issue.edit(body=issue_body)

@@ -47,8 +47,10 @@ def test_handle_tasklist_when_there_is_a_task_list(
     issue.body = "- [ ] batata"
     created_issue.number = 123
     handle_tasklist(event)
-    repository.create_issue.assert_called_with(title="batata")
-    issue.edit.assert_called_with(body="- [ ] heitorpolidoro/bartholomew-smith#123")
+    repository.create_issue.assert_called_once_with(title="batata")
+    issue.edit.assert_called_once_with(
+        body="- [ ] heitorpolidoro/bartholomew-smith#123"
+    )
 
 
 def test_handle_tasklist_with_just_repository_name(
@@ -58,8 +60,8 @@ def test_handle_tasklist_with_just_repository_name(
     created_issue.number = 123
     created_issue.repository = repo_batata
     handle_tasklist(event)
-    repo_batata.create_issue.assert_called_with(title="Issue Title")
-    issue.edit.assert_called_with(body="- [ ] heitorpolidoro/repo_batata#123")
+    repo_batata.create_issue.assert_called_once_with(title="Issue Title")
+    issue.edit.assert_called_once_with(body="- [ ] heitorpolidoro/repo_batata#123")
 
 
 def test_handle_tasklist_with_repository_name_and_title(
@@ -69,5 +71,16 @@ def test_handle_tasklist_with_repository_name_and_title(
     created_issue.number = 123
     created_issue.repository = repo_batata
     handle_tasklist(event)
-    repo_batata.create_issue.assert_called_with(title="Batata")
-    issue.edit.assert_called_with(body="- [ ] heitorpolidoro/repo_batata#123")
+    repo_batata.create_issue.assert_called_once_with(title="Batata")
+    issue.edit.assert_called_once_with(body="- [ ] heitorpolidoro/repo_batata#123")
+
+
+def test_handle_tasklist_with_issue_in_task_list(event, issue, repository):
+    issue.body = "- [x] #123"
+    repository.get_issue.return_value = issue
+    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
+        handle_tasklist(event)
+    handle_issue_state.assert_called_once_with(True, issue)
+    repository.get_issue.assert_called_once_with(123)
+    repository.create_issue.assert_not_called()
+    issue.edit.assert_not_called()

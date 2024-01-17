@@ -14,10 +14,10 @@ def handle_release(event: CheckSuiteRequestedEvent):
     event.start_check_run("Releaser", head_sha, title="Checking for release command")
 
     if head_branch == repository.default_branch:
-        repository.create_git_release(
-            tag=version_to_release, generate_release_notes=True
-        )
-        return
+        # repository.create_git_release(
+        #     tag=version_to_release, generate_release_notes=True
+        # )
+        return True
     else:
         if pull_request := get_existing_pull_request(repository, head_branch):
             version_to_release = None
@@ -40,7 +40,6 @@ def handle_release(event: CheckSuiteRequestedEvent):
     #     last_release = repository.get_latest_release()
     # except UnknownObjectException:
     #     last_release = "0"
-
     # if commit.message.startswith("release"):
     #     event.create_check_run(
     #         "Releaser", head_sha, title="Found release command", conclusion="success"
