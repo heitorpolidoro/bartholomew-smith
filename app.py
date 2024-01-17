@@ -1,15 +1,21 @@
 import logging
 import os
 import sys
+from typing import Union
 
 import markdown
 import sentry_sdk
 from flask import Flask, abort, render_template
 from githubapp import webhook_handler
-from githubapp.events import CheckSuiteRequestedEvent
+from githubapp.events import (
+    CheckSuiteRequestedEvent,
+    IssueEditedEvent,
+    IssueOpenedEvent,
+)
 
-from src.handlers.pull_request import handle_create_pull_request
-from src.handlers.release import handle_release
+from src.managers.issue import handle_tasklist
+from src.managers.pull_request import handle_create_pull_request
+from src.managers.release import handle_release
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -42,7 +48,7 @@ webhook_handler.handle_with_flask(app, use_default_index=False)
 
 
 @webhook_handler.webhook_handler(CheckSuiteRequestedEvent)
-def handle(event: CheckSuiteRequestedEvent):
+def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     """
     Handle the Check Suite Requested Event, doing:
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
@@ -50,6 +56,20 @@ def handle(event: CheckSuiteRequestedEvent):
     repository = event.repository
     handle_create_pull_request(repository, event.check_suite.head_branch)
     handle_release(event)
+
+
+@webhook_handler.webhook_handler(IssueOpenedEvent)
+@webhook_handler.webhook_handler(IssueEditedEvent)
+def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
+    """
+    Handle the IssueOpened and IssueEdited events, handling the tasklist and add the issue to the main project if
+    configured to
+    :param event:
+    :return:
+    """
+    if event.issue.body:
+        handle_tasklist(event)
+    # add_to_project(event)
 
 
 @app.route("/", methods=["GET"])

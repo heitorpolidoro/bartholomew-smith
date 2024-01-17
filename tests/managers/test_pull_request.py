@@ -2,12 +2,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.handlers.pull_request import handle_create_pull_request
+from src.managers.pull_request import handle_create_pull_request
 
 
-@pytest.fixture()
+@pytest.fixture
 def pull_request_helper():
-    with patch("src.handlers.pull_request.pull_request") as mock:
+    with patch("src.managers.pull_request.pull_request") as mock:
         yield mock
 
 

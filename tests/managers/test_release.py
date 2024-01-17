@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from src.handlers.release import handle_release
+from src.managers.release import handle_release
 
 
 def test_handle_release_when_there_is_no_command(event, repository, pull_request):
@@ -24,6 +24,6 @@ def test_handle_release_when_there_is_a_command(event, repository, pull_request)
     )
     pull_request.get_commits.assert_called_once()
     event.update_check_run.assert_called_once_with(
-        title="Prepared to release 1.2.3",
-        summary="Release command found ✅\nReleasing 1.2.3",
+        title="Ready to release 1.2.3",
+        summary="Release command found ✅",
     )
