@@ -9,8 +9,8 @@ from flask import Flask, abort, render_template
 from githubapp import webhook_handler
 from githubapp.events import (
     CheckSuiteRequestedEvent,
-    IssueOpenedEvent,
     IssueEditedEvent,
+    IssueOpenedEvent,
 )
 
 from src.managers.issue import handle_tasklist

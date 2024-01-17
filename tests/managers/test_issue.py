@@ -1,8 +1,8 @@
+from unittest.mock import Mock, patch
+
 import pytest
 
 from src.managers.issue import handle_tasklist
-
-from unittest.mock import patch, Mock
 
 
 @pytest.fixture(autouse=True)
