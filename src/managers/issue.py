@@ -2,7 +2,7 @@ import re
 
 from githubapp.events import IssuesEvent
 
-from src.helpers.issue import get_tasklist, issue_ref, handle_issue_state, get_issue
+from src.helpers.issue import get_issue, get_tasklist, handle_issue_state, issue_ref
 from src.helpers.repository import get_repository
 
 

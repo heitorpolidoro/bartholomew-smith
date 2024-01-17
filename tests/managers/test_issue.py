@@ -1,8 +1,8 @@
+from unittest.mock import Mock, patch
+
 import pytest
 
 from src.managers.issue import handle_tasklist
-
-from unittest.mock import patch, Mock
 
 
 @pytest.fixture(autouse=True)
@@ -48,7 +48,9 @@ def test_handle_tasklist_when_there_is_a_task_list(
     created_issue.number = 123
     handle_tasklist(event)
     repository.create_issue.assert_called_once_with(title="batata")
-    issue.edit.assert_called_once_with(body="- [ ] heitorpolidoro/bartholomew-smith#123")
+    issue.edit.assert_called_once_with(
+        body="- [ ] heitorpolidoro/bartholomew-smith#123"
+    )
 
 
 def test_handle_tasklist_with_just_repository_name(
