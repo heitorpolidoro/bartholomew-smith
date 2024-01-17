@@ -33,6 +33,10 @@ def created_issue(repository):
     created_issue = Mock(repository=repository)
     repository.create_issue.return_value = created_issue
     yield created_issue
+@pytest.fixture
+def handle_issue_state():
+    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
+        yield handle_issue_state
 
 
 def test_handle_tasklist_when_there_is_no_task_list(event, issue, repository):
@@ -47,7 +51,7 @@ def test_handle_tasklist_when_there_is_a_task_list(
     issue.body = "- [ ] batata"
     created_issue.number = 123
     handle_tasklist(event)
-    repository.create_issue.assert_called_once_with(title="batata")
+    repository.create_issue.assert_called_once_with(title="batata", milestone="milestone")
     issue.edit.assert_called_once_with(
         body="- [ ] heitorpolidoro/bartholomew-smith#123"
     )
@@ -60,7 +64,7 @@ def test_handle_tasklist_with_just_repository_name(
     created_issue.number = 123
     created_issue.repository = repo_batata
     handle_tasklist(event)
-    repo_batata.create_issue.assert_called_once_with(title="Issue Title")
+    repo_batata.create_issue.assert_called_once_with(title="Issue Title", milestone="milestone")
     issue.edit.assert_called_once_with(body="- [ ] heitorpolidoro/repo_batata#123")
 
 
@@ -71,37 +75,34 @@ def test_handle_tasklist_with_repository_name_and_title(
     created_issue.number = 123
     created_issue.repository = repo_batata
     handle_tasklist(event)
-    repo_batata.create_issue.assert_called_once_with(title="Batata")
+    repo_batata.create_issue.assert_called_once_with(title="Batata", milestone="milestone")
     issue.edit.assert_called_once_with(body="- [ ] heitorpolidoro/repo_batata#123")
 
 
-def test_handle_tasklist_with_issue_in_task_list(event, issue, repository):
+def test_handle_tasklist_with_issue_in_task_list(event, issue, repository, handle_issue_state):
     issue.body = "- [ ] #123"
     repository.get_issue.return_value = issue
-    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
-        handle_tasklist(event)
+    handle_tasklist(event)
     handle_issue_state.assert_called_once_with(False, issue)
     repository.get_issue.assert_called_once_with(123)
     repository.create_issue.assert_not_called()
     issue.edit.assert_not_called()
 
 
-def test_handle_tasklist_when_not_all_tasks_are_done(event, issue, repository):
+def test_handle_tasklist_when_not_all_tasks_are_done(event, issue, repository, handle_issue_state):
     issue.body = "- [x] #123\r\n- [ ] #321"
     repository.get_issue.return_value = issue
-    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
-        handle_tasklist(event)
+    handle_tasklist(event)
     handle_issue_state.assert_has_calls([call(True, issue), call(False, issue)])
     repository.get_issue.assert_has_calls([call(123), call(321)])
     repository.create_issue.assert_not_called()
     issue.edit.assert_not_called()
 
 
-def test_handle_tasklist_when_all_tasks_are_done(event, issue, repository):
+def test_handle_tasklist_when_all_tasks_are_done(event, issue, repository, handle_issue_state):
     issue.body = "- [x] #123\r\n- [x] #321"
     repository.get_issue.return_value = issue
-    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
-        handle_tasklist(event)
+    handle_tasklist(event)
     handle_issue_state.assert_has_calls([call(True, issue), call(True, issue)])
     repository.get_issue.assert_has_calls([call(123), call(321)])
     repository.create_issue.assert_not_called()

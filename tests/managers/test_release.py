@@ -1,12 +1,16 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from src.managers.release import handle_release
+
+CHECKING_RELEASE_COMMAND = "Checking for release command"
+
+BARTHOLOMEW_RELEASER = "Bartholomew - Releaser"
 
 
 def test_handle_release_when_there_is_no_command(event, repository, pull_request):
     handle_release(event)
     event.start_check_run.assert_called_once_with(
-        "Releaser", "sha", title="Checking for release command"
+        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
     )
     pull_request.get_commits.assert_called_once()
     event.update_check_run.assert_called_once_with(
@@ -20,7 +24,7 @@ def test_handle_release_when_there_is_a_command(event, repository, pull_request)
 
     handle_release(event)
     event.start_check_run.assert_called_once_with(
-        "Releaser", "sha", title="Checking for release command"
+        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
     )
     pull_request.get_commits.assert_called_once()
     event.update_check_run.assert_called_once_with(
@@ -38,6 +42,6 @@ def test_handle_release_when_there_is_no_pull_request(event, repository):
     repository.get_pulls.return_value = []
     handle_release(event)
     event.start_check_run.assert_called_once_with(
-        "Releaser", "sha", title="Checking for release command"
+        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
     )
     event.update_check_run.assert_not_called()

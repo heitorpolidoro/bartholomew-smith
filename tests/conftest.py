@@ -51,6 +51,7 @@ def issue():
     issue = Mock()
     issue.title = "Issue Title"
     issue.body = "Issue Body"
+    issue.milestone = "milestone"
     return issue
 
 
