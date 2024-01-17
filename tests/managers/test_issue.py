@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 import pytest
 
@@ -76,11 +76,33 @@ def test_handle_tasklist_with_repository_name_and_title(
 
 
 def test_handle_tasklist_with_issue_in_task_list(event, issue, repository):
-    issue.body = "- [x] #123"
+    issue.body = "- [ ] #123"
     repository.get_issue.return_value = issue
     with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
         handle_tasklist(event)
-    handle_issue_state.assert_called_once_with(True, issue)
+    handle_issue_state.assert_called_once_with(False, issue)
     repository.get_issue.assert_called_once_with(123)
     repository.create_issue.assert_not_called()
     issue.edit.assert_not_called()
+
+
+def test_handle_tasklist_when_not_all_tasks_are_done(event, issue, repository):
+    issue.body = "- [x] #123\r\n- [ ] #321"
+    repository.get_issue.return_value = issue
+    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
+        handle_tasklist(event)
+    handle_issue_state.assert_has_calls([call(True, issue), call(False, issue)])
+    repository.get_issue.assert_has_calls([call(123), call(321)])
+    repository.create_issue.assert_not_called()
+    issue.edit.assert_not_called()
+
+
+def test_handle_tasklist_when_all_tasks_are_done(event, issue, repository):
+    issue.body = "- [x] #123\r\n- [x] #321"
+    repository.get_issue.return_value = issue
+    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
+        handle_tasklist(event)
+    handle_issue_state.assert_has_calls([call(True, issue), call(True, issue)])
+    repository.get_issue.assert_has_calls([call(123), call(321)])
+    repository.create_issue.assert_not_called()
+    issue.edit.assert_called_once_with(state="closed")
