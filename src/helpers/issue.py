@@ -10,7 +10,9 @@ def get_tasklist(issue_body: str) -> list[tuple[bool, str]]:
     tasks = []
     for line in issue_body.split("\n"):
         if task := re.match(r"- \[(.)] (.*)", line):
-            tasks.append((task.group(1) == "x", task.group(2)))
+            checked = task.group(1) == "x"
+            task_info: str = task.group(2).strip()
+            tasks.append((checked, task_info))
     return tasks
 
 
