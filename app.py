@@ -12,8 +12,9 @@ from githubapp.events import (
     IssueEditedEvent,
     IssueOpenedEvent,
 )
+from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
-from src.managers.issue import handle_tasklist
+from src.managers.issue import handle_tasklist, handle_close_tasklist
 from src.managers.pull_request import handle_create_pull_request
 from src.managers.release import handle_release
 
@@ -60,15 +61,20 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
 
 @webhook_handler.webhook_handler(IssueOpenedEvent)
 @webhook_handler.webhook_handler(IssueEditedEvent)
-def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
+@webhook_handler.webhook_handler(IssueClosedEvent)
+def handle_issue(event: IssuesEvent):
     """
+    TODO update
     Handle the IssueOpened and IssueEdited events, handling the tasklist and add the issue to the main project if
     configured to
     :param event:
     :return:
     """
     if event.issue.body:
-        handle_tasklist(event)
+        if isinstance(event, IssueClosedEvent):
+            handle_close_tasklist(event)
+        else:
+            handle_tasklist(event)
     # add_to_project(event)
 
 

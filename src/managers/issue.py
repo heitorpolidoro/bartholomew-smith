@@ -49,10 +49,21 @@ def handle_tasklist(event: IssuesEvent):
                 "title": title,
             }
             if issue.milestone is not None:
-                create_issue_params["milestone"] = issue.milestone.number
+                create_issue_params["milestone"] = issue.milestone
             created_issue = issue_repository.create_issue(**create_issue_params)
             issue_body = issue_body.replace(task, issue_ref(created_issue))
     if issue_body != issue.body:
         issue.edit(body=issue_body)
     if all_checked and all(all_checked):
         issue.edit(state="closed")
+
+
+def handle_close_tasklist(event: IssuesEvent):
+    gh = event.gh
+    repository = event.repository
+    issue = event.issue
+    issue_body = issue.body
+    for checked, task in get_tasklist(issue_body):
+        if task_issue := get_issue(gh, repository, task):
+            if task_issue.state != "closed":
+                task_issue.edit(state="closed", state_reason=issue.state_reason)

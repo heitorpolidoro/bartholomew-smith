@@ -3,8 +3,14 @@ from unittest.mock import patch
 
 import markdown
 import pytest
+from githubapp.events.issues import IssueClosedEvent
 
-from app import app, handle_check_suite_requested, handle_issue, sentry_init
+from app import (
+    app,
+    handle_check_suite_requested,
+    handle_issue,
+    sentry_init,
+)
 
 
 def test_sentry_init(monkeypatch):
@@ -47,6 +53,13 @@ def test_handle_issue_when_issue_has_no_body(event, issue):
     with patch("app.handle_tasklist") as mock_handle_tasklist:
         handle_issue(event)
     mock_handle_tasklist.assert_not_called()
+
+
+def test_handle_close_issue(event, issue):
+    event.__class__ = IssueClosedEvent
+    with patch("app.handle_close_tasklist") as mock_handle_close_tasklist:
+        handle_issue(event)
+    mock_handle_close_tasklist.assert_called_once_with(event)
 
 
 @pytest.mark.usefixtures("mock_render_template")
