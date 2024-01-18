@@ -1,12 +1,11 @@
 import logging
 import os
 import sys
-from typing import Union
 
 import markdown
 import sentry_sdk
 from flask import Flask, abort, render_template
-from githubapp import webhook_handler
+from githubapp import Config, webhook_handler
 from githubapp.events import (
     CheckSuiteRequestedEvent,
     IssueEditedEvent,
@@ -45,23 +44,27 @@ def sentry_init():
 
 app = Flask(__name__)
 sentry_init()
-webhook_handler.handle_with_flask(app, use_default_index=False)
+webhook_handler.handle_with_flask(
+    app, use_default_index=False, config_file="bartholomew.yaml"
+)
 
 
-@webhook_handler.webhook_handler(CheckSuiteRequestedEvent)
+@webhook_handler.add_handler(CheckSuiteRequestedEvent)
 def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     """
     Handle the Check Suite Requested Event, doing:
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
     repository = event.repository
-    handle_create_pull_request(repository, event.check_suite.head_branch)
-    handle_release(event)
+    if Config.is_pull_request_manager_enabled:
+        handle_create_pull_request(repository, event.check_suite.head_branch)
+    if Config.is_release_manager_enabled:
+        handle_release(event)
 
 
-@webhook_handler.webhook_handler(IssueOpenedEvent)
-@webhook_handler.webhook_handler(IssueEditedEvent)
-@webhook_handler.webhook_handler(IssueClosedEvent)
+@webhook_handler.add_handler(IssueOpenedEvent)
+@webhook_handler.add_handler(IssueEditedEvent)
+@webhook_handler.add_handler(IssueClosedEvent)
 def handle_issue(event: IssuesEvent):
     """
     TODO update
@@ -70,7 +73,7 @@ def handle_issue(event: IssuesEvent):
     :param event:
     :return:
     """
-    if event.issue.body:
+    if Config.is_issue_manager_enabled and event.issue.body:
         if isinstance(event, IssueClosedEvent):
             handle_close_tasklist(event)
         else:

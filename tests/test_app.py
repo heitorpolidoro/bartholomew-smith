@@ -1,8 +1,9 @@
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import markdown
 import pytest
+from githubapp import Config
 from githubapp.events.issues import IssueClosedEvent
 
 from app import app, handle_check_suite_requested, handle_issue, sentry_init
@@ -25,36 +26,55 @@ def test_sentry_dont_init(monkeypatch):
         mock_sentry.init.assert_not_called()
 
 
-def test_handle_check_suite_requested(event, repository):
-    with (
-        patch("app.handle_create_pull_request") as mock_handle_create_pull_request,
-        patch("app.handle_release") as mock_handle_release,
-    ):
-        handle_check_suite_requested(event)
-        mock_handle_create_pull_request.assert_called_once_with(
-            repository, event.check_suite.head_branch
-        )
-        mock_handle_release.assert_called_once_with(event)
+@pytest.fixture
+def handle_create_pull_request_mock():
+    with patch("app.handle_create_pull_request") as handle_create_pull_request_mock:
+        yield handle_create_pull_request_mock
 
 
-def test_handle_issue(event):
-    with patch("app.handle_tasklist") as mock_handle_tasklist:
-        handle_issue(event)
-    mock_handle_tasklist.assert_called_once_with(event)
+@pytest.fixture
+def handle_release_mock():
+    with patch("app.handle_release") as handle_release_mock:
+        yield handle_release_mock
 
 
-def test_handle_issue_when_issue_has_no_body(event, issue):
+@pytest.fixture
+def handle_tasklist_mock():
+    with patch("app.handle_tasklist") as handle_tasklist_mock:
+        yield handle_tasklist_mock
+
+
+@pytest.fixture
+def handle_close_tasklist_mock():
+    with patch("app.handle_close_tasklist") as handle_close_tasklist_mock:
+        yield handle_close_tasklist_mock
+
+
+def test_handle_check_suite_requested(
+    event, repository, handle_create_pull_request_mock, handle_release_mock
+):
+    handle_check_suite_requested(event)
+    handle_create_pull_request_mock.assert_called_once_with(
+        repository, event.check_suite.head_branch
+    )
+    handle_release_mock.assert_called_once_with(event)
+
+
+def test_handle_issue(event, handle_tasklist_mock):
+    handle_issue(event)
+    handle_tasklist_mock.assert_called_once_with(event)
+
+
+def test_handle_issue_when_issue_has_no_body(event, issue, handle_tasklist_mock):
     issue.body = None
-    with patch("app.handle_tasklist") as mock_handle_tasklist:
-        handle_issue(event)
-    mock_handle_tasklist.assert_not_called()
+    handle_issue(event)
+    handle_tasklist_mock.assert_not_called()
 
 
-def test_handle_close_issue(event, issue):
+def test_handle_close_issue(event, issue, handle_close_tasklist_mock):
     event.__class__ = IssueClosedEvent
-    with patch("app.handle_close_tasklist") as mock_handle_close_tasklist:
-        handle_issue(event)
-    mock_handle_close_tasklist.assert_called_once_with(event)
+    handle_issue(event)
+    handle_close_tasklist_mock.assert_called_once_with(event)
 
 
 @pytest.mark.usefixtures("mock_render_template")
@@ -93,3 +113,22 @@ class TestApp(TestCase):
         response = self.client.get("/other.txt")
         assert response.status_code == 404
         self.mock_render_template.assert_not_called()
+
+
+def test_managers_disabled(
+    handle_create_pull_request_mock, handle_release_mock, handle_tasklist_mock
+):
+    event = Mock()
+    with patch("app.Config.load_config_from_file"):
+        Config.set_values(
+            {
+                "pull_request_manager": False,
+                "release_manager": False,
+                "issue_manager": False,
+            }
+        )
+    handle_check_suite_requested(event)
+    handle_create_pull_request_mock.assert_not_called()
+    handle_release_mock.assert_not_called()
+    handle_issue(event)
+    handle_tasklist_mock.assert_not_called()
