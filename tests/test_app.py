@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import markdown
 import pytest
@@ -120,11 +120,13 @@ def test_managers_disabled(
 ):
     event = Mock()
     with patch("app.Config.load_config_from_file"):
-        Config.set_values({
-            "pull_request_manager": False,
-            "release_manager": False,
-            "issue_manager": False,
-        })
+        Config.set_values(
+            {
+                "pull_request_manager": False,
+                "release_manager": False,
+                "issue_manager": False,
+            }
+        )
     handle_check_suite_requested(event)
     handle_create_pull_request_mock.assert_not_called()
     handle_release_mock.assert_not_called()
