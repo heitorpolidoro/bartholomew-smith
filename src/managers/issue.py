@@ -59,11 +59,16 @@ def handle_tasklist(event: IssuesEvent):
 
 
 def handle_close_tasklist(event: IssuesEvent):
+    """
+    Close all issues in the tasklist.
+    :param event:
+    :return:
+    """
     gh = event.gh
     repository = event.repository
     issue = event.issue
     issue_body = issue.body
-    for checked, task in get_tasklist(issue_body):
+    for _, task in get_tasklist(issue_body):
         if task_issue := get_issue(gh, repository, task):
             if task_issue.state != "closed":
                 task_issue.edit(state="closed", state_reason=issue.state_reason)
