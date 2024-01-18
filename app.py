@@ -14,7 +14,7 @@ from githubapp.events import (
 )
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
-from src.managers.issue import handle_tasklist, handle_close_tasklist
+from src.managers.issue import handle_close_tasklist, handle_tasklist
 from src.managers.pull_request import handle_create_pull_request
 from src.managers.release import handle_release
 

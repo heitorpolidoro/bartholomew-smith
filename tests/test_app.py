@@ -5,12 +5,7 @@ import markdown
 import pytest
 from githubapp.events.issues import IssueClosedEvent
 
-from app import (
-    app,
-    handle_check_suite_requested,
-    handle_issue,
-    sentry_init,
-)
+from app import app, handle_check_suite_requested, handle_issue, sentry_init
 
 
 def test_sentry_init(monkeypatch):

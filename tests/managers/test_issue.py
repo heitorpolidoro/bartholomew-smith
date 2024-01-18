@@ -2,7 +2,7 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from src.managers.issue import handle_tasklist, handle_close_tasklist
+from src.managers.issue import handle_close_tasklist, handle_tasklist
 
 
 @pytest.fixture(autouse=True)
