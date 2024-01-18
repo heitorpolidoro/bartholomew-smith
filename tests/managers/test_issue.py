@@ -2,7 +2,7 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from src.managers.issue import handle_tasklist
+from src.managers.issue import handle_close_tasklist, handle_tasklist
 
 
 @pytest.fixture(autouse=True)
@@ -121,3 +121,26 @@ def test_handle_tasklist_when_all_tasks_are_done(
     repository.get_issue.assert_has_calls([call(123), call(321)])
     repository.create_issue.assert_not_called()
     issue.edit.assert_called_once_with(state="closed")
+
+
+def test_handle_tasklist_when_issue_has_not_milestone(event, issue, repository):
+    issue.body = "- [ ] batata"
+    issue.milestone = None
+    handle_tasklist(event)
+    repository.create_issue.assert_called_once_with(title="batata")
+
+
+def test_handle_close_tasklist(event, issue, repository):
+    issue123 = Mock(state="closed")
+    issue321 = Mock(state="open")
+
+    def get_issue(issue_number):
+        return {123: issue123, 321: issue321}[issue_number]
+
+    issue.state = "closed"
+    issue.state_reason = "completed"
+    issue.body = "- [x] #123\r\n- [ ] #321\r\n- [ ] not a issue"
+    repository.get_issue.side_effect = get_issue
+    handle_close_tasklist(event)
+    issue123.edit.assert_not_called()
+    issue321.edit.assert_called_once_with(state="closed", state_reason="completed")

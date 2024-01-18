@@ -52,6 +52,8 @@ def issue():
     issue.title = "Issue Title"
     issue.body = "Issue Body"
     issue.milestone = "milestone"
+    issue.state_reason = None
+    issue.state = "open"
     return issue
 
 
