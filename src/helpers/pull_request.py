@@ -52,7 +52,7 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
                 title=issue.title,
                 repo_full_name=repository.full_name,
                 issue_num=issue_num,
-                body=issue.body,
+                body=issue.body or "",
             )
         pr = repository.create_pull(
             repository.default_branch,
