@@ -10,6 +10,7 @@ from githubapp.events import (
     CheckSuiteRequestedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
+    CheckSuiteRerequestedEvent,
 )
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
@@ -50,6 +51,7 @@ webhook_handler.handle_with_flask(
 
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
+@webhook_handler.add_handler(CheckSuiteRerequestedEvent)
 def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     """
     Handle the Check Suite Requested Event, doing:
@@ -73,7 +75,7 @@ def handle_issue(event: IssuesEvent):
     :param event:
     :return:
     """
-    if Config.is_issue_manager_enabled and event.issue.body:
+    if Config.is_issue_manager_enabled and event.issue and event.issue.body:
         if isinstance(event, IssueClosedEvent):
             handle_close_tasklist(event)
         else:
