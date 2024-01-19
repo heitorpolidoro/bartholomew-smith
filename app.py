@@ -8,9 +8,9 @@ from flask import Flask, abort, render_template
 from githubapp import Config, webhook_handler
 from githubapp.events import (
     CheckSuiteRequestedEvent,
+    CheckSuiteRerequestedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
-    CheckSuiteRerequestedEvent,
 )
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
