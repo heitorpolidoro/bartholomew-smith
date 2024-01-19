@@ -2,6 +2,12 @@ from githubapp.events import CheckSuiteRequestedEvent
 
 from src.helpers.command import get_command
 from src.helpers.pull_request import get_existing_pull_request
+from src.helpers.release import (
+    is_relative_release,
+    get_relative_release,
+    is_valid_release,
+    get_last_release,
+)
 
 
 def handle_release(event: CheckSuiteRequestedEvent):
@@ -32,8 +38,18 @@ def handle_release(event: CheckSuiteRequestedEvent):
             break
 
     if not version_to_release:
+        event.update_check_run(title="No release command found", conclusion="success")
+        return
+
+    if is_relative_release(version_to_release):
+        last_version = get_last_release(repository)
+        version_to_release = get_relative_release(last_version, version_to_release)
+
+    if not is_valid_release(version_to_release):
         event.update_check_run(
-            title="No release command found", conclusion="success"
+            title=f"Invalid release {version_to_release}",
+            summary="Invalid release ❌",
+            conclusion="failure",
         )
         return
 
@@ -46,26 +62,11 @@ def handle_release(event: CheckSuiteRequestedEvent):
             tag=version_to_release, generate_release_notes=True
         )
         event.update_check_run(
-            title=f"{version_to_release} released ✅",
-            summary="",
-            conclusion="success"
+            title=f"{version_to_release} released ✅", summary="", conclusion="success"
         )
     else:
         event.update_check_run(
             title=f"Ready to release {version_to_release}",
             summary="Release command found ✅",
-            conclusion="success"
+            conclusion="success",
         )
-
-    # try:
-    #     last_release = repository.get_latest_release()
-    # except UnknownObjectException:
-    #     last_release = "0"
-    # if commit.message.startswith("release"):
-    #     event.create_check_run(
-    #         "Releaser", head_sha, title="Found release command", conclusion="success"
-    #     )
-    #     return
-    # while True:
-    #     head_commit = repository.get_commit(head_sha)
-    #     commit

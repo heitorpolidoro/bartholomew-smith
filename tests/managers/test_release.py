@@ -1,4 +1,4 @@
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 from src.managers.release import handle_release
 
@@ -66,3 +66,35 @@ def test_handle_release_when_there_is_no_pull_request(event, repository):
         BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
     )
     event.update_check_run.assert_not_called()
+
+
+def test_handle_release_when_is_relative_release(event, repository, pull_request):
+    commit = Mock(commit=Mock(message="[release:bugfix]"))
+    pull_request.get_commits.return_value.reversed = [commit]
+
+    with patch("src.managers.release.get_last_release", return_value="1.2.3"):
+        handle_release(event)
+    event.start_check_run.assert_called_once_with(
+        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
+    )
+    pull_request.get_commits.assert_called_once()
+    event.update_check_run.assert_called_once_with(
+        title="Ready to release 1.2.4",
+        summary="Release command found ✅",
+        conclusion="success",
+    )
+
+
+def test_handle_release_when_is_not_a_valid_relative(event, repository, pull_request):
+    commit = Mock(commit=Mock(message="[release:invalid]"))
+    pull_request.get_commits.return_value.reversed = [commit]
+
+    handle_release(event)
+    event.start_check_run.assert_called_once_with(
+        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
+    )
+    event.update_check_run.assert_called_once_with(
+        title="Invalid release invalid",
+        summary="Invalid release ❌",
+        conclusion="failure",
+    )
