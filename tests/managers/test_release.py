@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from src.managers.release import handle_release
 
@@ -30,6 +30,7 @@ def test_handle_release_when_there_is_a_command(event, repository, pull_request)
     event.update_check_run.assert_called_once_with(
         title="Ready to release 1.2.3",
         summary="Release command found ✅",
+        conclusion="success",
     )
 
 
@@ -42,6 +43,19 @@ def test_handle_release_when_head_branch_is_the_default_branch(
     handle_release(event)
     repository.create_git_release.assert_called_once_with(
         tag="1.2.3", generate_release_notes=True
+    )
+    event.update_check_run.assert_has_calls(
+        [
+            call(
+                title="Releasing 1.2.3",
+                summary="",
+            ),
+            call(
+                title="1.2.3 released ✅",
+                summary="",
+                conclusion="success",
+            ),
+        ]
     )
 
 
