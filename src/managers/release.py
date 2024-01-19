@@ -32,9 +32,7 @@ def handle_release(event: CheckSuiteRequestedEvent):
             break
 
     if not version_to_release:
-        event.update_check_run(
-            title="No release command found", conclusion="success"
-        )
+        event.update_check_run(title="No release command found", conclusion="success")
         return
 
     if is_default_branch:
@@ -46,15 +44,13 @@ def handle_release(event: CheckSuiteRequestedEvent):
             tag=version_to_release, generate_release_notes=True
         )
         event.update_check_run(
-            title=f"{version_to_release} released ✅",
-            summary="",
-            conclusion="success"
+            title=f"{version_to_release} released ✅", summary="", conclusion="success"
         )
     else:
         event.update_check_run(
             title=f"Ready to release {version_to_release}",
             summary="Release command found ✅",
-            conclusion="success"
+            conclusion="success",
         )
 
     # try:
