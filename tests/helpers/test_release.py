@@ -1,10 +1,10 @@
 from github import UnknownObjectException
 
 from src.helpers.release import (
+    get_last_release,
+    get_relative_release,
     is_relative_release,
     is_valid_release,
-    get_relative_release,
-    get_last_release,
 )
 
 

@@ -3,10 +3,10 @@ from githubapp.events import CheckSuiteRequestedEvent
 from src.helpers.command import get_command
 from src.helpers.pull_request import get_existing_pull_request
 from src.helpers.release import (
-    is_relative_release,
-    get_relative_release,
-    is_valid_release,
     get_last_release,
+    get_relative_release,
+    is_relative_release,
+    is_valid_release,
 )
 
 
