@@ -36,8 +36,8 @@ def test_handle_release_when_there_is_a_command(event, repository, pull_request)
 def test_handle_release_when_head_branch_is_the_default_branch(event, repository, pull_request):
     event.check_suite.head_branch = repository.default_branch
     commit = Mock(commit=Mock(message="[release:1.2.3]"))
-    pull_request.get_commits.return_value.reversed = [commit]
-    assert handle_release(event) is True
+    repository.compare.return_value = Mock(commits=[commit])
+    handle_release(event)
     repository.create_git_release.assert_called_once_with(tag="1.2.3", generate_release_notes=True)
 
 
