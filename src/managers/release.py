@@ -14,28 +14,40 @@ def handle_release(event: CheckSuiteRequestedEvent):
         "Bartholomew - Releaser", head_sha, title="Checking for release command"
     )
 
-    if head_branch == repository.default_branch:
-        # repository.create_git_release(
-        #     tag=version_to_release, generate_release_notes=True
-        # )
-        return True
+    version_to_release = None
+    check_suite = event.check_suite
+    is_default_branch = head_branch == repository.default_branch
+    if is_default_branch:
+        commits = reversed(
+            repository.compare(check_suite.before, check_suite.after).commits
+        )
     else:
         if pull_request := get_existing_pull_request(repository, head_branch):
-            version_to_release = None
-            for commit in pull_request.get_commits().reversed:
-                if version_to_release := get_command(commit.commit.message, "release"):
-                    break
+            commits = pull_request.get_commits().reversed
+        else:
+            return
 
-            if not version_to_release:
-                event.update_check_run(
-                    title="No release command found", conclusion="success"
-                )
-                return
+    for commit in commits:
+        if version_to_release := get_command(commit.commit.message, "release"):
+            break
 
-            event.update_check_run(
-                title=f"Ready to release {version_to_release}",
-                summary="Release command found ✅",
-            )
+    if not version_to_release:
+        event.update_check_run(title="No release command found", conclusion="success")
+        return
+
+    if is_default_branch:
+        event.update_check_run(
+            title=f"Releasing {version_to_release}",
+            summary="",
+        )
+        repository.create_git_release(
+            tag=version_to_release, generate_release_notes=True
+        )
+    else:
+        event.update_check_run(
+            title=f"Ready to release {version_to_release}",
+            summary="Release command found ✅",
+        )
 
     # try:
     #     last_release = repository.get_latest_release()
