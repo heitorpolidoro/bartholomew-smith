@@ -18,7 +18,9 @@ def handle_release(event: CheckSuiteRequestedEvent):
     check_suite = event.check_suite
     is_default_branch = head_branch == repository.default_branch
     if is_default_branch:
-        commits = reversed(repository.compare(check_suite.before, check_suite.after).commits)
+        commits = reversed(
+            repository.compare(check_suite.before, check_suite.after).commits
+        )
     else:
         if pull_request := get_existing_pull_request(repository, head_branch):
             commits = pull_request.get_commits().reversed
@@ -30,9 +32,7 @@ def handle_release(event: CheckSuiteRequestedEvent):
             break
 
     if not version_to_release:
-        event.update_check_run(
-            title="No release command found", conclusion="success"
-        )
+        event.update_check_run(title="No release command found", conclusion="success")
         return
 
     if is_default_branch:
