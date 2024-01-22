@@ -7,7 +7,7 @@
 Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories. 
 This app automates repetitive tasks, helping you save time and focus on what’s important. 
 Here’s what GitHub Butler can do for you:
-- **[Pull Request Management](pull-request.md)**: Automatically creates a pull request on the repository's default branch
+- **[Pull Request Management](wiki/pull-request.md)**: Automatically creates a pull request on the repository's default branch
 	when a branch is created among other things.
 - Releaser WiP
 - Issue Manager WiP
@@ -40,6 +40,7 @@ It’s like having a butler for your GitHub repository! :tophat:
 - [ ] Self-Approver heitorpolidoro/bartholomew-smith#4
 - [ ] Auto Release heitorpolidoro/bartholomew-smith#5
 - [ ] Issue Manager heitorpolidoro/bartholomew-smith#6
-- [ ] Auto-fix linter
-- [ ] Check for TODOs in repository (create issues?)
-- [ ] Dont Merge Yet if WiP or has a not checked item in the checklist
+- [ ] Auto-fix linter heitorpolidoro/bartholomew-smith#84
+- [ ] Check for TODOs in repository (create issues?) heitorpolidoro/bartholomew-smith#83
+- [ ] Dont Merge Yet if WiP or has a not checked item in the checklist heitorpolidoro/bartholomew-smith#86
+- [ ] PR checklist heitorpolidoro/bartholomew-smith#87
