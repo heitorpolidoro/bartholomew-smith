@@ -4,7 +4,7 @@ from src.helpers.command import get_command
 from src.helpers.pull_request import get_existing_pull_request
 from src.helpers.release import (
     get_last_release,
-    get_relative_release,
+    get_absolute_release,
     is_relative_release,
     is_valid_release,
 )
@@ -43,7 +43,7 @@ def handle_release(event: CheckSuiteRequestedEvent):
 
     if is_relative_release(version_to_release):
         last_version = get_last_release(repository)
-        version_to_release = get_relative_release(last_version, version_to_release)
+        version_to_release = get_absolute_release(last_version, version_to_release)
 
     if not is_valid_release(version_to_release):
         event.update_check_run(

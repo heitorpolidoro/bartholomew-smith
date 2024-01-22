@@ -2,7 +2,7 @@ from github import UnknownObjectException
 
 from src.helpers.release import (
     get_last_release,
-    get_relative_release,
+    get_absolute_release,
     is_relative_release,
     is_valid_release,
 )
@@ -18,14 +18,14 @@ def test_is_valid_release():
 
 
 def test_get_relative_release():
-    assert get_relative_release("1.2.3", "major") == "2.0.0"
-    assert get_relative_release("1.2.3", "minor") == "1.3.0"
-    assert get_relative_release("1.2.3", "patch") == "1.2.4"
-    assert get_relative_release("1.2.3", "bugfix") == "1.2.4"
+    assert get_absolute_release("1.2.3", "major") == "2.0.0"
+    assert get_absolute_release("1.2.3", "minor") == "1.3.0"
+    assert get_absolute_release("1.2.3", "patch") == "1.2.4"
+    assert get_absolute_release("1.2.3", "bugfix") == "1.2.4"
 
-    assert get_relative_release("0", "major") == "1"
-    assert get_relative_release("0", "minor") == "0.1"
-    assert get_relative_release("0", "bugfix") == "0.0.1"
+    assert get_absolute_release("0", "major") == "1"
+    assert get_absolute_release("0", "minor") == "0.1"
+    assert get_absolute_release("0", "bugfix") == "0.0.1"
 
 
 def test_get_last_release(repository):
