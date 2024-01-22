@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 from github import UnknownObjectException
 
 from src.helpers.release import (
@@ -29,7 +31,7 @@ def test_get_relative_release():
 
 
 def test_get_last_release(repository):
-    repository.get_latest_release.return_value = "1.2.3"
+    repository.get_latest_release.return_value = Mock(tag_name="1.2.3")
     assert get_last_release(repository) == "1.2.3"
 
 
