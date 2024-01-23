@@ -9,8 +9,8 @@ from app import (
     app,
     handle_check_suite_requested,
     handle_issue,
-    sentry_init,
     handle_issue_closed,
+    sentry_init,
 )
 
 
@@ -105,7 +105,10 @@ class TestApp(TestCase):
 
 
 def test_managers_disabled(
-    handle_create_pull_request_mock, handle_release_mock, handle_tasklist_mock, handle_close_tasklist_mock
+    handle_create_pull_request_mock,
+    handle_release_mock,
+    handle_tasklist_mock,
+    handle_close_tasklist_mock,
 ):
     event = Mock()
     with patch("app.Config.load_config_from_file"):
