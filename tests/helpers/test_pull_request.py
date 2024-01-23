@@ -5,10 +5,11 @@ from github import GithubException
 
 from src.helpers.pull_request import (
     create_pull_request,
-    enable_auto_merge,
     get_existing_pull_request,
     get_or_create_pull_request,
 )
+
+OTHER_ERROR = "other error"
 
 
 def test_get_existing_pull_request_when_there_is_none(repository):
@@ -30,7 +31,7 @@ def test_create_pull_request(repository):
         repository.default_branch,
         "branch",
         title="branch",
-        body="PR automatically created",
+        body="Pull Request automatically created",
         draft=False,
     )
 
@@ -65,20 +66,20 @@ def test_create_pull_request_when_there_is_no_commits(repository):
 
 def test_create_pull_request_when_other_errors(repository):
     repository.create_pull.side_effect = GithubException(
-        status=400, message="other error"
+        status=400, message=OTHER_ERROR
     )
     with pytest.raises(GithubException) as err:
         create_pull_request(repository, "branch")
-    assert err.value.message == "other error"
+    assert err.value.message == OTHER_ERROR
 
 
 def test_create_pull_request_when_other_errors2(repository):
     repository.create_pull.side_effect = GithubException(
-        status=400, data={"errors": [{"message": "other error"}]}
+        status=400, data={"errors": [{"message": OTHER_ERROR}]}
     )
     with pytest.raises(GithubException) as err:
         create_pull_request(repository, "branch")
-    assert err.value.data["errors"][0]["message"] == "other error"
+    assert err.value.data["errors"][0]["message"] == OTHER_ERROR
 
 
 def test_get_or_create_pull_request_when_there_is_no_pull_request(repository):
@@ -116,7 +117,4 @@ def test_get_or_create_pull_request_when_there_is_a_pull_request(repository):
         create_pull_request_mock.assert_not_called()
 
 
-def test_enable_auto_merge():
-    pull_request = Mock()
-    enable_auto_merge(pull_request)
-    pull_request.enable_automerge.assert_called_once_with(merge_method="SQUASH")
+

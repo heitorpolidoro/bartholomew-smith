@@ -58,7 +58,7 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
             repository.default_branch,
             branch,
             title=title or branch,
-            body=body or "PR automatically created",
+            body=body or "Pull Request automatically created",
             draft=False,
         )
         return pr
@@ -102,10 +102,3 @@ def get_or_create_pull_request(
         pr = create_pull_request(repository, branch)
     return pr
 
-
-def enable_auto_merge(pr: PullRequest) -> None:
-    """
-    Enables auto merge for the given PR.
-    :param pr: The PR to enable auto merge for.
-    """
-    pr.enable_automerge(merge_method="SQUASH")

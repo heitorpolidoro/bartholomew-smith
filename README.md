@@ -2,19 +2,6 @@
 <img src="static/bartholomew-logo.png" width="200" height="200">
 </div>
 
-# Bartholomew "The Butler" Smith
-
-Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories. 
-This app automates repetitive tasks, helping you save time and focus on what’s important. 
-Here’s what GitHub Butler can do for you:
-- **[Pull Request Management](pull-request)**: Automatically creates a pull request on the repository's default branch
-	when a branch is created among other things.
-- Releaser WiP
-- Issue Manager WiP
-
-With Bartholomew "The Butler" Smith, you can spend less time managing your repository and more time writing great code. 
-It’s like having a butler for your GitHub repository! :tophat:
-
 [![Code Quality](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml/badge.svg)](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml)
 <br>
 [![Latest Version](https://img.shields.io/github/v/release/heitorpolidoro/bartholomew-smith?label=Latest%20Version)](https://github.com/heitorpolidoro/bartholomew-smith/releases/latest)
@@ -33,14 +20,21 @@ It’s like having a butler for your GitHub repository! :tophat:
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 
+# Bartholomew "The Butler" Smith
+
+Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories. 
+This app automates repetitive tasks, helping you save time and focus on what’s important. 
+Here’s what GitHub Butler can do for you:
+- **[Pull Request Manager](../../wiki/Pull-Request-Manager.md)**: Automatically creates a pull request with the repository's default branch as base
+	when a branch is created among other things.
+- Releaser WiP
+- Issue Manager WiP
+
+With Bartholomew "The Butler" Smith, you can spend less time managing your repository and more time writing great code. 
+It’s like having a butler for your GitHub repository! :tophat:
+
+See the [Wiki](../../wiki/Home.md) for more information
+
 ## Thanks to
 [gabriellamas](https://github.com/gabriellamas) for helping me with logo ideas
 
-## TODOs
-- [ ] Self-Approver heitorpolidoro/bartholomew-smith#4
-- [ ] Auto Release heitorpolidoro/bartholomew-smith#5
-- [ ] Issue Manager heitorpolidoro/bartholomew-smith#6
-- [ ] Auto-fix linter heitorpolidoro/bartholomew-smith#84
-- [ ] Check for TODOs in repository (create issues?) heitorpolidoro/bartholomew-smith#83
-- [ ] Dont Merge Yet if WiP or has a not checked item in the checklist heitorpolidoro/bartholomew-smith#86
-- [ ] PR checklist heitorpolidoro/bartholomew-smith#87

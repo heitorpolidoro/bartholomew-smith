@@ -4,7 +4,7 @@ import sys
 
 import markdown
 import sentry_sdk
-from flask import Flask, abort, render_template
+from flask import Flask, render_template
 from githubapp import Config, webhook_handler
 from githubapp.events import (
     CheckSuiteRequestedEvent,
@@ -86,19 +86,8 @@ def handle_issue(event: IssuesEvent):
 @app.route("/", methods=["GET"])
 def index():
     """Return the index homepage"""
-    return file("README.md")
-
-
-@app.route("/<path:filename>", methods=["GET"])
-def file(filename):
-    """Convert a md file into HTML and return it"""
-    allowed_files = {f: f for f in ["README.md", "pull-request.md"]}
-    if filename not in allowed_files:
-        abort(404)
-    with open(allowed_files[filename]) as f:
+    with open("README.md") as f:
         md = f.read()
     body = markdown.markdown(md)
     title = "Bartholomew Smith"
-    if filename != "README.md":
-        title += f" - {filename.replace('-', ' ').replace('.md', '').title()}"
     return render_template("index.html", title=title, body=body)

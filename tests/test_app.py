@@ -99,21 +99,6 @@ class TestApp(TestCase):
             "index.html", title="Bartholomew Smith", body=body
         )
 
-    def test_file(self):
-        response = self.client.get("/pull-request.md")
-        assert response.status_code == 200
-        with open("pull-request.md") as f:
-            md = f.read()
-        body = markdown.markdown(md)
-        self.mock_render_template.assert_called_once_with(
-            "index.html", title="Bartholomew Smith - Pull Request", body=body
-        )
-
-    def test_file_security(self):
-        response = self.client.get("/other.txt")
-        assert response.status_code == 404
-        self.mock_render_template.assert_not_called()
-
 
 def test_managers_disabled(
     handle_create_pull_request_mock, handle_release_mock, handle_tasklist_mock
