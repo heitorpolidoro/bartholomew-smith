@@ -46,8 +46,11 @@ def sentry_init():
 app = Flask(__name__)
 sentry_init()
 webhook_handler.handle_with_flask(
-    app, use_default_index=False, config_file="bartholomew.yaml"
+    app, use_default_index=False, config_file=".bartholomew.yaml"
 )
+Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH")
+Config.create_config("release_manager", enabled=True)
+Config.create_config("issue_manager", enabled=True)
 
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
@@ -58,29 +61,35 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
     repository = event.repository
-    if Config.is_pull_request_manager_enabled:
+    if Config.pull_request_manager.enabled:
         handle_create_pull_request(repository, event.check_suite.head_branch)
-    if Config.is_release_manager_enabled:
+    if Config.release_manager.enabled:
         handle_release(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
-@webhook_handler.add_handler(IssueClosedEvent)
 def handle_issue(event: IssuesEvent):
     """
-    TODO update
-    Handle the IssueOpened and IssueEdited events, handling the tasklist and add the issue to the main project if
+    Handle the Issues events, handling the tasklist and add the issue to the main project if
     configured to
     :param event:
     :return:
     """
-    if Config.is_issue_manager_enabled and event.issue and event.issue.body:
-        if isinstance(event, IssueClosedEvent):
-            handle_close_tasklist(event)
-        else:
-            handle_tasklist(event)
+    if Config.issue_manager.enabled and event.issue and event.issue.body:
+        handle_tasklist(event)
     # add_to_project(event)
+
+
+@webhook_handler.add_handler(IssueClosedEvent)
+def handle_issue_closed(event: IssueClosedEvent):
+    """
+    Handle the Issue Closed events, closing the issues in the task list
+    :param event:
+    :return:
+    """
+    if Config.issue_manager.enabled and event.issue and event.issue.body:
+        handle_close_tasklist(event)
 
 
 @app.route("/", methods=["GET"])

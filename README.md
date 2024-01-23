@@ -25,15 +25,16 @@
 Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories. 
 This app automates repetitive tasks, helping you save time and focus on what’s important. 
 Here’s what GitHub Butler can do for you:
-- **[Pull Request Manager](../../wiki/Pull-Request-Manager)**: Automatically creates a pull request with the repository's default branch as base
-	when a branch is created among other things.
-- Releaser WiP
-- Issue Manager WiP
+- **[Pull Request Manager](../../wiki/Pull-Request-Manager)**: Automatically creates a pull request with the 
+repository's default branch as base	when a branch is created among other things.
+- **[Release Manager](../../wiki/Release-Manager)**: Automatically create releases using commands in commits message.
+- **[Issue Manager](../../wiki/Issue-Manager)**: Manager the issues, automatically create issues from tasklist, 
+closes the issue if all issues in the tasklist are done, among other things
 
 With Bartholomew "The Butler" Smith, you can spend less time managing your repository and more time writing great code. 
 It’s like having a butler for your GitHub repository! :tophat:
 
-See the [Wiki](../../wiki/) for more information
+See the [Wiki](../../wiki) for more information
 
 ## Thanks to
 [gabriellamas](https://github.com/gabriellamas) for helping me with logo ideas
