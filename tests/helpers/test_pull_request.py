@@ -115,6 +115,3 @@ def test_get_or_create_pull_request_when_there_is_a_pull_request(repository):
             repository, "heitorpolidoro:branch"
         )
         create_pull_request_mock.assert_not_called()
-
-
-

@@ -101,4 +101,3 @@ def get_or_create_pull_request(
     else:
         pr = create_pull_request(repository, branch)
     return pr
-
