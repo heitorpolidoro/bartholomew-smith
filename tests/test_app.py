@@ -4,9 +4,14 @@ from unittest.mock import Mock, patch
 import markdown
 import pytest
 from githubapp import Config
-from githubapp.events.issues import IssueClosedEvent
 
-from app import app, handle_check_suite_requested, handle_issue, sentry_init
+from app import (
+    app,
+    handle_check_suite_requested,
+    handle_issue,
+    handle_issue_closed,
+    sentry_init,
+)
 
 
 def test_sentry_init(monkeypatch):
@@ -72,8 +77,7 @@ def test_handle_issue_when_issue_has_no_body(event, issue, handle_tasklist_mock)
 
 
 def test_handle_close_issue(event, issue, handle_close_tasklist_mock):
-    event.__class__ = IssueClosedEvent
-    handle_issue(event)
+    handle_issue_closed(event)
     handle_close_tasklist_mock.assert_called_once_with(event)
 
 
@@ -101,19 +105,24 @@ class TestApp(TestCase):
 
 
 def test_managers_disabled(
-    handle_create_pull_request_mock, handle_release_mock, handle_tasklist_mock
+    handle_create_pull_request_mock,
+    handle_release_mock,
+    handle_tasklist_mock,
+    handle_close_tasklist_mock,
 ):
     event = Mock()
     with patch("app.Config.load_config_from_file"):
-        Config.set_values(
-            {
-                "pull_request_manager": False,
-                "release_manager": False,
-                "issue_manager": False,
-            }
-        )
+        Config.pull_request_manager.enabled = False
+        Config.release_manager.enabled = False
+        Config.issue_manager.enabled = False
+
     handle_check_suite_requested(event)
     handle_create_pull_request_mock.assert_not_called()
     handle_release_mock.assert_not_called()
     handle_issue(event)
     handle_tasklist_mock.assert_not_called()
+    handle_issue_closed(event)
+    handle_close_tasklist_mock.assert_not_called()
+    Config.pull_request_manager.enabled = True
+    Config.release_manager.enabled = True
+    Config.issue_manager.enabled = True
