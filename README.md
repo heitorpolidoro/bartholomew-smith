@@ -3,6 +3,7 @@
 </div>
 
 [![Code Quality](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml/badge.svg)](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml)
+![Vercel](https://vercelbadge.vercel.app/api/heitorpolidoro/bartholomew-smith)
 <br>
 [![Latest Version](https://img.shields.io/github/v/release/heitorpolidoro/bartholomew-smith?label=Latest%20Version)](https://github.com/heitorpolidoro/bartholomew-smith/releases/latest)
 ![GitHub Release Date](https://img.shields.io/github/release-date/heitorpolidoro/bartholomew-smith)
