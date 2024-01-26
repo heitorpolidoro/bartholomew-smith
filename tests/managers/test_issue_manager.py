@@ -2,7 +2,7 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from src.managers.issue import handle_close_tasklist, handle_tasklist
+from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
 
 
 @pytest.fixture(autouse=True)
@@ -12,7 +12,7 @@ def get_repository(repo_batata):
             return repo_batata
 
     with patch(
-        "src.managers.issue.get_repository", side_effect=mocked_get_repository
+        "src.managers.issue_manager.get_repository", side_effect=mocked_get_repository
     ) as mock:
         yield mock
 
@@ -37,7 +37,7 @@ def created_issue(repository):
 
 @pytest.fixture
 def handle_issue_state():
-    with patch("src.managers.issue.handle_issue_state") as handle_issue_state:
+    with patch("src.managers.issue_manager.handle_issue_state") as handle_issue_state:
         yield handle_issue_state
 
 

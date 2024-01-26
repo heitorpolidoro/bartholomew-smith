@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from github import GithubException
 
-from src.helpers.pull_request import (
+from src.helpers.pull_request_helper import (
     create_pull_request,
     get_existing_pull_request,
     get_or_create_pull_request,
@@ -86,10 +86,12 @@ def test_get_or_create_pull_request_when_there_is_no_pull_request(repository):
     pull_request = Mock()
     with (
         patch(
-            "src.helpers.pull_request.get_existing_pull_request", return_value=None
+            "src.helpers.pull_request_helper.get_existing_pull_request",
+            return_value=None,
         ) as get_existing_pull_request_mock,
         patch(
-            "src.helpers.pull_request.create_pull_request", return_value=pull_request
+            "src.helpers.pull_request_helper.create_pull_request",
+            return_value=pull_request,
         ) as create_pull_request_mock,
     ):
         assert get_or_create_pull_request(repository, "branch") == pull_request
@@ -103,11 +105,11 @@ def test_get_or_create_pull_request_when_there_is_a_pull_request(repository):
     pull_request = Mock()
     with (
         patch(
-            "src.helpers.pull_request.get_existing_pull_request",
+            "src.helpers.pull_request_helper.get_existing_pull_request",
             return_value=pull_request,
         ) as get_existing_pull_request_mock,
         patch(
-            "src.helpers.pull_request.create_pull_request"
+            "src.helpers.pull_request_helper.create_pull_request"
         ) as create_pull_request_mock,
     ):
         assert get_or_create_pull_request(repository, "branch") == pull_request

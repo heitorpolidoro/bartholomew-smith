@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 from github import UnknownObjectException
 
-from src.helpers.release import (
+from src.helpers.release_helper import (
     get_absolute_release,
     get_last_release,
     is_relative_release,

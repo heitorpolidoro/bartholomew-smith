@@ -2,7 +2,7 @@ from unittest.mock import Mock, call
 
 from github import UnknownObjectException
 
-from src.helpers.repository import get_repository
+from src.helpers.repository_helper import get_repository
 
 
 def test_get_repository():
