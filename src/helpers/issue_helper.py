@@ -7,7 +7,7 @@ from github.Repository import Repository
 
 
 def get_tasklist(issue_body: str) -> list[tuple[bool, str]]:
-    """ Return the tasks in a tasklist in the issue body, if there is any """
+    """Return the tasks in a tasklist in the issue body, if there is any"""
     tasks = []
     for line in issue_body.split("\n"):
         if task := re.match(r"- \[(.)] (.*)", line):
@@ -18,12 +18,12 @@ def get_tasklist(issue_body: str) -> list[tuple[bool, str]]:
 
 
 def issue_ref(created_issue):
-    """ Return an issue reference {owner}/{repo}#{issue_number} """
+    """Return an issue reference {owner}/{repo}#{issue_number}"""
     return f"{created_issue.repository.full_name}#{created_issue.number}"
 
 
 def get_issue(gh: Github, repository: Repository, task: str) -> Optional[Issue]:
-    """ Get an Issue by the reference {owner}/{repo}#{issue_number} """
+    """Get an Issue by the reference {owner}/{repo}#{issue_number}"""
     if "#" not in task:
         return None
     issue_repository, issue_number = task.split("#")
