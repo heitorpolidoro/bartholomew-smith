@@ -27,8 +27,7 @@ def test_get_repository_partial_name():
     def get_repo(name):
         if name == "owner/batata":
             return repository
-        else:
-            raise UnknownObjectException(404)
+        raise UnknownObjectException(404)
 
     gh.get_repo.side_effect = get_repo
     assert get_repository(gh, "batata", "owner") is repository
