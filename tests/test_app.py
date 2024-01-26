@@ -11,6 +11,7 @@ from app import (
     handle_issue,
     handle_issue_closed,
     sentry_init,
+    handle_check_suite_completed,
 )
 
 
@@ -54,6 +55,11 @@ def handle_close_tasklist_mock():
     with patch("app.handle_close_tasklist") as handle_close_tasklist_mock:
         yield handle_close_tasklist_mock
 
+@pytest.fixture
+def handle_self_approver_mock():
+    with patch("app.handle_self_approver") as handle_self_approver_mock:
+        yield handle_self_approver_mock
+
 
 def test_handle_check_suite_requested(
     event, repository, handle_create_pull_request_mock, handle_release_mock
@@ -65,20 +71,43 @@ def test_handle_check_suite_requested(
     handle_release_mock.assert_called_once_with(event)
 
 
-def test_handle_issue(event, handle_tasklist_mock):
+def test_handle_issue_opened_or_edited(event, handle_tasklist_mock):
     handle_issue(event)
     handle_tasklist_mock.assert_called_once_with(event)
 
 
-def test_handle_issue_when_issue_has_no_body(event, issue, handle_tasklist_mock):
+def test_handle_issue_opened_or_edited_when_issue_has_no_body(
+    event, issue, handle_tasklist_mock
+):
     issue.body = None
     handle_issue(event)
     handle_tasklist_mock.assert_not_called()
 
 
-def test_handle_close_issue(event, issue, handle_close_tasklist_mock):
+def test_handle_issue_closed(event, issue, handle_close_tasklist_mock):
     handle_issue_closed(event)
     handle_close_tasklist_mock.assert_called_once_with(event)
+
+
+def test_handle_issue_closed_when_issue_has_no_body(
+    event, issue, handle_close_tasklist_mock
+):
+    issue.body = None
+    handle_issue_closed(event)
+    handle_close_tasklist_mock.assert_not_called()
+
+
+def test_handle_check_suite_completed(event, repository, pull_request, monkeypatch, handle_self_approver_mock):
+    monkeypatch.setenv("OWNER_PAT", "gh_owner_pat")
+    check_suite = event.check_suite
+    check_suite.pull_requests = [pull_request]
+    handle_check_suite_completed(event)
+    handle_self_approver_mock.assert_called_once_with("gh_owner_pat", repository, pull_request)
+
+def test_handle_check_suite_completed_when_there_is_no_owner_pat(event, repository, pull_request, monkeypatch, handle_self_approver_mock):
+    monkeypatch.delenv("OWNER_PAT")
+    handle_check_suite_completed(event)
+    handle_self_approver_mock.assert_not_called()
 
 
 @pytest.mark.usefixtures("mock_render_template")
