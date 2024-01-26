@@ -29,8 +29,8 @@ def handle_self_approver(
     branch_owner = first_commit.author
     if branch_owner.login != repository.owner.login:
         logger.info(
-            f'The branch "{pull_request.head.ref}" owner, "{branch_owner.login}", '
-            f'is not the same as the repository owner, "{repository.owner.login}"'
+            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s"'
+            % (pull_request.head.ref, branch_owner.login, repository.owner.login)
         )
         return
     if any(
@@ -38,11 +38,14 @@ def handle_self_approver(
         for review in pull_request.get_reviews()
     ):
         logger.info(
-            f"Pull Request {repository.full_name}#{pull_request.number} already approved"
+            "Pull Request %s#%d already approved"
+            % (repository.full_name, pull_request.number)
         )
         return
 
     gh = Github(auth=Token(owner_pat))
     pull_request = gh.get_repo(repository.full_name).get_pull(pull_request.number)
     pull_request.create_review(event="APPROVE")
-    logger.info(f"Pull Request {repository.full_name}#{pull_request.number} approved")
+    logger.info(
+        "Pull Request %s#%d approved" % (repository.full_name, pull_request.number)
+    )

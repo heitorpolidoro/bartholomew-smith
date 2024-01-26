@@ -10,6 +10,7 @@ def get_repository(repo_batata):
     def mocked_get_repository(_gh, repository_name, _owner):
         if repository_name == "repo_batata":
             return repo_batata
+        return None
 
     with patch(
         "src.managers.issue_manager.get_repository", side_effect=mocked_get_repository
