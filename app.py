@@ -5,8 +5,10 @@ import sys
 import markdown
 import sentry_sdk
 from flask import Flask, render_template
+from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
+    CheckSuiteCompletedEvent,
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
     IssueEditedEvent,
@@ -14,9 +16,12 @@ from githubapp.events import (
 )
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
-from src.managers.issue import handle_close_tasklist, handle_tasklist
-from src.managers.pull_request import handle_create_pull_request
-from src.managers.release import handle_release
+from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
+from src.managers.pull_request_manager import (
+    handle_create_pull_request,
+    handle_self_approver,
+)
+from src.managers.release_manager import handle_release
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -48,6 +53,7 @@ sentry_init()
 webhook_handler.handle_with_flask(
     app, use_default_index=False, config_file=".bartholomew.yaml"
 )
+load_dotenv()
 Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH")
 Config.create_config("release_manager", enabled=True)
 Config.create_config("issue_manager", enabled=True)
@@ -90,6 +96,18 @@ def handle_issue_closed(event: IssueClosedEvent):
     """
     if Config.issue_manager.enabled and event.issue and event.issue.body:
         handle_close_tasklist(event)
+
+
+@webhook_handler.add_handler(CheckSuiteCompletedEvent)
+def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
+    """
+    Handle the Check Suite Completed Event, doing:
+     - Creates a Pull Request, if not exists, and/or enable the auto merge flag
+    """
+    if owner_pat := os.getenv("OWNER_PAT"):
+        repository = event.repository
+        for pull_request in event.check_suite.pull_requests:
+            handle_self_approver(owner_pat, repository, pull_request)
 
 
 @app.route("/", methods=["GET"])

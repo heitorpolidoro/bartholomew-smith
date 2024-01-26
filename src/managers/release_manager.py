@@ -1,8 +1,8 @@
 from githubapp.events import CheckSuiteRequestedEvent
 
-from src.helpers.command import get_command
-from src.helpers.pull_request import get_existing_pull_request
-from src.helpers.release import (
+from src.helpers.command_helper import get_command
+from src.helpers.pull_request_helper import get_existing_pull_request
+from src.helpers.release_helper import (
     get_absolute_release,
     get_last_release,
     is_relative_release,
