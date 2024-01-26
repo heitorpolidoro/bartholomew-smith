@@ -7,11 +7,11 @@ import sentry_sdk
 from flask import Flask, render_template
 from githubapp import Config, webhook_handler
 from githubapp.events import (
+    CheckSuiteCompletedEvent,
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
-    CheckSuiteCompletedEvent,
 )
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
