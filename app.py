@@ -17,7 +17,10 @@ from githubapp.events import (
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
 from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
-from src.managers.pull_request_manager import handle_create_pull_request, handle_self_approver
+from src.managers.pull_request_manager import (
+    handle_create_pull_request,
+    handle_self_approver,
+)
 from src.managers.release_manager import handle_release
 
 logging.basicConfig(
@@ -104,7 +107,7 @@ def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
     if owner_pat := os.getenv("OWNER_PAT"):
         repository = event.repository
         for pull_request in event.check_suite.pull_requests:
-            handle_self_approver(owner_pat,repository,  pull_request)
+            handle_self_approver(owner_pat, repository, pull_request)
 
 
 @app.route("/", methods=["GET"])
