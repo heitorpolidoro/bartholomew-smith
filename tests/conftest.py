@@ -1,6 +1,14 @@
 from unittest.mock import Mock
 
 import pytest
+from githubapp import Config
+
+
+@pytest.fixture(autouse=True)
+def setup():
+    Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH")
+    Config.create_config("release_manager", enabled=True)
+    Config.create_config("issue_manager", enabled=True)
 
 
 @pytest.fixture

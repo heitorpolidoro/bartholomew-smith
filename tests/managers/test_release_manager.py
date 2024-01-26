@@ -1,6 +1,6 @@
 from unittest.mock import Mock, call, patch
 
-from src.managers.release import handle_release
+from src.managers.release_manager import handle_release
 
 CHECKING_RELEASE_COMMAND = "Checking for release command"
 
@@ -72,7 +72,7 @@ def test_handle_release_when_is_relative_release(event, repository, pull_request
     commit = Mock(commit=Mock(message="[release:bugfix]"))
     pull_request.get_commits.return_value.reversed = [commit]
 
-    with patch("src.managers.release.get_last_release", return_value="1.2.3"):
+    with patch("src.managers.release_manager.get_last_release", return_value="1.2.3"):
         handle_release(event)
     event.start_check_run.assert_called_once_with(
         BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
