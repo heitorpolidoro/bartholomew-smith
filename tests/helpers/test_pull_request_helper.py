@@ -86,10 +86,12 @@ def test_get_or_create_pull_request_when_there_is_no_pull_request(repository):
     pull_request = Mock()
     with (
         patch(
-            "src.helpers.pull_request_helper.get_existing_pull_request", return_value=None
+            "src.helpers.pull_request_helper.get_existing_pull_request",
+            return_value=None,
         ) as get_existing_pull_request_mock,
         patch(
-            "src.helpers.pull_request_helper.create_pull_request", return_value=pull_request
+            "src.helpers.pull_request_helper.create_pull_request",
+            return_value=pull_request,
         ) as create_pull_request_mock,
     ):
         assert get_or_create_pull_request(repository, "branch") == pull_request

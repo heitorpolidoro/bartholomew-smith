@@ -1,6 +1,11 @@
 from unittest.mock import Mock
 
-from src.helpers.issue_helper import get_issue, get_tasklist, handle_issue_state, issue_ref
+from src.helpers.issue_helper import (
+    get_issue,
+    get_tasklist,
+    handle_issue_state,
+    issue_ref,
+)
 
 
 def test_get_tasklist_without_tasklist():
