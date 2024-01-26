@@ -113,7 +113,7 @@ def test_handle_check_suite_completed(
 def test_handle_check_suite_completed_when_there_is_no_owner_pat(
     event, repository, pull_request, monkeypatch, handle_self_approver_mock
 ):
-    monkeypatch.delenv("OWNER_PAT")
+    monkeypatch.delenv("OWNER_PAT", False)
     handle_check_suite_completed(event)
     handle_self_approver_mock.assert_not_called()
 
