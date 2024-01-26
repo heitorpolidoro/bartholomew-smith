@@ -7,11 +7,11 @@ from githubapp import Config
 
 from app import (
     app,
+    handle_check_suite_completed,
     handle_check_suite_requested,
     handle_issue,
     handle_issue_closed,
     sentry_init,
-    handle_check_suite_completed,
 )
 
 
@@ -55,6 +55,7 @@ def handle_close_tasklist_mock():
     with patch("app.handle_close_tasklist") as handle_close_tasklist_mock:
         yield handle_close_tasklist_mock
 
+
 @pytest.fixture
 def handle_self_approver_mock():
     with patch("app.handle_self_approver") as handle_self_approver_mock:
@@ -97,14 +98,21 @@ def test_handle_issue_closed_when_issue_has_no_body(
     handle_close_tasklist_mock.assert_not_called()
 
 
-def test_handle_check_suite_completed(event, repository, pull_request, monkeypatch, handle_self_approver_mock):
+def test_handle_check_suite_completed(
+    event, repository, pull_request, monkeypatch, handle_self_approver_mock
+):
     monkeypatch.setenv("OWNER_PAT", "gh_owner_pat")
     check_suite = event.check_suite
     check_suite.pull_requests = [pull_request]
     handle_check_suite_completed(event)
-    handle_self_approver_mock.assert_called_once_with("gh_owner_pat", repository, pull_request)
+    handle_self_approver_mock.assert_called_once_with(
+        "gh_owner_pat", repository, pull_request
+    )
 
-def test_handle_check_suite_completed_when_there_is_no_owner_pat(event, repository, pull_request, monkeypatch, handle_self_approver_mock):
+
+def test_handle_check_suite_completed_when_there_is_no_owner_pat(
+    event, repository, pull_request, monkeypatch, handle_self_approver_mock
+):
     monkeypatch.delenv("OWNER_PAT")
     handle_check_suite_completed(event)
     handle_self_approver_mock.assert_not_called()
