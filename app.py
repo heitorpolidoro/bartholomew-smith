@@ -11,11 +11,12 @@ from githubapp.events import (
     CheckSuiteRerequestedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
+    CheckSuiteCompletedEvent,
 )
 from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
 from src.managers.issue import handle_close_tasklist, handle_tasklist
-from src.managers.pull_request import handle_create_pull_request
+from src.managers.pull_request import handle_create_pull_request, handle_self_approver
 from src.managers.release import handle_release
 
 logging.basicConfig(
@@ -90,6 +91,17 @@ def handle_issue_closed(event: IssueClosedEvent):
     """
     if Config.issue_manager.enabled and event.issue and event.issue.body:
         handle_close_tasklist(event)
+
+
+@webhook_handler.add_handler(CheckSuiteCompletedEvent)
+def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
+    """
+    Handle the Check Suite Completed Event, doing:
+     - Creates a Pull Request, if not exists, and/or enable the auto merge flag
+    """
+    if owner_pat := os.getenv("OWNER_PAT"):
+        for pull_request in event.check_suite.pull_requests:
+            handle_self_approver(owner_pat, pull_request)
 
 
 @app.route("/", methods=["GET"])

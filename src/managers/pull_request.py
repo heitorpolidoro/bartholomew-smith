@@ -1,5 +1,6 @@
 import logging
 
+from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config
 
@@ -14,3 +15,7 @@ def handle_create_pull_request(repository: Repository, branch: str):
         pull_request.get_or_create_pull_request(repository, branch).enable_automerge(
             merge_method=Config.pull_request_manager.merge_method
         )
+
+
+def handle_self_approver(owner_pat: str, pull_request: PullRequest):
+    print(pull_request.number)
