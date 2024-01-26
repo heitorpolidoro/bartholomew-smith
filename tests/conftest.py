@@ -29,7 +29,7 @@ def pull_request(head_commit):
     This fixture returns a mock PullRequest object with default values for the attributes.
     :return: Mocked PullRequest
     """
-    pull_request = Mock()
+    pull_request = Mock(number=42)
     pull_request.get_commits.return_value.reversed = [head_commit]
     return pull_request
 
