@@ -11,6 +11,9 @@ from src.helpers.release_helper import (
 
 
 def handle_release(event: CheckSuiteRequestedEvent):
+    """
+    Create a release if there is a command in the commit message
+    """
     repository = event.repository
 
     head_sha = event.check_suite.head_sha

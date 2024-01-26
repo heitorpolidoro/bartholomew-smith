@@ -22,6 +22,7 @@ def handle_create_pull_request(repository: Repository, branch: str):
 def handle_self_approver(
     owner_pat: str, repository: Repository, pull_request: PullRequest
 ):
+    """ Approve the Pull Request if the branch creator is the same of the repository owner """
     pr_commits = pull_request.get_commits()
     first_commit = pr_commits[0]
 
