@@ -4,7 +4,7 @@ import sys
 
 import markdown
 import sentry_sdk
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -118,3 +118,10 @@ def index():
     body = markdown.markdown(md)
     title = "Bartholomew Smith"
     return render_template("index.html", title=title, body=body)
+
+
+@app.route("/marketplace", methods=["POST"])
+def marketplace():
+    """Marketplace events"""
+    logger.info(f"Marketplace event: {request.json}")
+    return "OK"
