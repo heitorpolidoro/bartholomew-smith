@@ -3,11 +3,11 @@ import re
 from githubapp.events import IssuesEvent
 
 from src.helpers.issue_helper import (
+    get_cached_existent_issue,
     get_issue,
     get_tasklist,
     handle_issue_state,
     issue_ref,
-    get_cached_existent_issue,
 )
 from src.helpers.repository_helper import get_repository
 
