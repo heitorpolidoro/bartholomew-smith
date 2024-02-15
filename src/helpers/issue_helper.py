@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 from typing import Optional
 
 from github import Github
@@ -43,3 +44,12 @@ def handle_issue_state(checked: bool, task_issue: Issue):
             task_issue.edit(state="closed")
     elif task_issue.state == "closed":
         task_issue.edit(state="open")
+
+
+def get_cached_existent_issue(issue_repository, title):
+    return {i.title: i for i in get_cached_issues(issue_repository)}.get(title)
+
+
+@lru_cache
+def get_cached_issues(issue_repository):
+    return issue_repository.get_issues()

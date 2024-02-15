@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from threading import Thread
 
 import markdown
 import sentry_sdk
@@ -83,7 +84,7 @@ def handle_issue(event: IssuesEvent):
     :return:
     """
     if Config.issue_manager.enabled and event.issue and event.issue.body:
-        handle_tasklist(event)
+        Thread(target=handle_tasklist, args=(event,)).start()
     # add_to_project(event)
 
 

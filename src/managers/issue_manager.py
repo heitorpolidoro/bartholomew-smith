@@ -7,6 +7,7 @@ from src.helpers.issue_helper import (
     get_tasklist,
     handle_issue_state,
     issue_ref,
+    get_cached_existent_issue,
 )
 from src.helpers.repository_helper import get_repository
 
@@ -42,20 +43,22 @@ def handle_tasklist(event: IssuesEvent):
             else:
                 repository_name = task
                 title = issue.title
-
             issue_repository = get_repository(
                 gh, repository_name, repository.owner.login
             )
             if issue_repository is None:
                 issue_repository = repository
                 title = task
-
-            create_issue_params = {
-                "title": title,
-            }
-            if issue.milestone is not None:
-                create_issue_params["milestone"] = issue.milestone
-            created_issue = issue_repository.create_issue(**create_issue_params)
+            if not (
+                created_issue := get_cached_existent_issue(issue_repository, title)
+            ):
+                create_issue_params = {
+                    "title": title,
+                }
+                if issue.milestone is not None:
+                    create_issue_params["milestone"] = issue.milestone
+                print(f"Creating issue {issue_repository.full_name}:{title}..")
+                created_issue = issue_repository.create_issue(**create_issue_params)
             issue_body = issue_body.replace(task, issue_ref(created_issue))
     if issue_body != issue.body:
         issue.edit(body=issue_body)
