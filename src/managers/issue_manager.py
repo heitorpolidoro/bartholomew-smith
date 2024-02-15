@@ -60,8 +60,9 @@ def handle_tasklist(event: IssuesEvent):
                 print(f"Creating issue {issue_repository.full_name}:{title}..")
                 created_issue = issue_repository.create_issue(**create_issue_params)
             issue_body = issue_body.replace(task, issue_ref(created_issue))
-    if issue_body != issue.body:
-        issue.edit(body=issue_body)
+            if issue_body != issue.body:
+                issue.edit(body=issue_body)
+                return
     if all_checked and all(all_checked):
         issue.edit(state="closed")
 
