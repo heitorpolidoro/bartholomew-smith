@@ -175,6 +175,6 @@ def test_correct_replace(event, issue, repository, created_issue):
     handle_tasklist(event)
     issue.edit.assert_called_once_with(
         body="- [ ] heitorpolidoro/bartholomew-smith#10\r\n"
-             "- [ ] heitorpolidoro/bartholomew-smith#123\r\n"
-             "- [ ] 10 something"
+        "- [ ] heitorpolidoro/bartholomew-smith#123\r\n"
+        "- [ ] 10 something"
     )
