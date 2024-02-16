@@ -1,20 +1,21 @@
 import re
-from functools import lru_cache
 from typing import Optional
 
 from github import Github
 from github.Issue import Issue
 from github.Repository import Repository
 
+from src.helpers.repository_helper import get_repo_cached
 
-def get_tasklist(issue_body: str) -> list[tuple[bool, str]]:
+
+def get_tasklist(issue_body: str) -> dict[str, bool]:
     """Return the tasks in a tasklist in the issue body, if there is any"""
-    tasks = []
+    tasks = {}
     for line in issue_body.split("\n"):
         if task := re.match(r"- \[(.)] (.*)", line):
             checked = task.group(1) == "x"
             task_info: str = task.group(2).strip()
-            tasks.append((checked, task_info))
+            tasks[task_info] = checked
     return tasks
 
 
@@ -29,7 +30,7 @@ def get_issue(gh: Github, repository: Repository, task: str) -> Optional[Issue]:
         return None
     issue_repository, issue_number = task.split("#")
     if issue_repository:
-        repository = gh.get_repo(issue_repository)
+        repository = get_repo_cached(gh, issue_repository)
     return repository.get_issue(int(issue_number))
 
 
@@ -44,12 +45,3 @@ def handle_issue_state(checked: bool, task_issue: Issue):
             task_issue.edit(state="closed")
     elif task_issue.state == "closed":
         task_issue.edit(state="open")
-
-
-def get_cached_existent_issue(issue_repository, title):
-    return {i.title: i for i in get_cached_issues(issue_repository)}.get(title)
-
-
-@lru_cache
-def get_cached_issues(issue_repository):
-    return issue_repository.get_issues()

@@ -7,6 +7,7 @@ from github.Repository import Repository
 from githubapp import Config
 
 from src.helpers import pull_request_helper
+from src.helpers.repository_helper import get_repo_cached
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,9 @@ def handle_self_approver(
         return
 
     gh = Github(auth=Token(owner_pat))
-    pull_request = gh.get_repo(repository.full_name).get_pull(pull_request.number)
+    pull_request = get_repo_cached(gh, repository.full_name).get_pull(
+        pull_request.number
+    )
     pull_request.create_review(event="APPROVE")
     logger.info(
         "Pull Request %s#%d approved", repository.full_name, pull_request.number

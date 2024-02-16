@@ -9,7 +9,7 @@ from src.helpers.issue_helper import (
 
 
 def test_get_tasklist_without_tasklist():
-    assert get_tasklist("blabla\r\nblabla") == []
+    assert get_tasklist("blabla\r\nblabla") == {}
 
 
 def test_get_tasklist_with_tasklist():
@@ -18,11 +18,11 @@ def test_get_tasklist_with_tasklist():
             """
 before
 - [ ] foo
-- [ ] bar
+- [x] bar
 after
 - [ ] other"""
         )
-        == [(False, "foo"), (False, "bar"), (False, "other")]
+        == {"foo": False, "bar": True, "other": False}
     )
 
 

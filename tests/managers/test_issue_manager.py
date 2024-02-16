@@ -1,6 +1,7 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
+from githubapp.events import IssueEditedEvent
 
 from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
 
@@ -88,26 +89,36 @@ def test_handle_tasklist_with_repository_name_and_title(
     issue.edit.assert_called_once_with(body="- [ ] heitorpolidoro/repo_batata#123")
 
 
-def test_handle_tasklist_with_issue_in_task_list(
+def test_handle_tasklist_close_issue_in_tasklist(
     event, issue, repository, handle_issue_state
 ):
-    issue.body = "- [ ] #123"
+    issue.body = "- [x] #123"
+    issue.changes = {"body": {"from": "- [ ] #123"}}
     repository.get_issue.return_value = issue
     handle_tasklist(event)
-    handle_issue_state.assert_called_once_with(False, issue)
+    handle_issue_state.assert_called_once_with(True, issue)
     repository.get_issue.assert_called_once_with(123)
     repository.create_issue.assert_not_called()
-    issue.edit.assert_not_called()
 
 
-def test_handle_tasklist_when_not_all_tasks_are_done(
+def test_handle_tasklist_only_handle_changed_checked_issues(
     event, issue, repository, handle_issue_state
 ):
-    issue.body = "- [x] #123\r\n- [ ] #321"
-    repository.get_issue.return_value = issue
+    issue1 = Mock(state="open")
+    issue2 = Mock(state="open")
+    issue3 = Mock(state="close")
+    event.__class__ = IssueEditedEvent
+
+    def get_issue(issue_number):
+        return {1: issue1, 2: issue2, 3: issue3}[issue_number]
+
+    issue.body = "- [x] #1\r\n- [ ] #2\r\n- [ ] #3"
+    issue.changes = {"body": {"from": "- [ ] #1\r\n- [ ] #2\r\n- [x] #3"}}
+    repository.get_issue.side_effect = get_issue
+
     handle_tasklist(event)
-    handle_issue_state.assert_has_calls([call(True, issue), call(False, issue)])
-    repository.get_issue.assert_has_calls([call(123), call(321)])
+    handle_issue_state.assert_has_calls([call(True, issue1), call(False, issue3)])
+    repository.get_issue.assert_has_calls([call(1), call(3)])
     repository.create_issue.assert_not_called()
     issue.edit.assert_not_called()
 
@@ -145,3 +156,11 @@ def test_handle_close_tasklist(event, issue, repository):
     handle_close_tasklist(event)
     issue123.edit.assert_not_called()
     issue321.edit.assert_called_once_with(state="closed", state_reason="completed")
+
+
+def test_dont_handle_is_checked(event, issue, repository, created_issue):
+    issue.body = "- [ ] #123\r\n- [x] batata"
+    created_issue.number = 123
+    handle_tasklist(event)
+    repository.create_issue.assert_not_called()
+    issue.edit.assert_not_called()

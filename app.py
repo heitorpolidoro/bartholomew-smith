@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from threading import Thread
+from typing import Union
 
 import markdown
 import sentry_sdk
@@ -15,7 +15,7 @@ from githubapp.events import (
     IssueEditedEvent,
     IssueOpenedEvent,
 )
-from githubapp.events.issues import IssueClosedEvent, IssuesEvent
+from githubapp.events.issues import IssueClosedEvent
 
 from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
 from src.managers.pull_request_manager import (
@@ -76,7 +76,7 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
 
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
-def handle_issue(event: IssuesEvent):
+def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     """
     Handle the Issues events, handling the tasklist and add the issue to the main project if
     configured to
