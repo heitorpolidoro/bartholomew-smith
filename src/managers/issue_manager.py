@@ -1,7 +1,7 @@
 import re
 from typing import Union
 
-from githubapp.events import IssuesEvent, IssueOpenedEvent, IssueEditedEvent
+from githubapp.events import IssueEditedEvent, IssueOpenedEvent, IssuesEvent
 
 from src.helpers.issue_helper import (
     get_issue,
