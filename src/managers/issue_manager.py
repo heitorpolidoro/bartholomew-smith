@@ -65,7 +65,9 @@ def handle_tasklist(event: Union[IssueOpenedEvent, IssueEditedEvent]):
 
             print(f"Creating issue {issue_repository.full_name}:{title}..")
             created_issue = issue_repository.create_issue(**create_issue_params)
-            issue_body = issue_body.replace(task, issue_ref(created_issue))
+            issue_body = issue_body.replace(
+                f"- [ ] {task}", f"- [ ] {issue_ref(created_issue)}", 1
+            )
             if issue_body != issue.body:
                 issue.edit(body=issue_body)
                 return

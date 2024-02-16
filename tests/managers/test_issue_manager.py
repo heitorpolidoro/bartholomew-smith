@@ -158,9 +158,23 @@ def test_handle_close_tasklist(event, issue, repository):
     issue321.edit.assert_called_once_with(state="closed", state_reason="completed")
 
 
-def test_dont_handle_is_checked(event, issue, repository, created_issue):
+def test_dont_handle_is_checked(event, issue, repository):
     issue.body = "- [ ] #123\r\n- [x] batata"
-    created_issue.number = 123
     handle_tasklist(event)
     repository.create_issue.assert_not_called()
     issue.edit.assert_not_called()
+
+
+def test_correct_replace(event, issue, repository, created_issue):
+    issue.body = (
+        "- [ ] heitorpolidoro/bartholomew-smith#10\r\n"
+        "- [ ] 10\r\n"
+        "- [ ] 10 something"
+    )
+    created_issue.number = 123
+    handle_tasklist(event)
+    issue.edit.assert_called_once_with(
+        body="- [ ] heitorpolidoro/bartholomew-smith#10\r\n"
+             "- [ ] heitorpolidoro/bartholomew-smith#123\r\n"
+             "- [ ] 10 something"
+    )
