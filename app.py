@@ -84,7 +84,7 @@ def handle_issue(event: IssuesEvent):
     :return:
     """
     if Config.issue_manager.enabled and event.issue and event.issue.body:
-        Thread(target=handle_tasklist, args=(event,)).start()
+        handle_tasklist(event)
     # add_to_project(event)
 
 
