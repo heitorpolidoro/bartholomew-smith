@@ -33,7 +33,7 @@ def handle_tasklist(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     all_checked = []
     old_task_list = {}
     if isinstance(event, IssueEditedEvent):
-        old_task_list = get_tasklist(issue.changes.get("body", {}).get("from", {}))
+        old_task_list = get_tasklist(event.changes.get("body", {}).get("from", {}))
     for task, checked in get_tasklist(issue_body).items():
         all_checked.append(checked)
         if checked == old_task_list.get(task):
