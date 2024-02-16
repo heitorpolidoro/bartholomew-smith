@@ -36,10 +36,9 @@ def handle_tasklist(event: Union[IssueOpenedEvent, IssueEditedEvent]):
         old_task_list = get_tasklist(event.changes.get("body", {}).get("from", {}))
     for task, checked in get_tasklist(issue_body).items():
         all_checked.append(checked)
-        if checked == old_task_list.get(task):
-            continue
         if task_issue := get_issue(gh, repository, task):
-            handle_issue_state(checked, task_issue)
+            if checked != old_task_list.get(task):
+                handle_issue_state(checked, task_issue)
 
         elif not checked:
             if repository_and_title := re.match(r"\[(.+?)] (.+)", task):

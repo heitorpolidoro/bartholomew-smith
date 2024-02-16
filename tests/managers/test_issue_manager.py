@@ -113,12 +113,12 @@ def test_handle_tasklist_only_handle_changed_checked_issues(
         return {1: issue1, 2: issue2, 3: issue3}[issue_number]
 
     issue.body = "- [x] #1\r\n- [ ] #2\r\n- [ ] #3"
-    issue.changes = {"body": {"from": "- [ ] #1\r\n- [ ] #2\r\n- [x] #3"}}
+    event.changes = {"body": {"from": "- [ ] #1\r\n- [ ] #2\r\n- [x] #3"}}
     repository.get_issue.side_effect = get_issue
 
     handle_tasklist(event)
     handle_issue_state.assert_has_calls([call(True, issue1), call(False, issue3)])
-    repository.get_issue.assert_has_calls([call(1), call(3)])
+    repository.get_issue.assert_has_calls([call(1), call(2), call(3)])
     repository.create_issue.assert_not_called()
     issue.edit.assert_not_called()
 
