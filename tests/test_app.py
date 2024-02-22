@@ -141,7 +141,7 @@ class TestApp(TestCase):
         )
 
     def test_marketplace(self):
-        response = self.client.post("/marketplace", json={1:2})
+        response = self.client.post("/marketplace", json={1: 2})
         assert response.status_code == 200
 
 
