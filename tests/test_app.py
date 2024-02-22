@@ -140,6 +140,10 @@ class TestApp(TestCase):
             "index.html", title="Bartholomew Smith", body=body
         )
 
+    def test_marketplace(self):
+        response = self.client.post("/marketplace", json={1:2})
+        assert response.status_code == 200
+
 
 def test_managers_disabled(
     handle_create_pull_request_mock,

@@ -126,3 +126,9 @@ def marketplace():
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
     return "OK"
+
+
+@app.route("/cron")
+def cron():
+    print("cronei")
+    return "OK"
