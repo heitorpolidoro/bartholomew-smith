@@ -113,6 +113,10 @@ def handle_task_list(gh, issue, issue_comment_id):
         issue.edit(body=issue_body)
     if all_checked and all(all_checked):
         issue.edit(state="closed")
+    comment_body = "Tasklist analysis completed"
+    if summary:
+        comment_body += "\n" + summarize()
+    issue_comment.edit(comment_body)
 
 
 def handle_close_tasklist(event: IssuesEvent):
