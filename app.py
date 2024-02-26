@@ -140,6 +140,7 @@ def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
 def handle_message():
     body = request.json
     headers = body["headers"]
+    print(body)
     issue = body["issue"]
 
     hook_installation_target_id = int(headers["X-Github-Hook-Installation-Target-Id"])
