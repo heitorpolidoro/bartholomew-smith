@@ -6,11 +6,10 @@ from githubapp.events import IssuesEvent
 from src.helpers.issue_helper import (
     get_issue,
     get_tasklist,
-    issue_ref,
     handle_issue_state,
+    issue_ref,
 )
 from src.helpers.repository_helper import get_repository
-
 
 # sqs = boto3.client("sqs", region_name="us-east-1")
 
@@ -102,9 +101,7 @@ def handle_task_list(gh, issue, issue_comment_id):
                 f"- [ ] {task}", f"- [ ] {issue_ref(created_issue)}", 1
             )
         count += 1
-        comment_body = (
-            f"Analyzing the tasklist..\n{progress()}"
-        )
+        comment_body = f"Analyzing the tasklist..\n{progress()}"
         if summary:
             comment_body += "\n" + summarize()
         issue_comment.edit(comment_body)
