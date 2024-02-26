@@ -21,10 +21,7 @@ from githubapp.events.issues import IssueClosedEvent
 from githubapp.webhook_handler import _get_auth
 
 from src.helpers.issue_helper import has_tasklist, issue_ref
-from src.managers.issue_manager import (
-    handle_close_tasklist,
-    handle_task_list,
-)
+from src.managers.issue_manager import handle_close_tasklist, handle_task_list
 from src.managers.pull_request_manager import (
     handle_create_pull_request,
     handle_self_approver,
@@ -103,12 +100,14 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
             )
             sqs.send_message(
                 QueueUrl=os.getenv("TASKLIST_QUEUE"),
-                MessageBody=json.dumps({
-                    "headers": dict(request.headers),
-                    "issue": issue_ref(issue),
-                    "installation_id": request.json["installation"]["id"],
-                    "issue_comment_id": issue_comment.id
-                }),
+                MessageBody=json.dumps(
+                    {
+                        "headers": dict(request.headers),
+                        "issue": issue_ref(issue),
+                        "installation_id": request.json["installation"]["id"],
+                        "issue_comment_id": issue_comment.id,
+                    }
+                ),
             )
     # add_to_project(event)
 
