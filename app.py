@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -7,6 +8,7 @@ import markdown
 import sentry_sdk
 from flask import Flask, render_template, request
 from flask.cli import load_dotenv
+from github import Github
 from githubapp import Config, webhook_handler
 from githubapp.events import (
     CheckSuiteCompletedEvent,
@@ -16,8 +18,13 @@ from githubapp.events import (
     IssueOpenedEvent,
 )
 from githubapp.events.issues import IssueClosedEvent
+from githubapp.webhook_handler import _get_auth
 
-from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
+from src.helpers.issue_helper import has_tasklist, issue_ref
+from src.managers.issue_manager import (
+    handle_close_tasklist,
+    handle_task_list,
+)
 from src.managers.pull_request_manager import (
     handle_create_pull_request,
     handle_self_approver,
@@ -83,8 +90,26 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     :param event:
     :return:
     """
+    import boto3
+
+    sqs = boto3.client("sqs", region_name="us-east-1")
+
     if Config.issue_manager.enabled and event.issue and event.issue.body:
-        handle_tasklist(event)
+        issue = event.issue
+        issue_body = issue.body
+        if has_tasklist(issue_body):
+            issue_comment = issue.create_comment(
+                "I'll manage the issues in the next minutes (sorry, free server :disappointed: )"
+            )
+            sqs.send_message(
+                QueueUrl=os.getenv("TASKLIST_QUEUE"),
+                MessageBody=json.dumps({
+                    "headers": dict(request.headers),
+                    "issue": issue_ref(issue),
+                    "installation_id": request.json["installation"]["id"],
+                    "issue_comment_id": issue_comment.id
+                }),
+            )
     # add_to_project(event)
 
 
@@ -111,6 +136,20 @@ def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
             handle_self_approver(owner_pat, repository, pull_request)
 
 
+@app.route("/handle_task_list", methods=["POST"])
+def handle_message():
+    body = request.json
+    headers = body["headers"]
+    issue = body["issue"]
+
+    hook_installation_target_id = int(headers["X-Github-Hook-Installation-Target-Id"])
+    installation_id = int(body["installation_id"])
+    auth = _get_auth(hook_installation_target_id, installation_id)
+    gh = Github(auth=auth)
+    handle_task_list(gh, issue, issue_comment_id=body["issue_comment_id"])
+    return "OK"
+
+
 @app.route("/", methods=["GET"])
 def index():
     """Return the index homepage"""
@@ -125,10 +164,5 @@ def index():
 def marketplace():
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
-    return "OK"
-
-
-@app.route("/cron")
-def cron():
-    print("cronei")
+    print(f"Marketplace event: {request.json}")
     return "OK"

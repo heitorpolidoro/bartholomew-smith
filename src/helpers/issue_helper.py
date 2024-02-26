@@ -8,6 +8,11 @@ from github.Repository import Repository
 from src.helpers.repository_helper import get_repo_cached
 
 
+def has_tasklist(issue_body: str) -> bool:
+    """Return if the issue has a tasklist"""
+    return bool(re.search(r"- \[(.)] (.*)", issue_body))
+
+
 def get_tasklist(issue_body: str) -> dict[str, bool]:
     """Return the tasks in a tasklist in the issue body, if there is any"""
     tasks = {}
@@ -43,5 +48,8 @@ def handle_issue_state(checked: bool, task_issue: Issue):
     if checked:
         if task_issue.state == "open":
             task_issue.edit(state="closed")
+            return True
     elif task_issue.state == "closed":
         task_issue.edit(state="open")
+        return True
+    return False

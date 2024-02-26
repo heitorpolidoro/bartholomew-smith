@@ -10,10 +10,4 @@
       "dest": "app.py"
     }
   ],
-  "crons": [
-    {
-      "path": "/cron",
-      "schedule": "* * * * *"
-    }
-  ]
 }
