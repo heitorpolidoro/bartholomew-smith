@@ -169,10 +169,28 @@ def marketplace():
     return "OK"
 
 
+def make_request(url):
+    import requests
+
+    print(url)
+    requests.get(url)
+
+
 @app.route("/sleep/<secs>")
 def sleep(secs):
     import time
+    import threading
 
-    logger.info(f"Sleeping for {secs} seconds")
+    secs = float(secs)
+
+    if secs < 30:
+        url = "/".join(request.url.split("/")[:-1] + [str(secs + 5)])
+        logger.info(f"Requesting {url}")
+        # url = f"https://bartholomew-smith.vercel.app/sleep/{secs+1}"
+        thread = threading.Thread(target=make_request, args=(url,))
+        thread.start()
+
+    logger.info(f"---------------------- Sleeping for {secs} seconds")
     time.sleep(float(secs))
+    logger.info(f"---------------------- Done sleeping for {secs} seconds")
     return "OK"
