@@ -167,3 +167,12 @@ def marketplace():
     logger.info(f"Marketplace event: {request.json}")
     print(f"Marketplace event: {request.json}")
     return "OK"
+
+
+@app.route("/sleep/<secs>")
+def sleep(secs):
+    import time
+
+    logger.info(f"Sleeping for {secs} seconds")
+    time.sleep(float(secs))
+    return "OK"
