@@ -185,12 +185,12 @@ def sleep(secs):
 
     if secs < 30:
         url = "/".join(request.url.split("/")[:-1] + [str(secs + 1)])
-        logger.info(f"Requesting {url}")
+        print(f"Requesting {url}")
         # url = f"https://bartholomew-smith.vercel.app/sleep/{secs+1}"
         thread = threading.Thread(target=make_request, args=(url,))
         thread.start()
 
-    logger.info(f"---------------------- Sleeping for {secs} seconds")
+    print(f"---------------------- Sleeping for {secs} seconds")
     time.sleep(float(secs))
-    logger.info(f"---------------------- Done sleeping for {secs} seconds")
+    print(f"---------------------- Done sleeping for {secs} seconds")
     return "OK"
