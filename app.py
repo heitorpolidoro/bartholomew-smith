@@ -183,7 +183,7 @@ def sleep(secs):
 
     secs = float(secs)
 
-    if secs < 30:
+    if secs < 15:
         url = "/".join(request.url.split("/")[:-1] + [str(secs + 1)])
         print(f"Requesting {url}")
         # url = f"https://bartholomew-smith.vercel.app/sleep/{secs+1}"
