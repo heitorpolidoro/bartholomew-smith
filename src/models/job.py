@@ -14,6 +14,7 @@ class JobStatus(Enum):
 class Job(BaseModel):
     class Config:
         key_schema = ["task", "original_issue_ref"]
+
     task: str
     original_issue_ref: str
     checked: bool
