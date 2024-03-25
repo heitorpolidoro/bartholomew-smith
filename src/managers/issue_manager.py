@@ -113,6 +113,7 @@ def process_jobs():
         update_progress(gh, job.original_issue_ref, job.issue_comment_id)
         print("update_progress", round(time.time() - start, 2))
         print("total", round(time.time() - start_total, 2))
+        break
 
 
 def process_job(job, original_issue, gh):
