@@ -89,6 +89,7 @@ def update_progress(gh, original_issue_ref, issue_comment_id):
 
 
 def process_jobs():
+    stop = False
     for job in JobService.all():
         start_total = time.time()
         start = time.time()
@@ -108,12 +109,14 @@ def process_jobs():
             start = time.time()
             update_issue_body(original_issue, job)
             print("update_issue_body", round(time.time() - start, 2))
+            stop = True
         start = time.time()
         JobService.to_done(job)
         update_progress(gh, job.original_issue_ref, job.issue_comment_id)
         print("update_progress", round(time.time() - start, 2))
         print("total", round(time.time() - start_total, 2))
-        break
+        if stop:
+            break
 
 
 def process_job(job, original_issue, gh):
