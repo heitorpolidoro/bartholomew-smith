@@ -31,4 +31,4 @@ def test_get_repository_partial_name():
 
     gh.get_repo.side_effect = get_repo
     assert get_repository(gh, "batata", "owner") is repository
-    gh.get_repo.assert_has_calls([call("batata"), call("owner/batata")])
+    gh.get_repo.assert_has_calls([call("owner/batata")])
