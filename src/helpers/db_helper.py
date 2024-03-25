@@ -180,11 +180,11 @@ class BaseModel(PydanticBaseModel):
     class Config:
         key_schema = None
 
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
     def dynamo_dict(self):
         return {
             k: v.value if isinstance(v, Enum) else v
             for k, v in self.dict().items()
             if v is not None
         }
-
-    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())

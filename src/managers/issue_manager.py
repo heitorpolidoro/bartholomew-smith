@@ -29,7 +29,10 @@ def parse_issue_and_create_tasks(issue, hook_installation_target_id, installatio
     issue_ref = issue_helper.get_issue_ref(issue)
     title = issue.title
     issue_comment_id = issue_comment.id
+    existing_jobs = {j.issue_ref or j.task: j for j in JobService.filter(original_issue_ref=issue_ref)}
     for task, checked in issue_helper.get_tasklist(issue.body):
+        if task in existing_jobs:
+            continue
         tasks.append(
             Job(
                 task=task,

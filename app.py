@@ -96,7 +96,7 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
         parse_issue_and_create_tasks(
             event.issue, event.hook_installation_target_id, event.installation_id
         )
-    url = request.url + f"/process_jobs"
+    url = request.url + "process_jobs"
     thread = threading.Thread(target=make_request, args=(url,))
     thread.start()
     time.sleep(1)
