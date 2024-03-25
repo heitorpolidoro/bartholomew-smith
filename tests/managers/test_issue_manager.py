@@ -1,5 +1,5 @@
 from collections import defaultdict
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -112,7 +112,7 @@ def test_process_tasks(github_mock, issue, repository, repo_batata):
 
     repository.get_issue = lambda _: issue
     closed_issue = Mock(state="closed")
-    repo_batata.get_issue = lambda _:  closed_issue
+    repo_batata.get_issue = lambda _: closed_issue
 
     process_jobs()
     closed_issue.edit.assert_called_once_with(state="open")

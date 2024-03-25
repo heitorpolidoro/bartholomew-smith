@@ -2,9 +2,9 @@ from unittest.mock import Mock
 
 from src.helpers.issue_helper import (
     get_issue,
+    get_issue_ref,
     get_tasklist,
     handle_issue_state,
-    get_issue_ref,
     has_tasklist,
 )
 
@@ -94,4 +94,3 @@ after
 
 def test_has_tasklist_without_tasklist():
     assert has_tasklist("This is not a [ ] list") is False
-
