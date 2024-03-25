@@ -8,12 +8,12 @@ from githubapp.events import IssuesEvent
 from githubapp.webhook_handler import _get_auth
 
 from src.helpers import issue_helper
-from src.helpers.issue_helper import get_issue, handle_issue_state, get_issue_ref
+from src.helpers.issue_helper import get_issue, get_issue_ref, handle_issue_state
 from src.helpers.repository_helper import get_repository
 from src.helpers.text_helper import (
+    extract_repo_title,
     is_issue_ref,
     is_repo_title_syntax,
-    extract_repo_title,
     markdown_progress,
 )
 from src.models import Job, JobStatus
