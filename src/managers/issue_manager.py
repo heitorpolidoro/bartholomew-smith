@@ -8,12 +8,12 @@ from githubapp.events import IssuesEvent
 from githubapp.webhook_handler import _get_auth
 
 from src.helpers import issue_helper
-from src.helpers.issue_helper import get_issue, handle_issue_state, get_issue_ref
+from src.helpers.issue_helper import get_issue, get_issue_ref, handle_issue_state
 from src.helpers.repository_helper import get_repository
 from src.helpers.text_helper import (
+    extract_repo_title,
     is_issue_ref,
     is_repo_title_syntax,
-    extract_repo_title,
     markdown_progress,
 )
 from src.models import Job, JobStatus
@@ -29,7 +29,10 @@ def parse_issue_and_create_tasks(issue, hook_installation_target_id, installatio
     issue_ref = issue_helper.get_issue_ref(issue)
     title = issue.title
     issue_comment_id = issue_comment.id
-    existing_jobs = {j.issue_ref or j.task: j for j in JobService.filter(original_issue_ref=issue_ref)}
+    existing_jobs = {
+        j.issue_ref or j.task: j
+        for j in JobService.filter(original_issue_ref=issue_ref)
+    }
     for task, checked in issue_helper.get_tasklist(issue.body):
         if task in existing_jobs:
             continue

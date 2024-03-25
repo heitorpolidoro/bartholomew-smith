@@ -159,8 +159,8 @@ def make_request(url):
 
 @app.route("/sleep/<secs>")
 def sleep(secs):
-    import time
     import threading
+    import time
 
     secs = float(secs)
 
