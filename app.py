@@ -101,7 +101,7 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
             event.issue, event.hook_installation_target_id, event.installation_id
         )
         if issue_job.issue_job_status != IssueJobStatus.RUNNING:
-            make_thread_request(request.url, issue_job.issue_url)
+            make_thread_request(f"{request.url}/process_jobs", issue_job.issue_url)
     # add_to_project(event)
 
 
@@ -213,4 +213,14 @@ def sleep(secs):
     print(f"---------------------- Sleeping for {secs} seconds")
     time.sleep(float(secs))
     print(f"---------------------- Done sleeping for {secs} seconds")
+    return "OK"
+
+
+def create_tables():
+    # TODO put in github actions
+    from src.helpers.db_helper import BaseModelService
+
+    for subclass in BaseModelService.__subclasses__():
+        logger.info(f"Creating table for {subclass.clazz.__name__}")
+        subclass.create_table()
     return "OK"
