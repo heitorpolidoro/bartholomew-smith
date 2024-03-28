@@ -106,6 +106,7 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
 
 
 def make_thread_request(request_url, issue_url):
+    print(f"making request to {request_url} with {issue_url}")
     thread = threading.Thread(target=make_request, args=(request_url, issue_url))
     thread.start()
     time.sleep(1)
@@ -126,28 +127,33 @@ def process_jobs_endpoint():
     if not issue_url:
         return jsonify({"error": "issue_url is required"}), 400
     start = time.time()
-    return_value = Queue()
-    process = Process(target=process_jobs_process, args=(issue_url, return_value))
+    # return_value = Queue()
+    process = Process(target=process_jobs, args=(issue_url,))
+    # process = Process(target=process_jobs_process, args=(issue_url, return_value))
     process.start()
     process.join(8)
-    process.terminate()
-    try:
-        issue_job_status = return_value.get(block=False)
-        print(issue_job_status)
-        if issue_job_status is None:
-            return jsonify({"error": "issue job not found"}), 404
-
-        if issue_job_status == IssueJobStatus.PENDING:
-            make_thread_request(request.url, issue_url)
-
-    except Empty:
-        print("Empty")
-        issue_job_status = IssueJobStatus.PENDING
-        issue_job = IssueJobService.filter(issue_url=issue_url)[0]
-        IssueJobService.update(issue_job, issue_job_status=issue_job_status)
+    if process.is_alive():
         make_thread_request(request.url, issue_url)
+    process.terminate()
+    # try:
+    #     issue_job_status = return_value.get(block=False)
+    #     print(issue_job_status)
+    #     if issue_job_status is None:
+    #         return jsonify({"error": "issue job not found"}), 404 # TODO
+    #
+    #     if issue_job_status == IssueJobStatus.PENDING:
+    #         make_thread_request(request.url, issue_url)
+    #
+    # except Empty:
+    #     print("Empty")
+    #     issue_job_status = IssueJobStatus.PENDING
+    #     issue_job = IssueJobService.filter(issue_url=issue_url)[0]
+    #     IssueJobService.update(issue_job, issue_job_status=issue_job_status)
+    #     make_thread_request(request.url, issue_url)
     print(round(time.time() - start, 2))
-    return jsonify({"status": issue_job_status.value}), 200
+    issue_job = IssueJobService.filter(issue_url=issue_url)[0]
+    return jsonify({"status": issue_job.issue_job_status.value}), 200
+    # return jsonify({"status": issue_job_status.value}), 200
 
 
 @webhook_handler.add_handler(IssueClosedEvent)
