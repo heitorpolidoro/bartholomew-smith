@@ -4,7 +4,6 @@ from githubapp import Config
 
 from app import handle_issue
 
-
 # def test_handle_issue_opened_or_edited(event, parse_issue_and_create_jobs_mock):
 #     handle_issue(event)
 #     parse_issue_and_create_jobs_mock.assert_called_once_with(
