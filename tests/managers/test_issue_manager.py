@@ -1,18 +1,18 @@
 from collections import defaultdict
-from unittest.mock import Mock, patch, ANY
+from unittest.mock import ANY, Mock, patch
 
 import pytest
 
 from src.managers.issue_manager import (
     parse_issue_and_create_jobs,
-    process_pending_jobs,
-    process_update_issue_status,
     process_create_issue,
-    process_update_issue_body,
     process_jobs,
+    process_pending_jobs,
+    process_update_issue_body,
+    process_update_issue_status,
 )
-from src.models import Job, JobStatus, IssueJob, IssueJobStatus
-from src.services import JobService, IssueJobService
+from src.models import IssueJob, IssueJobStatus, Job, JobStatus
+from src.services import IssueJobService, JobService
 
 
 @pytest.fixture(autouse=True)
@@ -141,7 +141,12 @@ def test_parse_issue_and_create_jobs_when_issue_job_already_exists(
 """
     JobService.insert_many(
         [
-            Job(task="batata1", original_issue_url=issue_job.issue_url, checked=False, issue_ref="heitorpolidoro/bartholomew-smith#111"),
+            Job(
+                task="batata1",
+                original_issue_url=issue_job.issue_url,
+                checked=False,
+                issue_ref="heitorpolidoro/bartholomew-smith#111",
+            ),
             Job(
                 task="heitorpolidoro/bartholomew-smith#321",
                 original_issue_url=issue_job.issue_url,
