@@ -132,7 +132,9 @@ def process_jobs_endpoint():
     # process = Process(target=process_jobs_process, args=(issue_url, return_value))
     process.start()
     process.join(8)
+    issue_job = IssueJobService.filter(issue_url=issue_url)[0]
     if process.is_alive():
+        IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
         make_thread_request(request.url, issue_url)
     process.terminate()
     # try:
@@ -150,8 +152,7 @@ def process_jobs_endpoint():
     #     issue_job = IssueJobService.filter(issue_url=issue_url)[0]
     #     IssueJobService.update(issue_job, issue_job_status=issue_job_status)
     #     make_thread_request(request.url, issue_url)
-    print(round(time.time() - start, 2))
-    issue_job = IssueJobService.filter(issue_url=issue_url)[0]
+    print(round(time.time() - start, 2), issue_job.issue_job_status.value)
     return jsonify({"status": issue_job.issue_job_status.value}), 200
     # return jsonify({"status": issue_job_status.value}), 200
 
