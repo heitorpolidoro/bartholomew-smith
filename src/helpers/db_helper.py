@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from enum import Enum
-from typing import Generic, TypeVar, Iterable, Optional
+from typing import Generic, TypeVar, Iterable, Optional, ClassVar
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -83,6 +83,8 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
                 expression_attribute_values = {}
                 for attr_name, attr_value in kwargs.items():
                     filter_expression.append(f"{attr_name}=:{attr_name}")
+                    if isinstance(attr_value, Enum):
+                        attr_value = attr_value.value
                     expression_attribute_values[f":{attr_name}"] = attr_value
                 scan_attributes = {
                     "FilterExpression": " and ".join(filter_expression),
@@ -108,7 +110,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
     @classmethod
     def create_table(cls):
         try:
-            key_schema = cls.clazz.Config.key_schema
+            key_schema = cls.clazz.key_schema
             assert key_schema
             dy_key_schema = []
             attribute_definitions = []
@@ -150,23 +152,31 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
             return table
 
     @classmethod
+    def insert_one(cls, item):
+        cls.table.put_item(Item=item.dynamo_dict())
+        return item
+
+    @classmethod
     def insert_many(cls, items):
         with cls.table.batch_writer() as writer:
             for item in items:
                 writer.put_item(Item=item.dynamo_dict())
 
     @classmethod
-    def update(cls, item):
+    def update(cls, item, **kwargs):
         dy_key = {}
-        key_schema = cls.clazz.Config.key_schema
-        attribute_values = item.dynamo_dict()
+        key_schema = cls.clazz.key_schema
+        attribute_values = kwargs or item.dynamo_dict()
         for attr in key_schema:
             dy_key[attr] = getattr(item, attr)
-            attribute_values.pop(attr)
+            attribute_values.pop(attr, None)
         update_expression = []
         expression_attribute_values = {}
         for attr_name, attr_value in attribute_values.items():
+            setattr(item, attr_name, attr_value)
             update_expression.append(f"{attr_name}=:{attr_name}")
+            if isinstance(attr_value, Enum):
+                attr_value = attr_value.value
             expression_attribute_values[f":{attr_name}"] = attr_value
         cls.table.update_item(
             Key=dy_key,
@@ -177,14 +187,20 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
 
 
 class BaseModel(PydanticBaseModel):
-    class Config:
-        key_schema = None
+    key_schema: ClassVar[list[str]] = None
 
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     def dynamo_dict(self):
         return {
             k: v.value if isinstance(v, Enum) else v
-            for k, v in self.dict().items()
+            for k, v in self.model_dump().items()
             if v is not None
         }
+
+    def __hash__(self):
+        key_schema = self.key_schema
+        hash_dict = {}
+        for attr in key_schema:
+            hash_dict[attr] = getattr(self, attr)
+        return hash(str(hash_dict))

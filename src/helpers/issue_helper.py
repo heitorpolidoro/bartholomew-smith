@@ -24,19 +24,9 @@ def get_tasklist(issue_body: str) -> list[tuple[str, bool]]:
     return tasks
 
 
-def get_issue_ref(created_issue):
+def get_issue_ref(issue):
     """Return an issue reference {owner}/{repo}#{issue_number}"""
-    return f"{created_issue.repository.full_name}#{created_issue.number}"
-
-
-def get_issue(gh: Github, repository: Repository, task: str) -> Optional[Issue]:
-    """Get an Issue by the reference {owner}/{repo}#{issue_number}"""
-    if "#" not in task:
-        return None
-    issue_repository, issue_number = task.split("#")
-    if issue_repository:
-        repository = get_repository(gh, issue_repository)
-    return repository.get_issue(int(issue_number))
+    return f"{issue.repository.full_name}#{issue.number}"
 
 
 def handle_issue_state(checked: bool, task_issue: Issue):
@@ -45,6 +35,7 @@ def handle_issue_state(checked: bool, task_issue: Issue):
     If the issue is closed and the checkbox is checked, open the issue.
     If the issue is open and the checkbox is unchecked, close the issue.
     """
+    print("updating issue status")
     if checked:
         if task_issue.state == "open":
             task_issue.edit(state="closed")

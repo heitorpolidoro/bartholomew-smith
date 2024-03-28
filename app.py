@@ -3,11 +3,13 @@ import os
 import sys
 import threading
 import time
+from multiprocessing import Queue, Process
+from queue import Empty
 from typing import Union
 
 import markdown
 import sentry_sdk
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -21,7 +23,7 @@ from githubapp.events.issues import IssueClosedEvent
 
 from src.managers.issue_manager import (
     handle_close_tasklist,
-    parse_issue_and_create_tasks,
+    parse_issue_and_create_jobs,
     process_jobs,
 )
 from src.managers.pull_request_manager import (
@@ -29,6 +31,8 @@ from src.managers.pull_request_manager import (
     handle_self_approver,
 )
 from src.managers.release_manager import handle_release
+from src.models import IssueJobStatus
+from src.services import IssueJobService
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -93,20 +97,57 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     :return:
     """
     if Config.issue_manager.enabled and event.issue and event.issue.body:
-        parse_issue_and_create_tasks(
+        issue_job = parse_issue_and_create_jobs(
             event.issue, event.hook_installation_target_id, event.installation_id
         )
-    url = request.url + "process_jobs"
-    thread = threading.Thread(target=make_request, args=(url,))
-    thread.start()
-    time.sleep(1)
+        if issue_job.issue_job_status != IssueJobStatus.RUNNING:
+            make_thread_request(request.url, issue_job.issue_url)
     # add_to_project(event)
 
 
-@app.route("/process_jobs", methods=["GET"])
+def make_thread_request(request_url, issue_url):
+    thread = threading.Thread(target=make_request, args=(request_url, issue_url))
+    thread.start()
+    time.sleep(1)
+
+
+def process_jobs_process(issue_url, return_queue):
+    try:
+        status = process_jobs(issue_url)
+        return_queue.put(status)
+    except SystemExit:
+        print("exit")
+        raise
+
+
+@app.route("/process_jobs", methods=["POST"])
 def process_jobs_endpoint():
-    process_jobs()
-    return "OK"
+    issue_url = request.get_json(force=True).get("issue_url")
+    if not issue_url:
+        return jsonify({"error": "issue_url is required"}), 400
+    start = time.time()
+    return_value = Queue()
+    process = Process(target=process_jobs_process, args=(issue_url, return_value))
+    process.start()
+    process.join(8)
+    process.terminate()
+    try:
+        issue_job_status = return_value.get(block=False)
+        print(issue_job_status)
+        if issue_job_status is None:
+            return jsonify({"error": "issue job not found"}), 404
+
+        if issue_job_status == IssueJobStatus.PENDING:
+            make_thread_request(request.url, issue_url)
+
+    except Empty:
+        print("Empty")
+        issue_job_status = IssueJobStatus.PENDING
+        issue_job = IssueJobService.filter(issue_url=issue_url)[0]
+        IssueJobService.update(issue_job, issue_job_status=issue_job_status)
+        make_thread_request(request.url, issue_url)
+    print(round(time.time() - start, 2))
+    return jsonify({"status": issue_job_status.value}), 200
 
 
 @webhook_handler.add_handler(IssueClosedEvent)
@@ -150,11 +191,10 @@ def marketplace():
     return "OK"
 
 
-def make_request(url):
+def make_request(request_url, issue_url):
     import requests
 
-    print(url)
-    requests.get(url)
+    requests.post(request_url, json={"issue_url": issue_url})
 
 
 @app.route("/sleep/<secs>")

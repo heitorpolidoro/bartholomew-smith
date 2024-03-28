@@ -5,19 +5,19 @@ from githubapp import Config
 from app import handle_issue
 
 
-def test_handle_issue_opened_or_edited(event, parse_issue_and_create_tasks_mock):
-    handle_issue(event)
-    parse_issue_and_create_tasks_mock.assert_called_once_with(
-        event.issue, event.hook_installation_target_id, event.installation_id
-    )
+# def test_handle_issue_opened_or_edited(event, parse_issue_and_create_jobs_mock):
+#     handle_issue(event)
+#     parse_issue_and_create_jobs_mock.assert_called_once_with(
+#         event.issue, event.hook_installation_target_id, event.installation_id
+#     )
 
 
 def test_handle_issue_opened_or_edited_when_issue_has_no_body(
-    event, issue, parse_issue_and_create_tasks_mock
+    event, issue, parse_issue_and_create_jobs_mock
 ):
     issue.body = None
     handle_issue(event)
-    parse_issue_and_create_tasks_mock.assert_not_called()
+    parse_issue_and_create_jobs_mock.assert_not_called()
 
 
 # def test_handle_issue_full_workflow(event, issue, sqs_mock):

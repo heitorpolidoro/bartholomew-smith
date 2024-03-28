@@ -106,6 +106,7 @@ def repository(head_commit, pull_request):
         default_branch="master",
         full_name="heitorpolidoro/bartholomew-smith",
         owner=Mock(login="heitorpolidoro"),
+        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith"
     )
     repository.get_pulls.return_value = [pull_request]
     repository.get_commit.return_value = head_commit
@@ -125,12 +126,13 @@ def issue(repository, issue_comment):
     """
     issue = Mock(
         title="Issue Title",
-        number=123,
+        number=1,
         body="Issue Body",
-        milestone="milestone",
+        milestone=Mock(url="https://github.com/heitorpolidoro/bartholomew-smith/milestone/1"),
         state_reason=None,
         state="open",
         repository=repository,
+        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith/issues/1"
     )
     issue.get_comments.return_value = [issue_comment]
     issue.create_comment.return_value = issue_comment
@@ -155,8 +157,8 @@ def event(repository, head_commit, issue):
 
 
 @pytest.fixture
-def parse_issue_and_create_tasks_mock():
-    with patch("app.parse_issue_and_create_tasks") as handle_tasklist_mock:
+def parse_issue_and_create_jobs_mock():
+    with patch("app.parse_issue_and_create_jobs") as handle_tasklist_mock:
         yield handle_tasklist_mock
 
 

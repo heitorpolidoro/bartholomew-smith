@@ -110,7 +110,7 @@ class TestApp(TestCase):
 def test_managers_disabled(
     handle_create_pull_request_mock,
     handle_release_mock,
-    parse_issue_and_create_tasks_mock,
+    parse_issue_and_create_jobs_mock,
     handle_close_tasklist_mock,
 ):
     event = Mock()
@@ -123,7 +123,7 @@ def test_managers_disabled(
     handle_create_pull_request_mock.assert_not_called()
     handle_release_mock.assert_not_called()
     handle_issue(event)
-    parse_issue_and_create_tasks_mock.assert_not_called()
+    parse_issue_and_create_jobs_mock.assert_not_called()
     handle_issue_closed(event)
     handle_close_tasklist_mock.assert_not_called()
     Config.pull_request_manager.enabled = True

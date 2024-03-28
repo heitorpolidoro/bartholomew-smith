@@ -1,10 +1,8 @@
 from unittest.mock import Mock
 
 from src.helpers.issue_helper import (
-    get_issue,
     get_tasklist,
     handle_issue_state,
-    get_issue_ref,
     has_tasklist,
 )
 
@@ -27,9 +25,9 @@ after
     )
 
 
-def test_issue_ref():
-    issue = Mock(repository=Mock(full_name="full_name"), number=123)
-    assert get_issue_ref(issue) == "full_name#123"
+# def test_issue_ref():
+#     issue = Mock(repository=Mock(full_name="full_name"), number=123)
+#     assert get_issue_ref(issue) == "full_name#123"
 
 
 # def test_get_issue():

@@ -6,19 +6,21 @@ from src.helpers.db_helper import BaseModel
 
 class JobStatus(Enum):
     PENDING = "pending"
+    UPDATE_ISSUE_STATUS = "update_issue_status"
+    CREATE_ISSUE = "create_issue"
     UPDATE_ISSUE_BODY = "update_issue_body"
     ERROR = "error"
     DONE = "done"
 
 
 class Job(BaseModel):
-    class Config:
-        key_schema = ["task", "original_issue_ref"]
+    key_schema = ["task", "original_issue_url"]
     task: str
-    original_issue_ref: str
+    original_issue_url: str
     checked: bool
-    issue_comment_id: int
     job_status: JobStatus = JobStatus.PENDING
-    hook_installation_target_id: int
-    installation_id: int
+    repository_url: Optional[str] = None
+    title: Optional[str] = None
+    milestone: Optional[str] = None
     issue_ref: Optional[str] = None
+    issue_url: Optional[str] = None
