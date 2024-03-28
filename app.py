@@ -3,13 +3,13 @@ import os
 import sys
 import threading
 import time
-from multiprocessing import Queue, Process
+from multiprocessing import Process, Queue
 from queue import Empty
 from typing import Union
 
 import markdown
 import sentry_sdk
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -199,8 +199,8 @@ def make_request(request_url, issue_url):
 
 @app.route("/sleep/<secs>")
 def sleep(secs):
-    import time
     import threading
+    import time
 
     secs = float(secs)
 
