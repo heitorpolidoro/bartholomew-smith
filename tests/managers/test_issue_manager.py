@@ -1,19 +1,19 @@
 from collections import defaultdict
-from unittest.mock import Mock, patch, ANY, call
+from unittest.mock import ANY, Mock, call, patch
 
 import pytest
 
 from src.managers.issue_manager import (
-    parse_issue_and_create_jobs,
-    process_pending_jobs,
-    process_update_issue_status,
-    process_create_issue,
-    process_update_issue_body,
-    process_jobs,
     handle_close_tasklist,
+    parse_issue_and_create_jobs,
+    process_create_issue,
+    process_jobs,
+    process_pending_jobs,
+    process_update_issue_body,
+    process_update_issue_status,
 )
-from src.models import Job, JobStatus, IssueJob, IssueJobStatus
-from src.services import JobService, IssueJobService
+from src.models import IssueJob, IssueJobStatus, Job, JobStatus
+from src.services import IssueJobService, JobService
 
 
 @pytest.fixture(autouse=True)
@@ -477,7 +477,9 @@ def test_process_update_issue_body(issue_job):
         ("- [ ] #333", False, "closed"),
     ],
 )
-def test_handle_close_tasklist(issue_body, task_issue_state, should_call_edit, event, issue):
+def test_handle_close_tasklist(
+    issue_body, task_issue_state, should_call_edit, event, issue
+):
     issue.body = issue_body
     with patch("src.managers.issue_manager.Issue") as issue_mock:
         issue = Mock(state=task_issue_state)
