@@ -37,7 +37,7 @@ def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation
                 issue_comment_id=issue_comment_id,
                 hook_installation_target_id=hook_installation_target_id,
                 installation_id=installation_id,
-                milestone_url=issue.milestone.url,
+                milestone_url=issue.milestone.url if issue.milestone else None,
             )
         )
     jobs = []
@@ -101,11 +101,9 @@ def _get_repository(issue_job: IssueJob, repository_name) -> Repository:
 
 
 @lru_cache
-def _instantiate_github_class(clazz, issue_job, url):
+def _instantiate_github_class(clazz, hook_installation_target_id, installation_id, url):
     return clazz(
-        requester=_get_requester(
-            issue_job.hook_installation_target_id, issue_job.installation_id
-        ),
+        requester=_get_requester(hook_installation_target_id, installation_id),
         headers={},
         attributes={"url": url},
         completed=False,
@@ -206,7 +204,10 @@ def process_create_issue(issue_job):
         original_issue_url=issue_job.issue_url, job_status=JobStatus.CREATE_ISSUE
     ):
         repository = _instantiate_github_class(
-            Repository, issue_job, job.repository_url
+            Repository,
+            issue_job.hook_installation_target_id,
+            issue_job.installation_id,
+            job.repository_url,
         )
         # TODO milestone
         created_issue = repository.create_issue(title=job.title)
@@ -221,7 +222,12 @@ def process_update_issue_body(issue_job):
     if update_issue_body_jobs := JobService.filter(
         original_issue_url=issue_job.issue_url, job_status=JobStatus.UPDATE_ISSUE_BODY
     ):
-        issue = _instantiate_github_class(Issue, issue_job, issue_job.issue_url)
+        issue = _instantiate_github_class(
+            Issue,
+            issue_job.hook_installation_target_id,
+            issue_job.installation_id,
+            issue_job.issue_url,
+        )
         body = issue.body
         for job in update_issue_body_jobs:
             body = re.sub(
@@ -246,7 +252,12 @@ def process_update_progress(issue_job):
         comment = (
             f"Analyzing the tasklist [{done}/{total}]\n{markdown_progress(done, total)}"
         )
-    issue = _instantiate_github_class(Issue, issue_job, issue_job.issue_url)
+    issue = _instantiate_github_class(
+        Issue,
+        issue_job.hook_installation_target_id,
+        issue_job.installation_id,
+        issue_job.issue_url,
+    )
     issue_helper.update_issue_comment_status(
         issue,
         comment,
@@ -264,7 +275,19 @@ def handle_close_tasklist(event: IssuesEvent):
     repository = event.repository
     issue = event.issue
     issue_body = issue.body
-    for task in issue_helper.get_tasklist(issue_body).keys():
-        if task_issue := issue_helper.get_issue(gh, repository, task):
+    for task, _ in issue_helper.get_tasklist(issue_body):
+        if is_issue_ref(task):
+            issue_repository, issue_number = task.split("#")
+            if issue_repository:
+                repository_url = _repository_url(issue_repository)
+            else:
+                repository_url = repository.url
+            issue_url = f"{repository_url}/issues/{issue_number}"
+            task_issue = _instantiate_github_class(
+                Issue,
+                event.hook_installation_target_id,
+                event.installation_id,
+                issue_url,
+            )
             if task_issue.state != "closed":
                 task_issue.edit(state="closed", state_reason=issue.state_reason)

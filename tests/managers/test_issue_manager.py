@@ -1,5 +1,5 @@
 from collections import defaultdict
-from unittest.mock import Mock, patch, ANY
+from unittest.mock import Mock, patch, ANY, call
 
 import pytest
 
@@ -10,6 +10,7 @@ from src.managers.issue_manager import (
     process_create_issue,
     process_update_issue_body,
     process_jobs,
+    handle_close_tasklist,
 )
 from src.models import Job, JobStatus, IssueJob, IssueJobStatus
 from src.services import JobService, IssueJobService
@@ -141,7 +142,12 @@ def test_parse_issue_and_create_jobs_when_issue_job_already_exists(
 """
     JobService.insert_many(
         [
-            Job(task="batata1", original_issue_url=issue_job.issue_url, checked=False, issue_ref="heitorpolidoro/bartholomew-smith#111"),
+            Job(
+                task="batata1",
+                original_issue_url=issue_job.issue_url,
+                checked=False,
+                issue_ref="heitorpolidoro/bartholomew-smith#111",
+            ),
             Job(
                 task="heitorpolidoro/bartholomew-smith#321",
                 original_issue_url=issue_job.issue_url,
@@ -460,3 +466,24 @@ def test_process_update_issue_body(issue_job):
         )
     for changed_job in JobService.filter(original_issue_url=issue_job.issue_url):
         assert changed_job.job_status == JobStatus.DONE, changed_job.task
+
+
+@pytest.mark.parametrize(
+    "issue_body,should_call_edit,task_issue_state",
+    [
+        ("- [ ] #123", True, "open"),
+        ("- [ ] not an issue", False, "open"),
+        ("- [ ] heitorpolidoro/repo_batata#321", True, "open"),
+        ("- [ ] #333", False, "closed"),
+    ],
+)
+def test_handle_close_tasklist(issue_body, task_issue_state, should_call_edit, event, issue):
+    issue.body = issue_body
+    with patch("src.managers.issue_manager.Issue") as issue_mock:
+        issue = Mock(state=task_issue_state)
+        issue_mock.return_value = issue
+        handle_close_tasklist(event)
+        if should_call_edit:
+            issue.edit.assert_called_once_with(state="closed", state_reason=None)
+        else:
+            issue.edit.assert_not_called()

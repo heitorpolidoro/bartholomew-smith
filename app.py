@@ -96,6 +96,9 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     :param event:
     :return:
     """
+    # TODO re-edit issue
+    # TODO avoid duplications
+    # TODO remove prints
     if Config.issue_manager.enabled and event.issue and event.issue.body:
         issue_job = parse_issue_and_create_jobs(
             event.issue, event.hook_installation_target_id, event.installation_id
@@ -105,20 +108,10 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     # add_to_project(event)
 
 
-def make_thread_request(request_url, issue_url):
-    print(f"making request to {request_url} with {issue_url}")
+def make_thread_request(request_url, issue_url):  # pragma: no cover
     thread = threading.Thread(target=make_request, args=(request_url, issue_url))
     thread.start()
     time.sleep(1)
-
-
-def process_jobs_process(issue_url, return_queue):
-    try:
-        status = process_jobs(issue_url)
-        return_queue.put(status)
-    except SystemExit:
-        print("exit")
-        raise
 
 
 @app.route("/process_jobs", methods=["POST"])
@@ -126,10 +119,7 @@ def process_jobs_endpoint():
     issue_url = request.get_json(force=True).get("issue_url")
     if not issue_url:
         return jsonify({"error": "issue_url is required"}), 400
-    start = time.time()
-    # return_value = Queue()
     process = Process(target=process_jobs, args=(issue_url,))
-    # process = Process(target=process_jobs_process, args=(issue_url, return_value))
     process.start()
     process.join(8)
     issue_job = IssueJobService.filter(issue_url=issue_url)[0]
@@ -137,24 +127,7 @@ def process_jobs_endpoint():
         IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
         make_thread_request(request.url, issue_url)
     process.terminate()
-    # try:
-    #     issue_job_status = return_value.get(block=False)
-    #     print(issue_job_status)
-    #     if issue_job_status is None:
-    #         return jsonify({"error": "issue job not found"}), 404 # TODO
-    #
-    #     if issue_job_status == IssueJobStatus.PENDING:
-    #         make_thread_request(request.url, issue_url)
-    #
-    # except Empty:
-    #     print("Empty")
-    #     issue_job_status = IssueJobStatus.PENDING
-    #     issue_job = IssueJobService.filter(issue_url=issue_url)[0]
-    #     IssueJobService.update(issue_job, issue_job_status=issue_job_status)
-    #     make_thread_request(request.url, issue_url)
-    print(round(time.time() - start, 2), issue_job.issue_job_status.value)
     return jsonify({"status": issue_job.issue_job_status.value}), 200
-    # return jsonify({"status": issue_job_status.value}), 200
 
 
 @webhook_handler.add_handler(IssueClosedEvent)
