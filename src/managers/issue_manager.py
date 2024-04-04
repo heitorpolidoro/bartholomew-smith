@@ -1,7 +1,7 @@
 import re
 from functools import lru_cache
 
-from github import Github, Consts, GithubRetry
+from github import Consts, Github, GithubRetry
 from github.Auth import Auth
 from github.Issue import Issue
 from github.Repository import Repository
@@ -10,16 +10,16 @@ from githubapp.events import IssuesEvent
 from githubapp.webhook_handler import _get_auth
 
 from src.helpers import issue_helper
-from src.helpers.issue_helper import handle_issue_state, get_issue_ref
+from src.helpers.issue_helper import get_issue_ref, handle_issue_state
 from src.helpers.repository_helper import get_repository
 from src.helpers.text_helper import (
+    extract_repo_title,
     is_issue_ref,
     is_repo_title_syntax,
-    extract_repo_title,
     markdown_progress,
 )
-from src.models import Job, JobStatus, IssueJobStatus, IssueJob
-from src.services import JobService, IssueJobService
+from src.models import IssueJob, IssueJobStatus, Job, JobStatus
+from src.services import IssueJobService, JobService
 
 
 def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation_id):
@@ -128,6 +128,7 @@ def process_jobs(issue_url):
         process_update_issue_status(issue_job)
         process_create_issue(issue_job)
         process_update_issue_body(issue_job)
+        close_issue_if_all_checked(issue_job)
         IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.DONE)
         process_update_progress(issue_job)
         return IssueJobStatus.DONE
@@ -237,6 +238,17 @@ def process_update_issue_body(issue_job):
             )
         issue.edit(body=body)
         set_jobs_to_done(update_issue_body_jobs, issue_job)
+
+
+def close_issue_if_all_checked(issue_job):
+    issue = _instantiate_github_class(
+        Issue,
+        issue_job.hook_installation_target_id,
+        issue_job.installation_id,
+        issue_job.issue_url,
+    )
+    if all(checked for _, checked in issue_helper.get_tasklist(issue.body)):
+        issue.edit(state="closed")
 
 
 def process_update_progress(issue_job):
