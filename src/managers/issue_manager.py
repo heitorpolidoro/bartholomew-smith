@@ -54,13 +54,16 @@ def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation
     for task, checked in issue_helper.get_tasklist(issue.body):
         if task in existing_jobs:
             continue
-        jobs.append(
-            Job(
-                task=task,
-                original_issue_url=issue.url,
-                checked=checked,
+        if created_issue := next(iter(JobService.filter(original_issue_url=issue.url, issue_ref=task)), None):
+            JobService.update(created_issue, checked=checked, job_status=JobStatus.PENDING)
+        else:
+            jobs.append(
+                Job(
+                    task=task,
+                    original_issue_url=issue.url,
+                    checked=checked,
+                )
             )
-        )
     if jobs:
         JobService.insert_many(jobs)
     return issue_job
@@ -167,8 +170,8 @@ def process_pending_jobs(issue_job):
         original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING
     ):
         task = job.task
-        if is_issue_ref(task):
-            repository, issue_number = task.split("#")
+        if job.issue_ref:
+            repository, issue_number = job.issue_ref.split("#")
             if repository:
                 repository_url = _repository_url(repository)
             else:
