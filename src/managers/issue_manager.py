@@ -40,7 +40,7 @@ def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation
                 milestone_url=issue.milestone.url if issue.milestone else None,
             )
         )
-    if issue_job.issue_job_status != IssueJobStatus.DONE:
+    if issue_job.issue_job_status == IssueJobStatus.DONE:
         IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
     jobs = []
     existing_jobs = {}
