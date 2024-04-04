@@ -198,6 +198,7 @@ def process_update_issue_status(issue_job):
             attributes={"url": job.issue_url},
             completed=False,
         )
+        print(job.issue_url, issue_job.hook_installation_target_id, issue_job.installation_id)
         handle_issue_state(job.checked, issue)
         set_jobs_to_done([job], issue_job)
 
