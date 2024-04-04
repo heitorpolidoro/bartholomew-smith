@@ -25,12 +25,6 @@ def handle_auto_update_pull_request(repository: Repository, branch: str):
             pull_request.update_branch()
 
 
-def handle_auto_update_pull_request(repository: Repository, branch: str):
-    if repository.default_branch == branch:
-        for pull_request in repository.get_pulls(state="open", base=branch):
-            print(pull_request)
-
-
 def handle_self_approver(
     owner_pat: str, repository: Repository, pull_request: PullRequest
 ):
