@@ -27,9 +27,9 @@ from src.managers.issue_manager import (
     process_jobs,
 )
 from src.managers.pull_request_manager import (
+    handle_auto_update_pull_request,
     handle_create_pull_request,
     handle_self_approver,
-    handle_auto_update_pull_request,
 )
 from src.managers.release_manager import handle_release
 from src.models import IssueJobStatus
