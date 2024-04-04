@@ -96,9 +96,6 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     :param event:
     :return:
     """
-    # TODO re-edit issue
-    # TODO avoid duplications
-    # TODO remove prints
     if Config.issue_manager.enabled and event.issue and event.issue.body:
         issue_job = parse_issue_and_create_jobs(
             event.issue, event.hook_installation_target_id, event.installation_id
