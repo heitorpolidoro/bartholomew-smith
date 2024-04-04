@@ -3,13 +3,13 @@ import os
 import sys
 import threading
 import time
-from multiprocessing import Queue, Process
+from multiprocessing import Process, Queue
 from queue import Empty
 from typing import Union
 
 import markdown
 import sentry_sdk
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -96,9 +96,6 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     :param event:
     :return:
     """
-    # TODO re-edit issue
-    # TODO avoid duplications
-    # TODO remove prints
     if Config.issue_manager.enabled and event.issue and event.issue.body:
         issue_job = parse_issue_and_create_jobs(
             event.issue, event.hook_installation_target_id, event.installation_id
@@ -179,8 +176,8 @@ def make_request(request_url, issue_url):
 
 @app.route("/sleep/<secs>")
 def sleep(secs):
-    import time
     import threading
+    import time
 
     secs = float(secs)
 
