@@ -1,7 +1,7 @@
 import re
 from functools import lru_cache
 
-from github import Github, Consts, GithubRetry
+from github import Consts, Github, GithubRetry
 from github.Auth import Auth
 from github.Issue import Issue
 from github.Repository import Repository
@@ -10,16 +10,16 @@ from githubapp.events import IssuesEvent
 from githubapp.webhook_handler import _get_auth
 
 from src.helpers import issue_helper
-from src.helpers.issue_helper import handle_issue_state, get_issue_ref
+from src.helpers.issue_helper import get_issue_ref, handle_issue_state
 from src.helpers.repository_helper import get_repository
 from src.helpers.text_helper import (
+    extract_repo_title,
     is_issue_ref,
     is_repo_title_syntax,
-    extract_repo_title,
     markdown_progress,
 )
-from src.models import Job, JobStatus, IssueJobStatus, IssueJob
-from src.services import JobService, IssueJobService
+from src.models import IssueJob, IssueJobStatus, Job, JobStatus
+from src.services import IssueJobService, JobService
 
 
 def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation_id):
