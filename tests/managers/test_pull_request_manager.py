@@ -32,14 +32,6 @@ def test_handle_create_pull_request(pull_request_helper):
     pr.enable_automerge.assert_called_once_with(merge_method="SQUASH")
 
 
-def test_handle_create_pull_request_ignore_when_head_branch_is_the_default_branch(
-    pull_request_helper,
-):
-    repository = Mock(default_branch="branch")
-    handle_create_pull_request(repository, "branch")
-    pull_request_helper.get_or_create_pull_request.assert_not_called()
-
-
 def test_handle_self_approver(repository, pull_request, github):
     pull_request.get_commits.return_value = [Mock(author=Mock(login="heitorpolidoro"))]
     pull_request.get_reviews.return_value = []

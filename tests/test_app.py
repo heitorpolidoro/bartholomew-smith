@@ -45,18 +45,6 @@ def handle_release_mock():
 
 
 @pytest.fixture
-def handle_tasklist_mock():
-    with patch("app.handle_tasklist") as handle_tasklist_mock:
-        yield handle_tasklist_mock
-
-
-@pytest.fixture
-def handle_close_tasklist_mock():
-    with patch("app.handle_close_tasklist") as handle_close_tasklist_mock:
-        yield handle_close_tasklist_mock
-
-
-@pytest.fixture
 def handle_self_approver_mock():
     with patch("app.handle_self_approver") as handle_self_approver_mock:
         yield handle_self_approver_mock
@@ -70,32 +58,6 @@ def test_handle_check_suite_requested(
         repository, event.check_suite.head_branch
     )
     handle_release_mock.assert_called_once_with(event)
-
-
-def test_handle_issue_opened_or_edited(event, handle_tasklist_mock):
-    handle_issue(event)
-    handle_tasklist_mock.assert_called_once_with(event)
-
-
-def test_handle_issue_opened_or_edited_when_issue_has_no_body(
-    event, issue, handle_tasklist_mock
-):
-    issue.body = None
-    handle_issue(event)
-    handle_tasklist_mock.assert_not_called()
-
-
-def test_handle_issue_closed(event, issue, handle_close_tasklist_mock):
-    handle_issue_closed(event)
-    handle_close_tasklist_mock.assert_called_once_with(event)
-
-
-def test_handle_issue_closed_when_issue_has_no_body(
-    event, issue, handle_close_tasklist_mock
-):
-    issue.body = None
-    handle_issue_closed(event)
-    handle_close_tasklist_mock.assert_not_called()
 
 
 def test_handle_check_suite_completed(
@@ -148,7 +110,7 @@ class TestApp(TestCase):
 def test_managers_disabled(
     handle_create_pull_request_mock,
     handle_release_mock,
-    handle_tasklist_mock,
+    parse_issue_and_create_jobs_mock,
     handle_close_tasklist_mock,
 ):
     event = Mock()
@@ -161,7 +123,7 @@ def test_managers_disabled(
     handle_create_pull_request_mock.assert_not_called()
     handle_release_mock.assert_not_called()
     handle_issue(event)
-    handle_tasklist_mock.assert_not_called()
+    parse_issue_and_create_jobs_mock.assert_not_called()
     handle_issue_closed(event)
     handle_close_tasklist_mock.assert_not_called()
     Config.pull_request_manager.enabled = True

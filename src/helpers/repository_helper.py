@@ -14,10 +14,10 @@ def get_repository(
     If the repository is not found by owner and name, return None.
     """
     try:
-        return get_repo_cached(gh, repository_name)
-    except UnknownObjectException:
         if repository_owner_login:
             return get_repository(gh, f"{repository_owner_login}/{repository_name}")
+        return get_repo_cached(gh, repository_name)
+    except UnknownObjectException:
         return None
 
 

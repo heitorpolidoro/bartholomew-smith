@@ -1,11 +1,14 @@
 import logging
 import os
 import sys
+import threading
+import time
+from multiprocessing import Process
 from typing import Union
 
 import markdown
 import sentry_sdk
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -17,12 +20,19 @@ from githubapp.events import (
 )
 from githubapp.events.issues import IssueClosedEvent
 
-from src.managers.issue_manager import handle_close_tasklist, handle_tasklist
+from src.managers.issue_manager import (
+    handle_close_tasklist,
+    parse_issue_and_create_jobs,
+    process_jobs,
+)
 from src.managers.pull_request_manager import (
+    handle_auto_update_pull_request,
     handle_create_pull_request,
     handle_self_approver,
 )
 from src.managers.release_manager import handle_release
+from src.models import IssueJobStatus
+from src.services import IssueJobService
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -30,6 +40,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+
+# TODO move to github-app-handler
+Config.BOT_NAME = "bartholomew-smith[bot]"
 
 
 def sentry_init():
@@ -69,7 +82,12 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     """
     repository = event.repository
     if Config.pull_request_manager.enabled:
-        handle_create_pull_request(repository, event.check_suite.head_branch)
+        head_branch = event.check_suite.head_branch
+        if repository.default_branch == head_branch:
+            handle_auto_update_pull_request(repository, head_branch)
+        else:
+            handle_create_pull_request(repository, head_branch)
+        handle_auto_update_pull_request(repository, event.check_suite.head_branch)
     if Config.release_manager.enabled:
         handle_release(event)
 
@@ -84,8 +102,34 @@ def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
     :return:
     """
     if Config.issue_manager.enabled and event.issue and event.issue.body:
-        handle_tasklist(event)
+        issue_job = parse_issue_and_create_jobs(
+            event.issue, event.hook_installation_target_id, event.installation_id
+        )
+        if issue_job.issue_job_status != IssueJobStatus.RUNNING:
+            make_thread_request(f"{request.url}/process_jobs", issue_job.issue_url)
     # add_to_project(event)
+
+
+def make_thread_request(request_url, issue_url):  # pragma: no cover
+    thread = threading.Thread(target=make_request, args=(request_url, issue_url))
+    thread.start()
+    time.sleep(1)
+
+
+@app.route("/process_jobs", methods=["POST"])
+def process_jobs_endpoint():
+    issue_url = request.get_json(force=True).get("issue_url")
+    if not issue_url:
+        return jsonify({"error": "issue_url is required"}), 400
+    process = Process(target=process_jobs, args=(issue_url,))
+    process.start()
+    process.join(8)
+    issue_job = IssueJobService.filter(issue_url=issue_url)[0]
+    if process.is_alive():
+        IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
+        make_thread_request(request.url, issue_url)
+    process.terminate()
+    return jsonify({"status": issue_job.issue_job_status.value}), 200
 
 
 @webhook_handler.add_handler(IssueClosedEvent)
@@ -125,10 +169,40 @@ def index():
 def marketplace():
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
+    print(f"Marketplace event: {request.json}")
     return "OK"
 
 
-@app.route("/cron")
-def cron():
-    print("cronei")
+def make_request(request_url, issue_url):
+    import requests
+
+    requests.post(request_url, json={"issue_url": issue_url})
+
+
+@app.route("/sleep/<secs>")
+def sleep(secs):
+    import threading
+    import time
+
+    secs = float(secs)
+
+    if secs < 15:
+        url = "/".join(request.url.split("/")[:-1] + [str(secs + 1)])
+        print(f"Requesting {url}")
+        thread = threading.Thread(target=make_request, args=(url,))
+        thread.start()
+
+    print(f"---------------------- Sleeping for {secs} seconds")
+    time.sleep(float(secs))
+    print(f"---------------------- Done sleeping for {secs} seconds")
+    return "OK"
+
+
+def create_tables():
+    # TODO put in github actions
+    from src.helpers.db_helper import BaseModelService
+
+    for subclass in BaseModelService.__subclasses__():
+        logger.info(f"Creating table for {subclass.clazz.__name__}")
+        subclass.create_table()
     return "OK"
