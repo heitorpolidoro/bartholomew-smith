@@ -2,12 +2,13 @@ import logging
 import os
 from datetime import datetime
 from enum import Enum
-from typing import Generic, TypeVar, Iterable, Optional, ClassVar
+from typing import ClassVar, Generic, Iterable, Optional, TypeVar
 
 import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
-from pydantic import BaseModel as PydanticBaseModel, Field
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
