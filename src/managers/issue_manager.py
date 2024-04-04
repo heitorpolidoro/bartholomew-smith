@@ -128,6 +128,7 @@ def process_jobs(issue_url):
         process_update_issue_status(issue_job)
         process_create_issue(issue_job)
         process_update_issue_body(issue_job)
+        close_issue_if_all_checked(issue_job)
         IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.DONE)
         process_update_progress(issue_job)
         return IssueJobStatus.DONE
@@ -237,6 +238,17 @@ def process_update_issue_body(issue_job):
             )
         issue.edit(body=body)
         set_jobs_to_done(update_issue_body_jobs, issue_job)
+
+
+def close_issue_if_all_checked(issue_job):
+    issue = _instantiate_github_class(
+        Issue,
+        issue_job.hook_installation_target_id,
+        issue_job.installation_id,
+        issue_job.issue_url,
+    )
+    if all(checked for _, checked in issue_helper.get_tasklist(issue.body)):
+        issue.edit(state="closed")
 
 
 def process_update_progress(issue_job):
