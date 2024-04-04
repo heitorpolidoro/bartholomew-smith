@@ -195,7 +195,6 @@ class BaseModel(PydanticBaseModel):
         return {
             k: v.value if isinstance(v, Enum) else v
             for k, v in self.model_dump().items()
-            if v is not None
         }
 
     def __hash__(self):

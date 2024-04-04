@@ -1,5 +1,5 @@
 from collections import defaultdict
-from unittest.mock import Mock, patch, ANY, call
+from unittest.mock import Mock, patch, ANY
 
 import pytest
 
@@ -477,7 +477,9 @@ def test_process_update_issue_body(issue_job):
         ("- [ ] #333", False, "closed"),
     ],
 )
-def test_handle_close_tasklist(issue_body, task_issue_state, should_call_edit, event, issue):
+def test_handle_close_tasklist(
+    issue_body, task_issue_state, should_call_edit, event, issue
+):
     issue.body = issue_body
     with patch("src.managers.issue_manager.Issue") as issue_mock:
         issue = Mock(state=task_issue_state)

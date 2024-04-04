@@ -170,15 +170,16 @@ def process_pending_jobs(issue_job):
         original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING
     ):
         task = job.task
-        if job.issue_ref:
-            repository, issue_number = job.issue_ref.split("#")
+        if job.issue_ref or is_issue_ref(task):
+            issue_ref = job.issue_ref or task
+            repository, issue_number = issue_ref.split("#")
             if repository:
                 repository_url = _repository_url(repository)
             else:
                 repository_url = issue_job.repository_url
             issue_url = f"{repository_url}/issues/{issue_number}"
             JobService.update(
-                job, job_status=JobStatus.UPDATE_ISSUE_STATUS, issue_url=issue_url
+                job, job_status=JobStatus.UPDATE_ISSUE_STATUS, issue_url=issue_url,
             )
         else:
             repository_url, title = _get_title_and_repository_url(issue_job, task)
