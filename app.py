@@ -29,6 +29,7 @@ from src.managers.pull_request_manager import (
     handle_auto_update_pull_request,
     handle_create_pull_request,
     handle_self_approver,
+    handle_auto_update_pull_request,
 )
 from src.managers.release_manager import handle_release
 from src.models import IssueJobStatus
@@ -82,7 +83,11 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     """
     repository = event.repository
     if Config.pull_request_manager.enabled:
-        handle_create_pull_request(repository, event.check_suite.head_branch)
+        head_branch = event.check_suite.head_branch
+        if repository.default_branch == head_branch:
+            handle_auto_update_pull_request(repository, head_branch)
+        else:
+            handle_create_pull_request(repository, head_branch)
         handle_auto_update_pull_request(repository, event.check_suite.head_branch)
     if Config.release_manager.enabled:
         handle_release(event)
