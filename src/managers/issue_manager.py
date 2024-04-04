@@ -40,14 +40,16 @@ def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation
                 milestone_url=issue.milestone.url if issue.milestone else None,
             )
         )
-    if issue_job.issue_job_status == IssueJobStatus.DONE:
-        IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
-    jobs = []
+    reediting = issue_job.issue_job_status == IssueJobStatus.DONE
     existing_jobs = {}
-    for j in JobService.filter(original_issue_url=issue.url):
-        existing_jobs[j.task] = j
-        if j.issue_ref:
-            existing_jobs[j.issue_ref] = j
+    if reediting:
+        IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
+    else:
+        for j in JobService.filter(original_issue_url=issue.url):
+            existing_jobs[j.task] = j
+            if j.issue_ref:
+                existing_jobs[j.issue_ref] = j
+    jobs = []
 
     for task, checked in issue_helper.get_tasklist(issue.body):
         if task in existing_jobs:
