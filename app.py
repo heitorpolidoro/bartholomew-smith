@@ -3,8 +3,7 @@ import os
 import sys
 import threading
 import time
-from multiprocessing import Process, Queue
-from queue import Empty
+from multiprocessing import Process
 from typing import Union
 
 import markdown
