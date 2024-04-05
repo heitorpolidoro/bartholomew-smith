@@ -25,9 +25,9 @@ def handle_release(event: CheckSuiteRequestedEvent):
     check_suite = event.check_suite
     is_default_branch = head_branch == repository.default_branch
     if is_default_branch:
-        commits = reversed(
-            repository.compare(check_suite.before, check_suite.after).commits
-        )
+        commits = repository.compare(
+            check_suite.before, check_suite.after
+        ).commits.reversed
     else:
         if pull_request := get_existing_pull_request(repository, head_branch):
             commits = pull_request.get_commits().reversed
