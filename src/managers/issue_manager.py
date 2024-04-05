@@ -24,6 +24,7 @@ from src.services import IssueJobService, JobService
 
 logger = logging.getLogger(__name__)
 
+
 def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation_id):
     if not (issue_job := next(iter(IssueJobService.filter(issue_url=issue.url)), None)):
         issue_comment = issue_helper.update_issue_comment_status(
@@ -322,5 +323,8 @@ def handle_close_tasklist(event: IssuesEvent):
                 event.installation_id,
                 issue_url,
             )
-            if task_issue.state != "closed":
-                task_issue.edit(state="closed", state_reason=issue.state_reason)
+            try:
+                if task_issue.state != "closed":
+                    task_issue.edit(state="closed", state_reason=issue.state_reason)
+            except UnknownObjectException:
+                logger.warning(f"Issue {issue.url} not found")
