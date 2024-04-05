@@ -68,7 +68,7 @@ webhook_handler.handle_with_flask(
     app, use_default_index=False, config_file=".bartholomew.yaml"
 )
 load_dotenv()
-Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH")
+Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH", auto_approve_logins=[])
 Config.create_config("release_manager", enabled=True)
 Config.create_config("issue_manager", enabled=True)
 
@@ -87,7 +87,6 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
             handle_auto_update_pull_request(repository, head_branch)
         else:
             handle_create_pull_request(repository, head_branch)
-        handle_auto_update_pull_request(repository, event.check_suite.head_branch)
     if Config.release_manager.enabled:
         handle_release(event)
 

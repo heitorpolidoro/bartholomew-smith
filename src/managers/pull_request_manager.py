@@ -33,16 +33,20 @@ def handle_self_approver(
     first_commit = pr_commits[0]
 
     branch_owner = first_commit.author
-    if branch_owner.login != repository.owner.login:
+    repository_owner_login = repository.owner.login
+    branch_owner_login = branch_owner.login
+    allowed_logins = Config.pull_request_manager.auto_approve_logins + [repository_owner_login]
+    if branch_owner_login not in allowed_logins:
         logger.info(
-            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s"',
+            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
+            'and is not in the auto approve logins list',
             pull_request.head.ref,
-            branch_owner.login,
-            repository.owner.login,
+            branch_owner_login,
+            repository_owner_login,
         )
         return
     if any(
-        review.user.login == branch_owner.login and review.state == "APPROVED"
+        review.user.login == branch_owner_login and review.state == "APPROVED"
         for review in pull_request.get_reviews()
     ):
         logger.info(

@@ -9,7 +9,7 @@ from githubapp import Config
 
 @pytest.fixture(autouse=True)
 def setup(monkeypatch):
-    Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH")
+    Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH", auto_approve_logins=[])
     Config.create_config("release_manager", enabled=True)
     Config.create_config("issue_manager", enabled=True)
     monkeypatch.setenv("TASKLIST_QUEUE", "task_queue")
