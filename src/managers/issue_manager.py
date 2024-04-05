@@ -1,7 +1,7 @@
 import re
 from functools import lru_cache
 
-from github import Consts, Github, GithubRetry
+from github import Consts, Github, GithubRetry, UnknownObjectException
 from github.Auth import Auth
 from github.Issue import Issue
 from github.Repository import Repository
@@ -21,6 +21,7 @@ from src.helpers.text_helper import (
 from src.models import IssueJob, IssueJobStatus, Job, JobStatus
 from src.services import IssueJobService, JobService
 
+logger = logging.getLogger(__name__)
 
 def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation_id):
     if not (issue_job := next(iter(IssueJobService.filter(issue_url=issue.url)), None)):
@@ -210,8 +211,12 @@ def process_update_issue_status(issue_job):
             attributes={"url": job.issue_url},
             completed=False,
         )
-        handle_issue_state(job.checked, issue)
-        set_jobs_to_done([job], issue_job)
+        try:
+            handle_issue_state(job.checked, issue)
+            set_jobs_to_done([job], issue_job)
+        except UnknownObjectException:
+            logger.warning(f"Issue {issue.url} not found")
+            JobService.update(job, job_status=JobStatus.ERROR)
 
 
 def process_create_issue(issue_job):
