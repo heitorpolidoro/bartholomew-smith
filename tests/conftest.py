@@ -9,7 +9,12 @@ from githubapp import Config
 
 @pytest.fixture(autouse=True)
 def setup(monkeypatch):
-    Config.create_config("pull_request_manager", enabled=True, merge_method="SQUASH")
+    Config.create_config(
+        "pull_request_manager",
+        enabled=True,
+        merge_method="SQUASH",
+        auto_approve_logins=[],
+    )
     Config.create_config("release_manager", enabled=True)
     Config.create_config("issue_manager", enabled=True)
     monkeypatch.setenv("TASKLIST_QUEUE", "task_queue")
@@ -106,7 +111,7 @@ def repository(head_commit, pull_request):
         default_branch="master",
         full_name="heitorpolidoro/bartholomew-smith",
         owner=Mock(login="heitorpolidoro"),
-        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith"
+        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith",
     )
     repository.get_pulls.return_value = [pull_request]
     repository.get_commit.return_value = head_commit
@@ -128,11 +133,13 @@ def issue(repository, issue_comment):
         title="Issue Title",
         number=1,
         body="Issue Body",
-        milestone=Mock(url="https://github.com/heitorpolidoro/bartholomew-smith/milestone/1"),
+        milestone=Mock(
+            url="https://github.com/heitorpolidoro/bartholomew-smith/milestone/1"
+        ),
         state_reason=None,
         state="open",
         repository=repository,
-        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith/issues/1"
+        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith/issues/1",
     )
     issue.get_comments.return_value = [issue_comment]
     issue.create_comment.return_value = issue_comment

@@ -261,7 +261,8 @@ def close_issue_if_all_checked(issue_job):
         issue_job.installation_id,
         issue_job.issue_url,
     )
-    if all(checked for _, checked in issue_helper.get_tasklist(issue.body)):
+    tasklist = issue_helper.get_tasklist(issue.body)
+    if tasklist and all(checked for _, checked in tasklist):
         issue.edit(state="closed")
 
 
