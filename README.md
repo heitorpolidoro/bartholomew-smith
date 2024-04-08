@@ -20,7 +20,8 @@
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
-
+<br>
+![Vercel](https://vercelbadge.vercel.app/api/heitorpolidoro/bartholomew-smith)
 # Bartholomew "The Butler" Smith
 
 Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories. 
