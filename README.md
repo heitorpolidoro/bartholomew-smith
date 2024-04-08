@@ -20,19 +20,20 @@
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
-
+<br>
+![Vercel](https://vercelbadge.vercel.app/api/heitorpolidoro/bartholomew-smith)
 # Bartholomew "The Butler" Smith
 
-Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories. 
-This app automates repetitive tasks, helping you save time and focus on what’s important. 
+Bartholomew "The Butler" Smith is your personal assistant for managing your GitHub repositories.
+This app automates repetitive tasks, helping you save time and focus on what’s important.
 Here’s what GitHub Butler can do for you:
-- **[Pull Request Manager](../../wiki/Pull-Request-Manager)**: Automatically creates a pull request with the 
-repository's default branch as base	when a branch is created among other things.
+- **[Pull Request Manager](../../wiki/Pull-Request-Manager)**: Automatically creates a pull request with the
+	repository's default branch as base	when a branch is created among other things.
 - **[Release Manager](../../wiki/Release-Manager)**: Automatically create releases using commands in commits message.
-- **[Issue Manager](../../wiki/Issue-Manager)**: Manager the issues, automatically create issues from tasklist, 
-closes the issue if all issues in the tasklist are done, among other things
+- **[Issue Manager](../../wiki/Issue-Manager)**: Manager the issues, automatically create issues from tasklist,
+	closes the issue if all issues in the tasklist are done, among other things
 
-With Bartholomew "The Butler" Smith, you can spend less time managing your repository and more time writing great code. 
+With Bartholomew "The Butler" Smith, you can spend less time managing your repository and more time writing great code.
 It’s like having a butler for your GitHub repository! :tophat:
 
 See the [Wiki](../../wiki) for more information
