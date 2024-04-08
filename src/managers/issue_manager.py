@@ -323,5 +323,8 @@ def handle_close_tasklist(event: IssuesEvent):
                 event.installation_id,
                 issue_url,
             )
-            if task_issue.state != "closed":
-                task_issue.edit(state="closed", state_reason=issue.state_reason)
+            try:
+                if task_issue.state != "closed":
+                    task_issue.edit(state="closed", state_reason=issue.state_reason)
+            except UnknownObjectException:
+                logger.warning(f"Issue {issue.url} not found")
