@@ -20,13 +20,12 @@ from githubapp.events import (
 )
 from githubapp.events.issues import IssueClosedEvent
 
+from src.managers import pull_request_manager, release_manager
 from src.managers.issue_manager import (
     handle_close_tasklist,
     parse_issue_and_create_jobs,
     process_jobs,
 )
-from src.managers import pull_request_manager
-from src.managers import release_manager
 from src.models import IssueJobStatus
 from src.services import IssueJobService
 

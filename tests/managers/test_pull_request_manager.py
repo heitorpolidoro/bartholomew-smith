@@ -2,8 +2,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.managers import pull_request_manager
 import app
+from src.managers import pull_request_manager
 
 
 def test_manage_create_pull_request_and_automerge(repository, pull_request_helper_mock):
@@ -80,6 +80,8 @@ def test_auto_update_pull_requests(repository):
 
     pull_behind.update_branch.assert_called_once()
     other_pull.update_branch.assert_not_called()
+
+
 # @pytest.fixture
 # def pull_request_helper():
 #     with patch("src.managers.pull_request_manager.pull_request_helper") as mock:

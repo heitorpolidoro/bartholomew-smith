@@ -83,9 +83,13 @@ def auto_approve(repository: Repository, pull_requests: list[PullRequest]):
 
 @Config.call_if("pull_request_manager.auto_update")
 def auto_update_pull_requests(repository: Repository):
-    for pull_request in repository.get_pulls(state="open", base=repository.default_branch):
+    for pull_request in repository.get_pulls(
+        state="open", base=repository.default_branch
+    ):
         if pull_request.mergeable_state == "behind":
             pull_request.update_branch()
+
+
 ######################################################################################################
 
 
