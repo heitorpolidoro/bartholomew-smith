@@ -1,4 +1,6 @@
 import logging
+import re
+from string import Template
 
 from github import Github
 from github.Auth import Token
@@ -11,23 +13,83 @@ from src.helpers.repository_helper import get_repo_cached
 
 logger = logging.getLogger(__name__)
 
+BODY_ISSUE_TEMPLATE = """### [$title](https://github.com/$repo_full_name/issues/$issue_num)
 
-def handle_create_pull_request(repository: Repository, branch: str):
+$body
+
+Closes #$issue_num
+
+"""
+
+
+@Config.call_if("pull_request_manager.enabled")
+def manage(repository: Repository, head_branch: str):
+    if repository.default_branch == head_branch:
+        auto_update_pull_requests(repository)
+    else:
+        if pull_request := pull_request_helper.get_existing_pull_request(
+            repository, f"{repository.owner.login}:{head_branch}"
+        ):
+            print(
+                f"PR already exists for '{repository.owner.login}:{head_branch}' into "
+                f"'{repository.default_branch} (PR#{pull_request.number})'"
+            )
+            logger.info(
+                "PR already exists for '%s:%s' into '%s'",
+                repository.owner.login,
+                head_branch,
+                repository.default_branch,
+            )
+        else:
+            pull_request = create_pull_request(repository, head_branch)
+        enable_auto_merge(pull_request)
+
+
+@Config.call_if("pull_request_manager.create_pull_request")
+def create_pull_request(repository: Repository, branch: str) -> PullRequest:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
-    pull_request_helper.get_or_create_pull_request(repository, branch).enable_automerge(
-        merge_method=Config.pull_request_manager.merge_method
-    )
+    title, body = get_title_and_body_from_issue(repository, branch)
+    return pull_request_helper.create_pull_request(repository, branch, title, body)
 
 
-def handle_auto_update_pull_request(repository: Repository, branch: str):
-    for pull_request in repository.get_pulls(state="open", base=branch):
+@Config.call_if("pull_request_manager.link_issue", return_on_not_call=("", ""))
+def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, str):
+    title = body = ""
+    for issue_num in re.findall(r"issue-(\d+)", branch, re.IGNORECASE):
+        issue = repository.get_issue(int(issue_num))
+        title = title or issue.title.strip()
+        body += Template(BODY_ISSUE_TEMPLATE).substitute(
+            title=issue.title,
+            repo_full_name=repository.full_name,
+            issue_num=issue_num,
+            body=issue.body or "",
+        )
+
+    return title, body
+
+
+@Config.call_if("pull_request_manager.enable_auto_merge")
+def enable_auto_merge(pull_request: PullRequest):
+    """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
+    pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
+
+
+@Config.call_if("AUTO_APPROVE_PAT")
+def auto_approve(repository: Repository, pull_requests: list[PullRequest]):
+    if AUTO_APPROVE_PAT := Config.AUTO_APPROVE_PAT:
+        for pull_request in pull_requests:
+            approve(AUTO_APPROVE_PAT, repository, pull_request)
+
+
+@Config.call_if("pull_request_manager.auto_update")
+def auto_update_pull_requests(repository: Repository):
+    for pull_request in repository.get_pulls(state="open", base=repository.default_branch):
         if pull_request.mergeable_state == "behind":
             pull_request.update_branch()
+######################################################################################################
 
 
-def handle_self_approver(
-    owner_pat: str, repository: Repository, pull_request: PullRequest
-):
+def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest):
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     pr_commits = pull_request.get_commits()
     first_commit = pr_commits[0]
@@ -58,7 +120,7 @@ def handle_self_approver(
         )
         return
 
-    gh = Github(auth=Token(owner_pat))
+    gh = Github(auth=Token(auto_approve_pat))
     pull_request = get_repo_cached(gh, repository.full_name).get_pull(
         pull_request.number
     )

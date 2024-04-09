@@ -2,23 +2,48 @@ from collections import defaultdict
 from contextlib import contextmanager
 from typing import Any
 from unittest.mock import Mock, patch
-
 import pytest
-from githubapp import Config
 
 
 @pytest.fixture(autouse=True)
-def setup(monkeypatch):
-    Config.create_config(
-        "pull_request_manager",
-        enabled=True,
-        merge_method="SQUASH",
-        auto_approve_logins=[],
-    )
-    Config.create_config("release_manager", enabled=True)
-    Config.create_config("issue_manager", enabled=True)
-    monkeypatch.setenv("TASKLIST_QUEUE", "task_queue")
+def setup():
     TableMock._items = defaultdict(list)
+
+
+@pytest.fixture
+def pull_request_manager_mock():
+    with patch("app.pull_request_manager") as mock:
+        yield mock
+
+
+@pytest.fixture
+def release_manager_mock():
+    with patch("app.release_manager") as mock:
+        yield mock
+
+
+@pytest.fixture
+def pull_request_helper_mock():
+    with patch("src.managers.pull_request_manager.pull_request_helper") as mock:
+        yield mock
+
+
+@pytest.fixture
+def repository():
+    # def repository(head_commit, pull_request):
+    """
+    This fixture returns a mock repository object with default values for the attributes.
+    :return: Mocked Repository
+    """
+    repository = Mock(
+        default_branch="master",
+        full_name="heitorpolidoro/bartholomew-smith",
+        owner=Mock(login="heitorpolidoro"),
+        url="https://api.github.com/repos/heitorpolidoro/bartholomew-smith",
+    )
+    # repository.get_pulls.return_value = [pull_request]
+    # repository.get_commit.return_value = head_commit
+    return repository
 
 
 class TableMock:

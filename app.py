@@ -25,12 +25,8 @@ from src.managers.issue_manager import (
     parse_issue_and_create_jobs,
     process_jobs,
 )
-from src.managers.pull_request_manager import (
-    handle_auto_update_pull_request,
-    handle_create_pull_request,
-    handle_self_approver,
-)
-from src.managers.release_manager import handle_release
+from src.managers import pull_request_manager
+from src.managers import release_manager
 from src.models import IssueJobStatus
 from src.services import IssueJobService
 
@@ -69,7 +65,14 @@ webhook_handler.handle_with_flask(
 )
 load_dotenv()
 Config.create_config(
-    "pull_request_manager", enabled=True, merge_method="SQUASH", auto_approve_logins=[]
+    "pull_request_manager",
+    enabled=True,
+    create_pull_request=True,
+    link_issue=True,
+    enable_auto_merge=True,
+    merge_method="SQUASH",
+    auto_approve_logins=[],
+    auto_update=True,
 )
 Config.create_config("release_manager", enabled=True)
 Config.create_config("issue_manager", enabled=True)
@@ -82,15 +85,10 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     Handle the Check Suite Requested Event, doing:
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
-    repository = event.repository
-    if Config.pull_request_manager.enabled:
-        head_branch = event.check_suite.head_branch
-        if repository.default_branch == head_branch:
-            handle_auto_update_pull_request(repository, head_branch)
-        else:
-            handle_create_pull_request(repository, head_branch)
+    pull_request_manager.manage(event.repository, event.check_suite.head_branch)
+
     if Config.release_manager.enabled:
-        handle_release(event)
+        release_manager.handle_release(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
@@ -150,10 +148,7 @@ def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
     Handle the Check Suite Completed Event, doing:
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
-    if owner_pat := os.getenv("OWNER_PAT"):
-        repository = event.repository
-        for pull_request in event.check_suite.pull_requests:
-            handle_self_approver(owner_pat, repository, pull_request)
+    pull_request_manager.auto_approve(event.repository, event.check_suite.pull_requests)
 
 
 @app.route("/", methods=["GET"])
