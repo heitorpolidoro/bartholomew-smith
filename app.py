@@ -84,7 +84,7 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     Handle the Check Suite Requested Event, doing:
      - Creates a Pull Request, if not exists, and/or enable the auto merge flag
     """
-    pull_request_manager.manage(event.repository, event.check_suite.head_branch)
+    pull_request_manager.manage(event)
 
     if Config.release_manager.enabled:
         release_manager.handle_release(event)

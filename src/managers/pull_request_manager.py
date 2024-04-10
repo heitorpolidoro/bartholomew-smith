@@ -6,8 +6,12 @@ from github import Github
 from github.Auth import Token
 from github.PullRequest import PullRequest
 from github.Repository import Repository
-from githubapp import Config
-
+from github.CheckRun import CheckRun
+from githubapp import Config, EventCheckRun
+from githubapp.events import (
+    CheckSuiteCompletedEvent,
+    CheckSuiteRequestedEvent,
+)
 from src.helpers import pull_request_helper
 from src.helpers.repository_helper import get_repo_cached
 
@@ -23,7 +27,16 @@ Closes #$issue_num
 
 
 @Config.call_if("pull_request_manager.enabled")
-def manage(repository: Repository, head_branch: str):
+def manage(event: CheckSuiteRequestedEvent):
+    repository = event.repository
+    head_branch = event.check_suite.head_branch
+    check_run = event.start_check_run(
+        "Pull Request Manager",
+        event.check_suite.head_sha,
+        "Initializing...",
+    )
+    pull_request_created = False
+
     if repository.default_branch == head_branch:
         auto_update_pull_requests(repository)
     else:
@@ -31,25 +44,52 @@ def manage(repository: Repository, head_branch: str):
             repository, f"{repository.owner.login}:{head_branch}"
         ):
             print(
-                f"PR already exists for '{repository.owner.login}:{head_branch}' into "
+                f"Pull Request already exists for '{repository.owner.login}:{head_branch}' into "
                 f"'{repository.default_branch} (PR#{pull_request.number})'"
             )
             logger.info(
-                "PR already exists for '%s:%s' into '%s'",
+                "Pull Request already exists for '%s:%s' into '%s'",
                 repository.owner.login,
                 head_branch,
                 repository.default_branch,
             )
+            if pull_request.user.login == Config.BOT_NAME:
+                pull_request_created = True
+                check_run.update(title="Pull Request created")
         else:
-            pull_request = create_pull_request(repository, head_branch)
-        enable_auto_merge(pull_request)
+            pull_request = create_pull_request(repository, head_branch, check_run)
+            pull_request_created = True
+        auto_merge_enabled = enable_auto_merge(pull_request, check_run)
+
+        summary = []
+        if pull_request_created:
+            summary.append(f"Pull Request #{pull_request.number} created")
+        else:
+            summary.append(
+                f"Pull Request for '{repository.owner.login}:{head_branch}' into "
+                f"'{repository.default_branch} (PR#{pull_request.number}) already exists'"
+            )
+        if auto_merge_enabled:
+            summary.append("Auto-merge enabled")
+        check_run.update(
+            title="Done",
+            summary="\n".join(summary),
+            conclusion="success",
+        )
 
 
 @Config.call_if("pull_request_manager.create_pull_request")
-def create_pull_request(repository: Repository, branch: str) -> PullRequest:
+def create_pull_request(
+    repository: Repository, branch: str, check_run: EventCheckRun
+) -> PullRequest:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
     title, body = get_title_and_body_from_issue(repository, branch)
-    return pull_request_helper.create_pull_request(repository, branch, title, body)
+    check_run.update(title="Creating Pull Request")
+    pull_request = pull_request_helper.create_pull_request(
+        repository, branch, title, body
+    )
+    check_run.update(title="Pull Request created")
+    return pull_request
 
 
 @Config.call_if("pull_request_manager.link_issue", return_on_not_call=("", ""))
@@ -69,9 +109,12 @@ def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, 
 
 
 @Config.call_if("pull_request_manager.enable_auto_merge")
-def enable_auto_merge(pull_request: PullRequest):
+def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun):
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
+    check_run.update(title="Enabling auto-merge")
     pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
+    check_run.update(title="Auto-merge enabled")
+    return True
 
 
 @Config.call_if("AUTO_APPROVE_PAT")
