@@ -4,14 +4,12 @@ from string import Template
 
 from github import Github
 from github.Auth import Token
+from github.CheckRun import CheckRun
 from github.PullRequest import PullRequest
 from github.Repository import Repository
-from github.CheckRun import CheckRun
 from githubapp import Config, EventCheckRun
-from githubapp.events import (
-    CheckSuiteCompletedEvent,
-    CheckSuiteRequestedEvent,
-)
+from githubapp.events import CheckSuiteCompletedEvent, CheckSuiteRequestedEvent
+
 from src.helpers import pull_request_helper
 from src.helpers.repository_helper import get_repo_cached
 
