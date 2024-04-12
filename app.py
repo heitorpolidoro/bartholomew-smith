@@ -1,8 +1,6 @@
 import logging
 import os
 import sys
-import threading
-import time
 from multiprocessing import Process
 from typing import Union
 
@@ -20,10 +18,11 @@ from githubapp.events import (
 )
 from githubapp.events.issues import IssueClosedEvent
 
-from src.managers import pull_request_manager, release_manager
+from config import default_configs
+from helper.request import make_thread_request
+from src.managers import pull_request_manager, release_manager, issue_manager
 from src.managers.issue_manager import (
     handle_close_tasklist,
-    parse_issue_and_create_jobs,
     process_jobs,
 )
 from src.models import IssueJobStatus
@@ -35,9 +34,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
-
-# TODO move to github-app-handler
-Config.BOT_NAME = "bartholomew-smith[bot]"
 
 
 def sentry_init():
@@ -62,56 +58,25 @@ sentry_init()
 webhook_handler.handle_with_flask(
     app, use_default_index=False, config_file=".bartholomew.yaml"
 )
+
 load_dotenv()
-Config.create_config(
-    "pull_request_manager",
-    enabled=True,
-    create_pull_request=True,
-    link_issue=True,
-    enable_auto_merge=True,
-    merge_method="SQUASH",
-    auto_approve_logins=[],
-    auto_update=True,
-)
-Config.create_config("release_manager", enabled=True)
-Config.create_config("issue_manager", enabled=True)
+default_configs()
 
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
 @webhook_handler.add_handler(CheckSuiteRerequestedEvent)
 def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
-    """
-    Handle the Check Suite Requested Event, doing:
-     - Creates a Pull Request, if not exists, and/or enable the auto merge flag
-    """
     pull_request_manager.manage(event)
 
-    if Config.release_manager.enabled:
-        release_manager.handle_release(event)
+    release_manager.manage(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
 def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
-    """
-    Handle the Issues events, handling the tasklist and add the issue to the main project if
-    configured to
-    :param event:
-    :return:
-    """
-    if Config.issue_manager.enabled and event.issue and event.issue.body:
-        issue_job = parse_issue_and_create_jobs(
-            event.issue, event.hook_installation_target_id, event.installation_id
-        )
-        if issue_job.issue_job_status != IssueJobStatus.RUNNING:
-            make_thread_request(f"{request.url}/process_jobs", issue_job.issue_url)
+    issue_manager.manage(event)
+
     # add_to_project(event)
-
-
-def make_thread_request(request_url, issue_url):  # pragma: no cover
-    thread = threading.Thread(target=make_request, args=(request_url, issue_url))
-    thread.start()
-    time.sleep(1)
 
 
 @app.route("/process_jobs", methods=["POST"])

@@ -2,16 +2,12 @@ import logging
 import re
 from string import Template
 
-from github import Github
-from github.Auth import Token
-from github.CheckRun import CheckRun
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config, EventCheckRun
-from githubapp.events import CheckSuiteCompletedEvent, CheckSuiteRequestedEvent
+from githubapp.events import CheckSuiteRequestedEvent
 
 from src.helpers import pull_request_helper
-from src.helpers.repository_helper import get_repo_cached
 
 logger = logging.getLogger(__name__)
 
@@ -117,59 +113,10 @@ def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun):
 
 @Config.call_if("AUTO_APPROVE_PAT")
 def auto_approve(repository: Repository, pull_requests: list[PullRequest]):
-    if AUTO_APPROVE_PAT := Config.AUTO_APPROVE_PAT:
-        for pull_request in pull_requests:
-            approve(AUTO_APPROVE_PAT, repository, pull_request)
+    for pull_request in pull_requests:
+        pull_request_helper.approve(Config.AUTO_APPROVE_PAT, repository, pull_request)
 
 
 @Config.call_if("pull_request_manager.auto_update")
 def auto_update_pull_requests(repository: Repository):
-    for pull_request in repository.get_pulls(
-        state="open", base=repository.default_branch
-    ):
-        if pull_request.mergeable_state == "behind":
-            pull_request.update_branch()
-
-
-######################################################################################################
-
-
-def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest):
-    """Approve the Pull Request if the branch creator is the same of the repository owner"""
-    pr_commits = pull_request.get_commits()
-    first_commit = pr_commits[0]
-
-    branch_owner = first_commit.author
-    repository_owner_login = repository.owner.login
-    branch_owner_login = branch_owner.login
-    allowed_logins = Config.pull_request_manager.auto_approve_logins + [
-        repository_owner_login
-    ]
-    if branch_owner_login not in allowed_logins:
-        logger.info(
-            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
-            "and is not in the auto approve logins list",
-            pull_request.head.ref,
-            branch_owner_login,
-            repository_owner_login,
-        )
-        return
-    if any(
-        review.user.login == branch_owner_login and review.state == "APPROVED"
-        for review in pull_request.get_reviews()
-    ):
-        logger.info(
-            "Pull Request %s#%d already approved",
-            repository.full_name,
-            pull_request.number,
-        )
-        return
-
-    gh = Github(auth=Token(auto_approve_pat))
-    pull_request = get_repo_cached(gh, repository.full_name).get_pull(
-        pull_request.number
-    )
-    pull_request.create_review(event="APPROVE")
-    logger.info(
-        "Pull Request %s#%d approved", repository.full_name, pull_request.number
-    )
+    pull_request_helper.update_pull_requests(repository)

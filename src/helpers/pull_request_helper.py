@@ -1,9 +1,12 @@
 import logging
+import github
 from typing import Optional
 
-from github import GithubException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+from githubapp import Config
+
+from src.helpers import repository_helper
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +48,7 @@ def create_pull_request(
             draft=False,
         )
         return pr
-    except GithubException as ghe:
+    except github.GithubException as ghe:
         if ghe.data and any(
             error["message"]
             == f"No commits between {repository.default_branch} and {branch}"
@@ -57,3 +60,51 @@ def create_pull_request(
         else:
             raise
     return None
+
+
+def update_pull_requests(repository):
+    for pull_request in repository.get_pulls(
+        state="open", base=repository.default_branch
+    ):
+        if pull_request.mergeable_state == "behind":
+            pull_request.update_branch()
+
+
+def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest):
+    """Approve the Pull Request if the branch creator is the same of the repository owner"""
+    pr_commits = pull_request.get_commits()
+    first_commit = pr_commits[0]
+
+    branch_owner = first_commit.author
+    repository_owner_login = repository.owner.login
+    branch_owner_login = branch_owner.login
+    allowed_logins = Config.pull_request_manager.auto_approve_logins + [
+        repository_owner_login
+    ]
+    if branch_owner_login not in allowed_logins:
+        logger.info(
+            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
+            "and is not in the auto approve logins list",
+            pull_request.head.ref,
+            branch_owner_login,
+            repository_owner_login,
+        )
+        return
+    if any(
+        review.user.login == branch_owner_login and review.state == "APPROVED"
+        for review in pull_request.get_reviews()
+    ):
+        logger.info(
+            "Pull Request %s#%d already approved",
+            repository.full_name,
+            pull_request.number,
+        )
+        return
+
+    pull_request = repository_helper.get_repo_cached(
+        repository.full_name, pat=auto_approve_pat
+    ).get_pull(pull_request.number)
+    pull_request.create_review(event="APPROVE")
+    logger.info(
+        "Pull Request %s#%d approved", repository.full_name, pull_request.number
+    )

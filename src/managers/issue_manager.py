@@ -1,15 +1,19 @@
 import logging
 import re
 from functools import lru_cache
+from typing import Union
 
+from flask import request
 from github import Consts, Github, GithubRetry, UnknownObjectException
 from github.Auth import Auth
 from github.Issue import Issue
 from github.Repository import Repository
 from github.Requester import Requester
-from githubapp.events import IssuesEvent
+from githubapp import Config
+from githubapp.events import IssuesEvent, IssueOpenedEvent, IssueEditedEvent
 from githubapp.webhook_handler import _get_auth
 
+from helper.request import make_thread_request
 from src.helpers import issue_helper
 from src.helpers.issue_helper import get_issue_ref, handle_issue_state
 from src.helpers.repository_helper import get_repository
@@ -25,7 +29,8 @@ from src.services import IssueJobService, JobService
 logger = logging.getLogger(__name__)
 
 
-def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation_id):
+def get_or_create_issue_job(event):
+    issue = event.issue
     if not (issue_job := next(iter(IssueJobService.filter(issue_url=issue.url)), None)):
         issue_comment = issue_helper.update_issue_comment_status(
             issue,
@@ -38,11 +43,19 @@ def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation
                 repository_url=issue.repository.url,
                 title=issue.title,
                 issue_comment_id=issue_comment_id,
-                hook_installation_target_id=hook_installation_target_id,
-                installation_id=installation_id,
+                hook_installation_target_id=event.hook_installation_target_id,
+                installation_id=event.installation_id,
                 milestone_url=issue.milestone.url if issue.milestone else None,
             )
         )
+    return issue_job
+
+
+@Config.call_if("issue_manager.enabled")
+@Config.call_if("issue_manager.create_issues_from_tasklist")
+def manage(event: Union[IssueOpenedEvent, IssueEditedEvent]):
+    issue = event.issue
+    issue_job = get_or_create_issue_job(event)
     reediting = issue_job.issue_job_status == IssueJobStatus.DONE
     existing_jobs = {}
     if reediting:
@@ -73,7 +86,8 @@ def parse_issue_and_create_jobs(issue, hook_installation_target_id, installation
             )
     if jobs:
         JobService.insert_many(jobs)
-    return issue_job
+    if issue_job.issue_job_status != IssueJobStatus.RUNNING:
+        make_thread_request(f"{request.url}/process_jobs", issue_job.issue_url)
 
 
 @lru_cache
