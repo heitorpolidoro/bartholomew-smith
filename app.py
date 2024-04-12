@@ -20,11 +20,8 @@ from githubapp.events.issues import IssueClosedEvent
 
 from config import default_configs
 from helper.request import make_thread_request
-from src.managers import pull_request_manager, release_manager, issue_manager
-from src.managers.issue_manager import (
-    handle_close_tasklist,
-    process_jobs,
-)
+from src.managers import issue_manager, pull_request_manager, release_manager
+from src.managers.issue_manager import handle_close_tasklist, process_jobs
 from src.models import IssueJobStatus
 from src.services import IssueJobService
 

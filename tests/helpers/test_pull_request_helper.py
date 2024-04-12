@@ -4,10 +4,10 @@ import pytest
 from github import GithubException
 
 from src.helpers.pull_request_helper import (
+    approve,
     create_pull_request,
     get_existing_pull_request,
     update_pull_requests,
-    approve,
 )
 
 OTHER_ERROR = "other error"
@@ -109,7 +109,9 @@ def test_approve_when_not_same_owner(repository, pull_request, repository_helper
     pull_request.create_review.assert_not_called()
 
 
-def test_approve_when_already_approved(repository, pull_request, repository_helper_mock):
+def test_approve_when_already_approved(
+    repository, pull_request, repository_helper_mock
+):
     author = Mock(login="heitorpolidoro")
     pull_request.get_commits.return_value = [Mock(author=author)]
     pull_request.get_reviews.return_value = [Mock(user=author, state="APPROVED")]
@@ -118,7 +120,9 @@ def test_approve_when_already_approved(repository, pull_request, repository_help
     pull_request.create_review.assert_not_called()
 
 
-def test_approve_when_review_dismissed(repository, pull_request, repository_helper_mock):
+def test_approve_when_review_dismissed(
+    repository, pull_request, repository_helper_mock
+):
     author = Mock(login="heitorpolidoro")
     pull_request.get_commits.return_value = [Mock(author=author)]
     pull_request.get_reviews.return_value = [Mock(user=author, state="DISMISSED")]
@@ -127,7 +131,9 @@ def test_approve_when_review_dismissed(repository, pull_request, repository_help
     pull_request.create_review.assert_called_once_with(event="APPROVE")
 
 
-def test_approve_when_approved_by_other(repository, pull_request, repository_helper_mock):
+def test_approve_when_approved_by_other(
+    repository, pull_request, repository_helper_mock
+):
     pull_request.get_commits.return_value = [Mock(author=Mock(login="heitorpolidoro"))]
     pull_request.get_reviews.return_value = [
         Mock(user=Mock(login="other"), state="APPROVED")

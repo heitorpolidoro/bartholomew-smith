@@ -132,5 +132,3 @@ def test_auto_approve_without_pat(repository, pull_request_helper_mock, monkeypa
     pull_request_manager.auto_approve(repository, [pull_request])
 
     pull_request_helper_mock.approve.assert_not_called()
-
-

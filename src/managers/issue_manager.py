@@ -10,7 +10,7 @@ from github.Issue import Issue
 from github.Repository import Repository
 from github.Requester import Requester
 from githubapp import Config
-from githubapp.events import IssuesEvent, IssueOpenedEvent, IssueEditedEvent
+from githubapp.events import IssueEditedEvent, IssueOpenedEvent, IssuesEvent
 from githubapp.webhook_handler import _get_auth
 
 from helper.request import make_thread_request

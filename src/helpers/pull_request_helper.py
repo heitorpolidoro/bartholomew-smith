@@ -1,7 +1,7 @@
 import logging
-import github
 from typing import Optional
 
+import github
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config
