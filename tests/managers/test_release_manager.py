@@ -1,100 +1,102 @@
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, call
 
-from src.managers.release_manager import handle_release
+import pytest
 
-CHECKING_RELEASE_COMMAND = "Checking for release command"
-
-BARTHOLOMEW_RELEASER = "Bartholomew - Releaser"
+from src.managers import release_manager
 
 
-def test_handle_release_when_there_is_no_command(event, repository, pull_request):
-    handle_release(event)
-    event.start_check_run.assert_called_once_with(
-        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
-    )
-    pull_request.get_commits.assert_called_once()
-    event.update_check_run.assert_called_once_with(
+@pytest.mark.parametrize("branch", ["default", "not default"])
+def test_manage_without_command_default_branch(event, repository, branch):
+    commit = Mock(commit=Mock(message="no command"))
+    if branch == "default":
+        event.check_suite.head_branch = repository.default_branch
+        repository.compare().commits.reversed = [commit]
+    elif branch == "not default":
+        event.check_suite.head_branch = "not default"
+        pull_request = Mock(state="open")
+        pull_request.get_commits().reversed = [commit]
+        repository.get_pulls.return_value = [pull_request]
+
+    release_manager.manage(event)
+
+    event.test_check_run.update.assert_called_once_with(
         title="No release command found", conclusion="success"
     )
+    repository.create_git_release.assert_not_called()
 
 
-def test_handle_release_when_there_is_a_command(event, repository, pull_request):
-    commit = Mock(commit=Mock(message="[release:1.2.3]"))
-    pull_request.get_commits.return_value.reversed = [commit]
-
-    handle_release(event)
-    event.start_check_run.assert_called_once_with(
-        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
-    )
-    pull_request.get_commits.assert_called_once()
-    event.update_check_run.assert_called_once_with(
-        title="Ready to release 1.2.3",
-        summary="Release command found ✅",
-        conclusion="success",
-    )
-
-
-def test_handle_release_when_head_branch_is_the_default_branch(
-    event, repository, pull_request
-):
-    event.check_suite.head_branch = repository.default_branch
-    commit = Mock(commit=Mock(message="[release:1.2.3]"))
-    repository.compare.return_value = Mock(commits=[commit])
-    handle_release(event)
-    repository.create_git_release.assert_called_once_with(
-        tag="1.2.3", generate_release_notes=True
-    )
-    event.update_check_run.assert_has_calls(
-        [
-            call(
-                title="Releasing 1.2.3",
-                summary="",
-            ),
-            call(
-                title="1.2.3 released ✅",
-                summary="",
-                conclusion="success",
-            ),
-        ]
-    )
-
-
-def test_handle_release_when_there_is_no_pull_request(event, repository):
+def test_manage_without_pull_request(event, repository):
+    event.check_suite.head_branch = "not default"
     repository.get_pulls.return_value = []
-    handle_release(event)
-    event.start_check_run.assert_called_once_with(
-        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
+
+    release_manager.manage(event)
+
+    event.test_check_run.update.assert_called_once_with(
+        title="No Pull Request found", conclusion="success"
     )
-    event.update_check_run.assert_not_called()
+    repository.create_git_release.assert_not_called()
 
 
-def test_handle_release_when_is_relative_release(event, repository, pull_request):
-    commit = Mock(commit=Mock(message="[release:bugfix]"))
-    pull_request.get_commits.return_value.reversed = [commit]
+@pytest.mark.parametrize(
+    "branch,version",
+    [
+        ("default", "minor"),
+        ("default", "2.0.0"),
+        ("not default", "minor"),
+        ("not default", "2.0.0"),
+    ],
+)
+def test_manage_with_command_default_branch(event, repository, branch, version):
+    commit = Mock(commit=Mock(message=f"[release:{version}]"))
+    repository.get_latest_release().tag_name = "1.2.3"
+    if branch == "default":
+        event.check_suite.head_branch = repository.default_branch
+        repository.compare().commits.reversed = [commit]
+    elif branch == "not default":
+        event.check_suite.head_branch = "not default"
+        pull_request = Mock(state="open")
+        pull_request.get_commits().reversed = [commit]
+        repository.get_pulls.return_value = [pull_request]
 
-    with patch("src.managers.release_manager.get_last_release", return_value="1.2.3"):
-        handle_release(event)
-    event.start_check_run.assert_called_once_with(
-        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
-    )
-    pull_request.get_commits.assert_called_once()
-    event.update_check_run.assert_called_once_with(
-        title="Ready to release 1.2.4",
-        summary="Release command found ✅",
-        conclusion="success",
-    )
+    release_manager.manage(event)
+
+    if version == "minor":
+        version = "1.3.0"
+
+    if branch == "default":
+        event.test_check_run.update.assert_has_calls(
+            [
+                call(title=f"Releasing {version}", summary=""),
+                call(title=f"{version} released ✅", summary="", conclusion="success"),
+            ]
+        )
+        repository.create_git_release.assert_called_once_with(
+            tag=version, generate_release_notes=True
+        )
+    elif branch == "not default":
+        event.test_check_run.update.assert_has_calls(
+            [
+                call(
+                    title=f"Ready to release {version}",
+                    summary="Release command found ✅",
+                    conclusion="success",
+                ),
+            ]
+        )
+        repository.create_git_release.assert_not_called()
 
 
-def test_handle_release_when_is_not_a_valid_relative(event, repository, pull_request):
-    commit = Mock(commit=Mock(message="[release:invalid]"))
-    pull_request.get_commits.return_value.reversed = [commit]
+def test_manage_with_invalid_version(event, repository):
+    commit = Mock(commit=Mock(message=f"[release:invalid]"))
 
-    handle_release(event)
-    event.start_check_run.assert_called_once_with(
-        BARTHOLOMEW_RELEASER, "sha", title=CHECKING_RELEASE_COMMAND
-    )
-    event.update_check_run.assert_called_once_with(
+    event.check_suite.head_branch = repository.default_branch
+    repository.compare().commits.reversed = [commit]
+
+    release_manager.manage(event)
+
+    event.test_check_run.update.assert_called_once_with(
         title="Invalid release invalid",
         summary="Invalid release ❌",
         conclusion="failure",
     )
+    repository.create_git_release.assert_not_called()

@@ -99,7 +99,12 @@ class TableMock:
 
 @pytest.fixture
 def event(repository):
-    return Mock(repository=repository, check_suite=Mock(head_branch="branch"))
+    check_run = Mock()
+    event = Mock(repository=repository, check_suite=Mock(head_branch="branch"))
+    event.start_check_run.return_value = check_run
+    event.test_check_run = check_run
+
+    return event
 
 
 # @pytest.fixture(autouse=True)
