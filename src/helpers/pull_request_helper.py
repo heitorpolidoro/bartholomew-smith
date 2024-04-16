@@ -64,7 +64,7 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
         return pr
     except GithubException as ghe:
         if ghe.data and any(
-            error["message"]
+            error.get("message")
             == f"No commits between {repository.default_branch} and {branch}"
             for error in ghe.data["errors"]
         ):
