@@ -2,13 +2,13 @@ import datetime
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import Any
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import boto3
 import pytest
 from boto3 import dynamodb
 from boto3.resources.base import ServiceResource
-from botocore.stub import Stubber, ANY
+from botocore.stub import ANY, Stubber
 
 from config import default_configs
 from src import services

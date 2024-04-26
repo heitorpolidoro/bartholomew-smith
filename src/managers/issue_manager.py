@@ -9,9 +9,9 @@ from github.Repository import Repository
 from github.Requester import Requester
 from githubapp import Config
 from githubapp.events import (
+    IssueClosedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
-    IssueClosedEvent,
     IssuesEvent,
 )
 from githubapp.webhook_handler import _get_auth

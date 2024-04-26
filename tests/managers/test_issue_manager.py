@@ -1,30 +1,30 @@
 import random
-from unittest.mock import patch, Mock, ANY, call
+from unittest.mock import ANY, Mock, call, patch
 
 import pytest
 from github import Consts, UnknownObjectException
-from githubapp.events import IssueOpenedEvent, IssueEditedEvent
+from githubapp.events import IssueEditedEvent, IssueOpenedEvent
 from githubapp.events.issues import IssueClosedEvent
 
 from src.helpers.text_helper import markdown_progress
 from src.managers.issue_manager import (
+    _get_repository,
+    _get_title_and_repository_url,
+    _instantiate_github_class,
+    close_issue_if_all_checked,
+    close_sub_tasks,
     get_or_create_issue_job,
-    manage,
     handle_task_list,
+    manage,
+    process_create_issue,
     process_jobs,
     process_pending_jobs,
-    _get_title_and_repository_url,
-    _get_repository,
-    _instantiate_github_class,
-    set_jobs_to_done,
-    process_update_issue_status,
-    process_create_issue,
     process_update_issue_body,
-    close_issue_if_all_checked,
+    process_update_issue_status,
     process_update_progress,
-    close_sub_tasks,
+    set_jobs_to_done,
 )
-from src.models import IssueJob, Job, IssueJobStatus, JobStatus
+from src.models import IssueJob, IssueJobStatus, Job, JobStatus
 from src.services import IssueJobService, JobService
 
 
@@ -557,7 +557,9 @@ def test_close_sub_tasks(event, issue_helper):
                 call(ANY, ANY, ANY, "https://api.github.com/repos/owner/repo/issues/1"),
                 call(ANY, ANY, ANY, "repository.url/issues/2"),
                 call(ANY, ANY, ANY, "repository.url/issues/0"),
-                call(ANY, ANY, ANY, "https://api.github.com/repos/owner/error/issues/3"),
+                call(
+                    ANY, ANY, ANY, "https://api.github.com/repos/owner/error/issues/3"
+                ),
             ]
         )
         for issue in issues:

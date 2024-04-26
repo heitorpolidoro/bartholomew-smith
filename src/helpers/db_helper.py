@@ -192,10 +192,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
 class BaseModel(PydanticBaseModel):
     key_schema: ClassVar[list[str]] = None
 
-    created_at: str = Field(
-        default_factory=lambda:
-        datetime.now().isoformat()
-    )
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     def dynamo_dict(self):
         return {
@@ -209,4 +206,3 @@ class BaseModel(PydanticBaseModel):
         for attr in key_schema:
             hash_dict[attr] = getattr(self, attr)
         return hash(str(hash_dict))
-

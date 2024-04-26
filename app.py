@@ -7,7 +7,7 @@ import markdown
 import sentry_sdk
 from flask import Flask, jsonify, render_template, request, url_for
 from flask.cli import load_dotenv
-from githubapp import webhook_handler, Config
+from githubapp import Config, webhook_handler
 from githubapp.events import (
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
@@ -18,7 +18,7 @@ from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
 from config import default_configs
 from src.helpers import request_helper
-from src.managers import pull_request_manager, release_manager, issue_manager
+from src.managers import issue_manager, pull_request_manager, release_manager
 from src.models import IssueJobStatus
 from src.services import IssueJobService
 

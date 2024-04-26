@@ -112,7 +112,7 @@ def event(repository):
         hook_installation_target_id=234,
         installation_id=345,
         test_check_run=check_run,
-        issue=issue
+        issue=issue,
     )
 
     event.start_check_run.return_value = check_run

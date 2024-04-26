@@ -1,8 +1,9 @@
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, Mock
 from github import UnknownObjectException
 
-from src.helpers.repository_helper import get_repository, get_repo_cached
+from src.helpers.repository_helper import get_repo_cached, get_repository
 
 
 @pytest.mark.parametrize(

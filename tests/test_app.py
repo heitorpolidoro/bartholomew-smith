@@ -1,11 +1,11 @@
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from githubapp import Config
 
-from app import handle_check_suite_requested, handle_issue, app
-from src.models import IssueJobStatus, IssueJob
+from app import app, handle_check_suite_requested, handle_issue
+from src.models import IssueJob, IssueJobStatus
 
 
 @pytest.fixture

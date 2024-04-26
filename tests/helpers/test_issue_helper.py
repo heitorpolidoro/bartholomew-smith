@@ -4,10 +4,10 @@ import pytest
 from githubapp import Config
 
 from src.helpers.issue_helper import (
-    has_tasklist,
-    get_tasklist,
     get_issue_ref,
+    get_tasklist,
     handle_issue_state,
+    has_tasklist,
     update_issue_comment_status,
 )
 
@@ -90,7 +90,11 @@ def test_get_issue_ref(repository_full_name, number, expected_ref, issue, reposi
         (False, "open", "open"),  # Unchecked, open issue -> no change
         (False, "closed", "open"),  # Unchecked, closed issue -> no change
     ],
-    ids=lambda value: (("not " if value is False else "") + "checked") if isinstance(value, bool) else value
+    ids=lambda value: (
+        (("not " if value is False else "") + "checked")
+        if isinstance(value, bool)
+        else value
+    ),
 )
 def test_handle_issue_state(checked, initial_state, expected_state, issue):
     """Test handle_issue_state with various inputs using parametrize"""
@@ -131,7 +135,9 @@ def test_handle_issue_state(checked, initial_state, expected_state, issue):
         "with existing comment passing the id",
     ],
 )
-def test_update_issue_comment_status(existing_comment, issue_comment_id, comment, issue):
+def test_update_issue_comment_status(
+    existing_comment, issue_comment_id, comment, issue
+):
     """Test update_issue_comment_status with various inputs using parametrize"""
     mock_comments = [
         Mock(user=Mock(login="user1")),
