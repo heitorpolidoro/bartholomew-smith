@@ -3,6 +3,7 @@ from githubapp import Config
 
 def default_configs():
     Config.BOT_NAME = "bartholomew-smith[bot]"
+    Config.TIMEOUT = "8"
 
     Config.create_config(
         "pull_request_manager",
@@ -15,4 +16,10 @@ def default_configs():
         auto_update=True,
     )
     Config.create_config("release_manager", enabled=True)
-    Config.create_config("issue_manager", enabled=True)
+    Config.create_config(
+        "issue_manager",
+        enabled=True,
+        handle_tasklist=True,
+        create_issues_from_tasklist=True,
+        close_subtasks=True,
+    )

@@ -28,7 +28,13 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.coverage.run]
 source = ["."]
-omit = ["tests/*"]
+omit = [
+    "tests/*",
+    "*/**/__init__.py",
+    "db_helper.py",
+    # remove \/
+    ".old_tests/*",
+]
 relative_files = true
 
 [tool.black]

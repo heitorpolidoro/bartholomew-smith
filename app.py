@@ -2,26 +2,23 @@ import logging
 import os
 import sys
 from multiprocessing import Process
-from typing import Union
 
 import markdown
 import sentry_sdk
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, url_for
 from flask.cli import load_dotenv
-from githubapp import Config, webhook_handler
+from githubapp import webhook_handler, Config
 from githubapp.events import (
-    CheckSuiteCompletedEvent,
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
 )
-from githubapp.events.issues import IssueClosedEvent
+from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
 from config import default_configs
-from helper.request import make_thread_request
-from src.managers import issue_manager, pull_request_manager, release_manager
-from src.managers.issue_manager import handle_close_tasklist, process_jobs
+from src.helpers import request_helper
+from src.managers import pull_request_manager, release_manager, issue_manager
 from src.models import IssueJobStatus
 from src.services import IssueJobService
 
@@ -33,7 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def sentry_init():
+def sentry_init():  # pragma: no cover
     """Initialize sentry only if SENTRY_DSN is present"""
     if sentry_dsn := os.getenv("SENTRY_DSN"):
         # Initialize Sentry SDK for error logging
@@ -63,57 +60,57 @@ default_configs()
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
 @webhook_handler.add_handler(CheckSuiteRerequestedEvent)
 def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
+    """
+    handle the Check Suite Request and Rerequest events
+    Calling the Pull Request manager to:
+    - Create Pull Request
+    - Enable auto merge
+    - Update Pull Requests
+    - Auto approve Pull Requests
+    """
     pull_request_manager.manage(event)
-
     release_manager.manage(event)
+    pull_request_manager.auto_approve(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
-def handle_issue(event: Union[IssueOpenedEvent, IssueEditedEvent]):
-    issue_manager.manage(event)
+@webhook_handler.add_handler(IssueClosedEvent)
+def handle_issue(event: IssuesEvent):
+    """
+    handle the Issues Open, Edit and Close events
+    Calling the Issue Manager to:
+    - Create issues from task list
+    - Close/Reopen issues from the checkbox in the task list
 
-    # add_to_project(event)
+    """
+    issue_job = issue_manager.manage(event)
+    if issue_job.issue_job_status != IssueJobStatus.RUNNING:
+        process_jobs_endpoint(issue_job.issue_url)
 
 
 @app.route("/process_jobs", methods=["POST"])
-def process_jobs_endpoint():
-    issue_url = request.get_json(force=True).get("issue_url")
+def process_jobs_endpoint(issue_url=None):
+    """ """
+    issue_url = issue_url or request.get_json(force=True).get("issue_url")
     if not issue_url:
         return jsonify({"error": "issue_url is required"}), 400
-    process = Process(target=process_jobs, args=(issue_url,))
+    process = Process(target=issue_manager.process_jobs, args=(issue_url,))
     process.start()
-    process.join(8)
-    issue_job = IssueJobService.filter(issue_url=issue_url)[0]
-    if process.is_alive():
-        IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
-        make_thread_request(request.url, issue_url)
-    process.terminate()
-    return jsonify({"status": issue_job.issue_job_status.value}), 200
-
-
-@webhook_handler.add_handler(IssueClosedEvent)
-def handle_issue_closed(event: IssueClosedEvent):
-    """
-    Handle the Issue Closed events, closing the issues in the task list
-    :param event:
-    :return:
-    """
-    if Config.issue_manager.enabled and event.issue and event.issue.body:
-        handle_close_tasklist(event)
-
-
-@webhook_handler.add_handler(CheckSuiteCompletedEvent)
-def handle_check_suite_completed(event: CheckSuiteCompletedEvent):
-    """
-    Handle the Check Suite Completed Event, doing:
-     - Creates a Pull Request, if not exists, and/or enable the auto merge flag
-    """
-    pull_request_manager.auto_approve(event.repository, event.check_suite.pull_requests)
+    process.join(float(Config.TIMEOUT))
+    if issue_job := next(iter(IssueJobService.filter(issue_url=issue_url)), None):
+        if process.is_alive():
+            IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
+            request_helper.make_thread_request(
+                request_helper.get_request_url("process_jobs_endpoint"), issue_url
+            )
+        process.terminate()
+        return jsonify({"status": issue_job.issue_job_status.value}), 200
+    return jsonify({"error": f"IssueJob for {issue_url=} not found"}), 404
 
 
 @app.route("/", methods=["GET"])
-def index():
+def index():  # pragma: no cover
     """Return the index homepage"""
     with open("README.md") as f:
         md = f.read()
@@ -123,40 +120,14 @@ def index():
 
 
 @app.route("/marketplace", methods=["POST"])
-def marketplace():
+def marketplace():  # pragma: no cover
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
     print(f"Marketplace event: {request.json}")
     return "OK"
 
 
-def make_request(request_url, issue_url):
-    import requests
-
-    requests.post(request_url, json={"issue_url": issue_url})
-
-
-@app.route("/sleep/<secs>")
-def sleep(secs):
-    import threading
-    import time
-
-    secs = float(secs)
-
-    if secs < 15:
-        url = "/".join(request.url.split("/")[:-1] + [str(secs + 1)])
-        print(f"Requesting {url}")
-        thread = threading.Thread(target=make_request, args=(url,))
-        thread.start()
-
-    print(f"---------------------- Sleeping for {secs} seconds")
-    time.sleep(float(secs))
-    print(f"---------------------- Done sleeping for {secs} seconds")
-    return "OK"
-
-
-def create_tables():
-    # TODO put in github actions
+def create_tables():  # pragma: no cover
     from src.helpers.db_helper import BaseModelService
 
     for subclass in BaseModelService.__subclasses__():

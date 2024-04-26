@@ -1,34 +1,44 @@
-from unittest.mock import Mock, call
-
+import pytest
+from unittest.mock import MagicMock, patch, Mock
 from github import UnknownObjectException
 
-from src.helpers.repository_helper import get_repository
+from src.helpers.repository_helper import get_repository, get_repo_cached
 
 
-def test_get_repository():
-    gh = Mock()
-    repository = Mock()
-    gh.get_repo.return_value = repository
-    assert get_repository(gh, "batata") == repository
-    gh.get_repo.assert_called_once_with("batata")
+@pytest.mark.parametrize(
+    "repository_name, repository_owner_login, expected",
+    [
+        (
+            "repository_name",
+            "owner_login",
+            "owner_login/repository_name",
+        ),  # repository found with owner and name
+        ("repository_name", None, "repository_name"),  # repository found with name
+        ("repository_name", None, None),  # repository not found
+    ],
+)
+def test_get_repository(repository_name, repository_owner_login, expected, gh):
+    if expected:  # if repository is expected to be found
+        gh.get_repo.return_value = expected
+    else:  # if repository is not expected to be found
+        gh.get_repo.side_effect = UnknownObjectException(0)
+
+    assert get_repository(gh, repository_name, repository_owner_login) == expected
 
 
-def test_get_repository_not_found():
-    gh = Mock()
-    gh.get_repo.side_effect = UnknownObjectException(404)
-    assert get_repository(gh, "batata") is None
-    gh.get_repo.assert_called_once_with("batata")
-
-
-def test_get_repository_partial_name():
-    gh = Mock()
-    repository = Mock()
-
-    def get_repo(name):
-        if name == "owner/batata":
-            return repository
-        raise UnknownObjectException(404)
-
-    gh.get_repo.side_effect = get_repo
-    assert get_repository(gh, "batata", "owner") is repository
-    gh.get_repo.assert_has_calls([call("owner/batata")])
+@pytest.mark.parametrize(
+    "repository_name, pass_gh",
+    [
+        ("repository_name", True),  # repository found
+        ("repository_name", False),  # repository not found
+    ],
+)
+def test_get_repo_cached(repository_name, pass_gh, gh):
+    other_gh = Mock()
+    with patch("src.helpers.repository_helper.github") as github:
+        github.Github.return_value = other_gh
+        get_repo_cached(repository_name, gh=gh if pass_gh else None)
+    if pass_gh:
+        gh.get_repo.assert_called_once_with(repository_name)
+    else:
+        other_gh.get_repo.assert_called_once_with(repository_name)
