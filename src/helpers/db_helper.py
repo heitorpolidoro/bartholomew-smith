@@ -113,10 +113,12 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
 
     @classmethod
     def all(cls) -> list["BaseModel"]:
+        """Return all models from the table."""
         return cls.filter()
 
     @classmethod
     def filter(cls, **kwargs) -> list["BaseModel"]:
+        """Return all models from the table matching the filter."""
         try:
             scan_attributes = {}
             if kwargs:
@@ -147,6 +149,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
 
     @classmethod
     def create_table(cls) -> ServiceResource:
+        """Creates a DynamoDB table"""
         try:
             key_schema = cls.clazz.key_schema
             if not key_schema:
@@ -191,17 +194,20 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
 
     @classmethod
     def insert_one(cls, item: "BaseModel") -> "BaseModel":
+        """Insert one item in the table"""
         cls.table.put_item(Item=item.dynamo_dict())
         return item
 
     @classmethod
     def insert_many(cls, items: list["BaseModel"]) -> NoReturn:
+        """Insert a list of items in the table"""
         with cls.table.batch_writer() as writer:
             for item in items:
                 writer.put_item(Item=item.dynamo_dict())
 
     @classmethod
     def update(cls, item: "BaseModel", **kwargs) -> NoReturn:
+        """Update an item in the table"""
         dy_key = {}
         key_schema = cls.clazz.key_schema
         attribute_values = kwargs or item.dynamo_dict()
@@ -235,12 +241,14 @@ class BaseModel(PydanticBaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     def dynamo_dict(self) -> dict[str, Any]:
+        """Returns a dict that dynamo will understand"""
         return {
             k: v.value if isinstance(v, Enum) else v
             for k, v in self.model_dump().items()
         }
 
     def __hash__(self) -> int:
+        """Return the hash of this item"""
         key_schema = self.key_schema
         hash_dict = {}
         for attr in key_schema:
