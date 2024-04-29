@@ -7,11 +7,12 @@ This module contains helper functions for interacting with DynamoDB tables using
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, Generic, TypeVar, NoReturn, Any
+from typing import Any, ClassVar, Generic, NoReturn, TypeVar
 
 import boto3
 from botocore.exceptions import ClientError
-from pydantic import BaseModel as PydanticBaseModel, BaseModel
+from pydantic import BaseModel
+from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
