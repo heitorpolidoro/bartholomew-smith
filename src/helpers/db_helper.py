@@ -68,8 +68,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
             if err.response["Error"]["Code"] == "ResourceNotFoundException":
                 return cls.create_table()
             raise
-        else:
-            return table
+        return table
 
     @classmethod
     def all(cls):
@@ -100,13 +99,12 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
                 err.response["Error"]["Message"],
             )
             raise
-        else:
-            return [
-                cls.clazz(**item)
-                for item in sorted(
-                    response["Items"], key=lambda item: item["created_at"]
-                )
-            ]
+        return [
+            cls.clazz(**item)
+            for item in sorted(
+                response["Items"], key=lambda item: item["created_at"]
+            )
+        ]
 
     @classmethod
     def create_table(cls):
@@ -149,8 +147,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
                 err.response["Error"]["Message"],
             )
             raise
-        else:
-            return table
+        return table
 
     @classmethod
     def insert_one(cls, item):
