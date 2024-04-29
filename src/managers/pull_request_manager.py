@@ -22,6 +22,11 @@ Closes #$issue_num
 
 @Config.call_if("pull_request_manager.enabled")
 def manage(event: CheckSuiteRequestedEvent):
+    """
+    Create a Pull Request, if the config is enabled and no Pull Request for the same head branch exists
+    Enable auto-merge for the Pull Request, if the config is enabled
+    Update all Pull Requests with the base branch is the event head branch
+    """
     repository = event.repository
     head_branch = event.check_suite.head_branch
     check_run = event.start_check_run(
@@ -52,6 +57,7 @@ def manage(event: CheckSuiteRequestedEvent):
 
 
 def get_or_create_pull_request(repository, head_branch, check_run):
+    """Get an existing Pull Request or create a new one"""
     if pull_request := pull_request_helper.get_existing_pull_request(
         repository, f"{repository.owner.login}:{head_branch}"
     ):
@@ -88,6 +94,7 @@ def create_pull_request(
 
 @Config.call_if("pull_request_manager.link_issue", return_on_not_call=("", ""))
 def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, str):
+    """Get title and body from Issue title and body respectively"""
     title = body = ""
     for issue_num in re.findall(r"issue-(\d+)", branch, re.IGNORECASE):
         issue = repository.get_issue(int(issue_num))
@@ -113,11 +120,14 @@ def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun):
 
 @Config.call_if("AUTO_APPROVE_PAT")
 def auto_approve(event: CheckSuiteRequestedEvent):
+    """Approve the Pull Request if the branch creator is the same of the repository owner"""
     repository = event.repository
-    for pull_request in repository.get_pulls():
+    pull_requests = event.check_suite.pull_requests
+    for pull_request in pull_requests:
         pull_request_helper.approve(Config.AUTO_APPROVE_PAT, repository, pull_request)
 
 
 @Config.call_if("pull_request_manager.auto_update")
 def auto_update_pull_requests(repository: Repository, base_branch: str):
+    """Updates all the pull requests in the given branch if is updatable."""
     pull_request_helper.update_pull_requests(repository, base_branch)
