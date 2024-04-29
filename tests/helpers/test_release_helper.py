@@ -2,10 +2,10 @@ import pytest
 from github import UnknownObjectException
 
 from src.helpers.release_helper import (
-    is_relative_release,
-    is_valid_release,
     get_absolute_release,
     get_last_release,
+    is_relative_release,
+    is_valid_release,
 )
 
 

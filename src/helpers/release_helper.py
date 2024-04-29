@@ -17,7 +17,9 @@ def is_valid_release(version_to_release: str) -> bool:
     Check if is a valid release
     :param version_to_release: Version to check if is a valid release
     """
-    return bool(version_to_release) and all(map(lambda x: x.isdigit(), version_to_release.split(".")))
+    return bool(version_to_release) and all(
+        map(lambda x: x.isdigit(), version_to_release.split("."))
+    )
 
 
 def get_absolute_release(last_release: str, relative_version: str) -> str:

@@ -5,10 +5,10 @@ from github import GithubException
 from githubapp import Config
 
 from src.helpers.pull_request_helper import (
-    get_existing_pull_request,
-    create_pull_request,
-    update_pull_requests,
     approve,
+    create_pull_request,
+    get_existing_pull_request,
+    update_pull_requests,
 )
 
 
