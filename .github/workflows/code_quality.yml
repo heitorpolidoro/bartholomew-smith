@@ -11,6 +11,7 @@ on:
 
 jobs:
   code_quality:
+    name: Code Quality
     uses: heitorpolidoro/.github/.github/workflows/code_quality_analyzers.yml@master
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
