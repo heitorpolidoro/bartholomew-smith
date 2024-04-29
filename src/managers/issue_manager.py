@@ -65,7 +65,7 @@ def manage(event: IssuesEvent):
 @Config.call_if("issue_manager.handle_tasklist")
 def handle_task_list(event):
     issue = event.issue
-    if not (tasklist := issue_helper.get_tasklist(issue.body)):
+    if not (tasklist := issue_helper.get_tasklist(issue.body or "")):
         return None
     issue_job = get_or_create_issue_job(event)
     existing_jobs = {}
