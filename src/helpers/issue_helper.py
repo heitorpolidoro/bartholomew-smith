@@ -54,5 +54,4 @@ def update_issue_comment_status(issue, comment, issue_comment_id=None):
     if issue_comment:
         issue_comment.edit(comment)
         return issue_comment
-    else:
-        return issue.create_comment(comment)
+    return issue.create_comment(comment)
