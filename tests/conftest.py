@@ -1,17 +1,11 @@
 import datetime
-from collections import defaultdict
 from contextlib import contextmanager
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
-import boto3
 import pytest
-from boto3 import dynamodb
-from boto3.resources.base import ServiceResource
-from botocore.stub import ANY, Stubber
 
 from config import default_configs
-from src import services
 from src.helpers.db_helper import BaseModelService
 from src.models import IssueJob, IssueJobStatus
 
@@ -19,15 +13,22 @@ default_configs()
 
 
 @pytest.fixture
-def event(issue, repository):
+def check_run():
+    yield Mock()
+
+
+@pytest.fixture
+def event(issue, repository, check_run):
     check_suite = Mock(head_branch="master")
-    return Mock(
+    event = Mock(
         hook_installation_target_id=1,
         installation_id=1,
         issue=issue,
         repository=repository,
         check_suite=check_suite,
     )
+    event.start_check_run.return_value = check_run
+    return event
 
 
 @pytest.fixture
