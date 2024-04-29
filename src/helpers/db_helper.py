@@ -101,9 +101,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
             raise
         return [
             cls.clazz(**item)
-            for item in sorted(
-                response["Items"], key=lambda item: item["created_at"]
-            )
+            for item in sorted(response["Items"], key=lambda item: item["created_at"])
         ]
 
     @classmethod
