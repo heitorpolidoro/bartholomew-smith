@@ -1,0 +1,35 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning.
+
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  merge:
+    name: Merge Master to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Merge master into production
+        run: |
+          git fetch --unshallow
+          git checkout production
+          git pull
+          git merge --no-ff master 
+
+      - name: Push changes
+        run: |
+          git push origin production
