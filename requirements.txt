@@ -1,4 +1,4 @@
-github-app-handler==0.26.0
+github-app-handler==0.27.6
 sentry-sdk<2
 flask<4
 PyGithub<3

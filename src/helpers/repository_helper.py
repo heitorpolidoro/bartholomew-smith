@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Optional
 
+import github
 from github import Github, UnknownObjectException
 from github.Repository import Repository
 
@@ -16,11 +17,13 @@ def get_repository(
     try:
         if repository_owner_login:
             return get_repository(gh, f"{repository_owner_login}/{repository_name}")
-        return get_repo_cached(gh, repository_name)
+        return get_repo_cached(repository_name, gh=gh)
     except UnknownObjectException:
         return None
 
 
 @lru_cache
-def get_repo_cached(gh, repository_name):
+def get_repo_cached(repository_name, gh=None, pat=None):
+    if gh is None:
+        gh = github.Github(auth=github.Auth.Token(pat))
     return gh.get_repo(repository_name)

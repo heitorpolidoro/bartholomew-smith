@@ -1,21 +1,14 @@
 import logging
-import re
-from string import Template
 from typing import Optional
 
-from github import GithubException
+import github
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+from githubapp import Config
+
+from src.helpers import repository_helper
 
 logger = logging.getLogger(__name__)
-
-BODY_ISSUE_TEMPLATE = """### [$title](https://github.com/$repo_full_name/issues/$issue_num)
-
-$body
-
-Closes #$issue_num
-
-"""
 
 
 def get_existing_pull_request(
@@ -30,41 +23,36 @@ def get_existing_pull_request(
     return next(iter(repository.get_pulls(state="open", head=head)), None)
 
 
-def create_pull_request(repository: Repository, branch: str) -> Optional[PullRequest]:
+def create_pull_request(
+    repository: Repository,
+    branch: str,
+    title: Optional[str] = None,
+    body: Optional[str] = None,
+) -> Optional[PullRequest]:
     """
     Creates a PR from the default branch to the given branch.
 
-    If the branch name match a issue-9999 pattern, the title and the body of the PR will be generated using
+    If the branch name match an issue-9999 pattern, the title and the body of the PR will be generated using
     the information from the issue
     :param repository: The Repository to create the PR in.
-    :param branch:
+    :param branch: The head branch to create the Pull Request
+    :param title: The title of the Pull Request
+    :param body: The body of the Pull Request
     :return: Created PR or None.
     :raises: GithubException if and error occurs, except if the error is "No commits between 'master' and 'branch'"
-    in that case ignores the exception and it returns None.
+    in that case ignores the exception, and it returns None.
     """
     try:
-        title = ""
-        body = ""
-        for issue_num in re.findall(r"issue-(\d+)", branch, re.IGNORECASE):
-            issue = repository.get_issue(int(issue_num))
-            title = title or issue.title.strip()
-            body += Template(BODY_ISSUE_TEMPLATE).substitute(
-                title=issue.title,
-                repo_full_name=repository.full_name,
-                issue_num=issue_num,
-                body=issue.body or "",
-            )
-        pr = repository.create_pull(
+        return repository.create_pull(
             repository.default_branch,
             branch,
             title=title or branch,
             body=body or "Pull Request automatically created",
             draft=False,
         )
-        return pr
-    except GithubException as ghe:
+    except github.GithubException as ghe:
         if ghe.data and any(
-            error["message"]
+            error.get("message")
             == f"No commits between {repository.default_branch} and {branch}"
             for error in ghe.data["errors"]
         ):
@@ -76,28 +64,47 @@ def create_pull_request(repository: Repository, branch: str) -> Optional[PullReq
     return None
 
 
-def get_or_create_pull_request(
-    repository: Repository, branch: str
-) -> Optional[PullRequest]:
-    """
-    Get a existing PR or create a new one if none exists
-    :param repository:
-    :param branch:
-    :return: The created or recovered PR or None if no commits between 'master' and 'branch'
-    """
-    if pr := get_existing_pull_request(
-        repository, f"{repository.owner.login}:{branch}"
+def update_pull_requests(repository, base_branch):
+    """Updates all the pull requests in the given branch if is updatable."""
+    for pull_request in repository.get_pulls(
+        state="open", base=f"{repository.owner.login}:{base_branch}"
     ):
-        print(
-            f"PR already exists for '{repository.owner.login}:{branch}' into "
-            f"'{repository.default_branch} (PR#{pr.number})'"
-        )
+        if pull_request.mergeable_state == "behind":
+            pull_request.update_branch()
+
+
+def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest):
+    """Approve the Pull Request if the branch creator is the same of the repository owner"""
+    pr_commits = pull_request.get_commits()
+    first_commit = pr_commits[0]
+
+    branch_owner = first_commit.author
+    repository_owner_login = repository.owner.login
+    branch_owner_login = branch_owner.login
+    allowed_logins = Config.pull_request_manager.auto_approve_logins + [
+        repository_owner_login
+    ]
+    if branch_owner_login not in allowed_logins:
         logger.info(
-            "PR already exists for '%s:%s' into '%s'",
-            repository.owner.login,
-            branch,
-            repository.default_branch,
+            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
+            "and is not in the auto approve logins list",
+            pull_request.head.ref,
+            branch_owner_login,
+            repository_owner_login,
         )
-    else:
-        pr = create_pull_request(repository, branch)
-    return pr
+        return
+    if any(review.state == "APPROVED" for review in pull_request.get_reviews()):
+        logger.info(
+            "Pull Request %s#%d already approved",
+            repository.full_name,
+            pull_request.number,
+        )
+        return
+
+    pull_request = repository_helper.get_repo_cached(
+        repository.full_name, pat=auto_approve_pat
+    ).get_pull(pull_request.number)
+    pull_request.create_review(event="APPROVE")
+    logger.info(
+        "Pull Request %s#%d approved", repository.full_name, pull_request.number
+    )
