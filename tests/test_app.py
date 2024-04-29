@@ -2,7 +2,6 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import pytest
-from githubapp import Config
 
 from app import app, handle_check_suite_requested, handle_issue
 from src.models import IssueJob, IssueJobStatus

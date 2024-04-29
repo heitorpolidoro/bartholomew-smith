@@ -5,7 +5,7 @@ from string import Template
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config, EventCheckRun
-from githubapp.events import CheckSuiteCompletedEvent, CheckSuiteRequestedEvent
+from githubapp.events import CheckSuiteRequestedEvent
 
 from src.helpers import pull_request_helper
 

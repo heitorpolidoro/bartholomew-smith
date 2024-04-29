@@ -73,7 +73,7 @@ def test_manage(
             )
         elif expected_version_to_release == "invalid":
             check_run.update.assert_called_once_with(
-                title=f"Invalid release invalid",
+                title="Invalid release invalid",
                 summary="Invalid release ❌",
                 conclusion="failure",
             )

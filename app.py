@@ -5,7 +5,7 @@ from multiprocessing import Process
 
 import markdown
 import sentry_sdk
-from flask import Flask, jsonify, render_template, request, url_for
+from flask import Flask, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
