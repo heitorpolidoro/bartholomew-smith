@@ -1,0 +1,2 @@
+pull_request_manager:
+  auto_approve_logins: [deepsource-autofix]
