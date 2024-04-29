@@ -32,26 +32,28 @@ type_map = {
 class MetaBaseModelService(type):
     def __init__(cls, *args):
         super().__init__(*args)
+        cls._resource = None
+        cls._table = None
 
     @property
-    def table(self):
-        if self._table is None:
-            self._table = self.get_table()
-        return self._table
+    def table(cls: "type[BaseModelService]"):
+        if cls._table is None:
+            cls._table = cls.get_table()
+        return cls._table
 
     @property
-    def resource(self):
-        if self._resource is None:
-            self._resource = boto3.resource("dynamodb", region_name="us-east-1")
-        return self._resource
+    def resource(cls: "type[BaseModelService]"):
+        if cls._resource is None:
+            cls._resource = boto3.resource("dynamodb", region_name="us-east-1")
+        return cls._resource
 
     @property
-    def table_name(self):
-        return self.clazz.__name__.lower()
+    def table_name(cls: "type[BaseModelService]"):
+        return cls.clazz.__name__.lower()
 
     @property
-    def clazz(self):
-        return self.__orig_bases__[0].__args__[0]
+    def clazz(cls: "type[BaseModelService]"):
+        return cls.__orig_bases__[0].__args__[0]
 
 
 class BaseModelService(Generic[T], metaclass=MetaBaseModelService):

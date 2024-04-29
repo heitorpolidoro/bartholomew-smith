@@ -1,11 +1,7 @@
 import re
-from typing import Optional
 
-from github import Github
 from github.Issue import Issue
-from github.Repository import Repository
 from githubapp import Config
-from src.helpers.repository_helper import get_repo_cached, get_repository
 
 
 def has_tasklist(issue_body: str) -> bool:
@@ -35,7 +31,6 @@ def handle_issue_state(checked: bool, task_issue: Issue):
     If the issue is closed and the checkbox is checked, open the issue.
     If the issue is open and the checkbox is unchecked, close the issue.
     """
-    print("updating issue status")
     if checked:
         if task_issue.state == "open":
             task_issue.edit(state="closed")

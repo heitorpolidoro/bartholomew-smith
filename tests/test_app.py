@@ -1,131 +1,139 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-import markdown
 import pytest
-from githubapp import Config
 
-from app import (
-    app,
-    handle_check_suite_completed,
-    handle_check_suite_requested,
-    handle_issue,
-    handle_issue_closed,
-    sentry_init,
-)
-
-
-def test_sentry_init(monkeypatch):
-    monkeypatch.setenv("SENTRY_DSN", "https://example.com")
-    with patch("app.sentry_sdk") as mock_sentry:
-        sentry_init()
-        mock_sentry.init.assert_called_once_with(
-            dsn="https://example.com",
-            traces_sample_rate=1.0,
-            profiles_sample_rate=1.0,
-        )
-
-
-def test_sentry_dont_init(monkeypatch):
-    with patch("app.sentry_sdk") as mock_sentry:
-        sentry_init()
-        mock_sentry.init.assert_not_called()
+from app import app, handle_check_suite_requested, handle_issue
+from src.models import IssueJob, IssueJobStatus
 
 
 @pytest.fixture
-def handle_create_pull_request_mock():
-    with patch("app.handle_create_pull_request") as handle_create_pull_request_mock:
-        yield handle_create_pull_request_mock
+def pull_request_manager():
+    with patch("app.pull_request_manager") as mock:
+        yield mock
 
 
 @pytest.fixture
-def handle_release_mock():
-    with patch("app.handle_release") as handle_release_mock:
-        yield handle_release_mock
+def release_manager():
+    with patch("app.release_manager") as mock:
+        yield mock
 
 
 @pytest.fixture
-def handle_self_approver_mock():
-    with patch("app.handle_self_approver") as handle_self_approver_mock:
-        yield handle_self_approver_mock
+def issue_manager():
+    with patch("app.issue_manager") as mock:
+        yield mock
 
 
-def test_handle_check_suite_requested(
-    event, repository, handle_create_pull_request_mock, handle_release_mock
-):
+@pytest.fixture
+def request_helper(request):
+    with patch("app.request_helper") as mock:
+        if request.cls:
+            request.cls.request_helper = mock
+        yield mock
+
+
+@pytest.fixture
+def issue_job_service(request):
+    with patch("app.IssueJobService") as mock:
+        if request.cls:
+            request.cls.issue_job_service = mock
+        yield mock
+
+
+@pytest.fixture(autouse=True)
+def process():
+    with patch("app.Process") as mock:
+        mock().is_alive.return_value = False
+        yield mock
+
+
+def test_handle_check_suite_requested(event, pull_request_manager, release_manager):
     handle_check_suite_requested(event)
-    handle_create_pull_request_mock.assert_called_once_with(
-        repository, event.check_suite.head_branch
+    pull_request_manager.manage.assert_called_once_with(event)
+    release_manager.manage.assert_called_once_with(event)
+    pull_request_manager.auto_approve.assert_called_once_with(event)
+
+
+def test_handle_issue(event, issue_manager, issue_job_service):
+    issue_job_service.filter.return_value = [
+        Mock(spec=IssueJob, issue_job_status=IssueJobStatus.RUNNING)
+    ]
+    issue_manager.manage.return_value = Mock(issue_url="issue_url")
+    with patch("app.process_jobs_endpoint") as process_jobs_endpoint_mock:
+        handle_issue(event)
+        issue_manager.manage.assert_called_once_with(event)
+        process_jobs_endpoint_mock.assert_called_once_with("issue_url")
+
+
+def test_handle_issue_job_running(event, issue_manager, request_helper):
+    issue_manager.manage.return_value = Mock(
+        issue_url="issue_url", issue_job_status=IssueJobStatus.RUNNING
     )
-    handle_release_mock.assert_called_once_with(event)
+    handle_issue(event)
+    issue_manager.manage.assert_called_once_with(event)
+    request_helper.make_thread_request.assert_not_called()
 
 
-def test_handle_check_suite_completed(
-    event, repository, pull_request, monkeypatch, handle_self_approver_mock
-):
-    monkeypatch.setenv("OWNER_PAT", "gh_owner_pat")
-    check_suite = event.check_suite
-    check_suite.pull_requests = [pull_request]
-    handle_check_suite_completed(event)
-    handle_self_approver_mock.assert_called_once_with(
-        "gh_owner_pat", repository, pull_request
-    )
-
-
-def test_handle_check_suite_completed_when_there_is_no_owner_pat(
-    event, repository, pull_request, monkeypatch, handle_self_approver_mock
-):
-    monkeypatch.delenv("OWNER_PAT", False)
-    handle_check_suite_completed(event)
-    handle_self_approver_mock.assert_not_called()
-
-
-@pytest.mark.usefixtures("mock_render_template")
+@pytest.mark.usefixtures("request_helper", "issue_job_service")
 class TestApp(TestCase):
-    @pytest.fixture
-    def mock_render_template(self):
-        with patch("app.render_template") as mock_render_template:
-            self.mock_render_template = mock_render_template
-            yield mock_render_template
-
     def setUp(self):
         self.app = app
         self.client = app.test_client()
+        self.patches = []
+        for p in self.patches:
+            p.start()
 
-    def test_index(self):
-        response = self.client.get("/")
-        assert response.status_code == 200
-        with open("README.md") as f:
-            md = f.read()
-        body = markdown.markdown(md)
-        self.mock_render_template.assert_called_once_with(
-            "index.html", title="Bartholomew Smith", body=body
-        )
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
 
-    def test_marketplace(self):
-        response = self.client.post("/marketplace", json={1: 2})
-        assert response.status_code == 200
+    def test_process_jobs(self):
+        self.issue_job_service.filter.return_value = [
+            Mock(spec=IssueJob, issue_job_status=IssueJobStatus.RUNNING)
+        ]
+        with patch("app.Process") as process:
+            process.return_value.is_alive.return_value = False
+            response = self.client.post(
+                "/process_jobs", json={"issue_url": "issue_url"}
+            )
+            assert response.status_code == 200
+            assert response.json["status"] == "running"
 
+            from src.managers import issue_manager
 
-def test_managers_disabled(
-    handle_create_pull_request_mock,
-    handle_release_mock,
-    parse_issue_and_create_jobs_mock,
-    handle_close_tasklist_mock,
-):
-    event = Mock()
-    with patch("app.Config.load_config_from_file"):
-        Config.pull_request_manager.enabled = False
-        Config.release_manager.enabled = False
-        Config.issue_manager.enabled = False
+            process.assert_called_once_with(
+                target=issue_manager.process_jobs, args=("issue_url",)
+            )
+            self.request_helper.make_thread_request.assert_not_called()
 
-    handle_check_suite_requested(event)
-    handle_create_pull_request_mock.assert_not_called()
-    handle_release_mock.assert_not_called()
-    handle_issue(event)
-    parse_issue_and_create_jobs_mock.assert_not_called()
-    handle_issue_closed(event)
-    handle_close_tasklist_mock.assert_not_called()
-    Config.pull_request_manager.enabled = True
-    Config.release_manager.enabled = True
-    Config.issue_manager.enabled = True
+    @patch("app.IssueJobService")
+    def test_process_jobs_process_alive(self, issue_job_service):
+        issue_job = Mock(spec=IssueJob, issue_job_status=IssueJobStatus.PENDING)
+        issue_job_service.filter.return_value = [issue_job]
+        self.request_helper.get_request_url.return_value = "request.url"
+        with patch("app.Process") as process:
+            process.return_value.is_alive.return_value = True
+
+            response = self.client.post(
+                "/process_jobs", json={"issue_url": "issue_url"}
+            )
+            assert response.status_code == 200
+            assert response.json["status"] == "pending"
+            issue_job_service.update.assert_called_once_with(
+                issue_job, issue_job_status=IssueJobStatus.PENDING
+            )
+
+            self.request_helper.make_thread_request.assert_called_once_with(
+                "request.url", "issue_url"
+            )
+
+    def test_process_jobs_issue_url_not_found(self):
+        response = self.client.post("/process_jobs", json={"issue_url": "not found"})
+        assert response.status_code == 404
+        assert response.json["error"] == "IssueJob for issue_url='not found' not found"
+
+    def test_process_jobs_without_issue_url(self):
+        response = self.client.post("/process_jobs", json={})
+        assert response.status_code == 400
+        assert response.json["error"] == "issue_url is required"
