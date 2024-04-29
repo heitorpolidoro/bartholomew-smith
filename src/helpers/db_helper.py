@@ -59,9 +59,7 @@ class MetaBaseModelService(type):
 
     @property
     def resource(cls: type["BaseModelService"]) -> boto3.resource:
-        """
-        Returns the DynamoDB resource client.
-        """
+        """Returns the DynamoDB resource client."""
         if cls._resource is None:
             cls._resource = boto3.resource("dynamodb", region_name="us-east-1")
         return cls._resource
