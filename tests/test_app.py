@@ -56,14 +56,21 @@ def test_handle_check_suite_requested(event, pull_request_manager, release_manag
 
 
 def test_handle_issue(event, issue_manager, issue_job_service):
-    issue_job_service.filter.return_value = [
-        Mock(spec=IssueJob, issue_job_status=IssueJobStatus.RUNNING)
-    ]
     issue_manager.manage.return_value = Mock(issue_url="issue_url")
     with patch("app.process_jobs_endpoint") as process_jobs_endpoint_mock:
         handle_issue(event)
         issue_manager.manage.assert_called_once_with(event)
         process_jobs_endpoint_mock.assert_called_once_with("issue_url")
+
+
+def test_handle_issue_when_issue_manager_returns_none(
+    event, issue_manager, issue_job_service
+):
+    issue_manager.manage.return_value = None
+    with patch("app.process_jobs_endpoint") as process_jobs_endpoint_mock:
+        handle_issue(event)
+        issue_manager.manage.assert_called_once_with(event)
+        process_jobs_endpoint_mock.assert_not_called()
 
 
 def test_handle_issue_job_running(event, issue_manager, request_helper):
