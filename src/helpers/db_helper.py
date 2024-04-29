@@ -12,7 +12,6 @@ from typing import Any, ClassVar, Generic, NoReturn, TypeVar
 import boto3
 from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field
 
@@ -42,13 +41,13 @@ class MetaBaseModelService(type):
     This metaclass manages table and resource access for the service class.
     """
 
-    def __init__(cls: "type[BaseModelService]", *args) -> NoReturn:
+    def __init__(cls: type["BaseModelService"], *args) -> NoReturn:
         super().__init__(*args)
         cls._resource = None
         cls._table = None
 
     @property
-    def table(cls: "type[BaseModelService]") -> ServiceResource:
+    def table(cls: type["BaseModelService"]) -> ServiceResource:
         """
         Returns the DynamoDB table associated with the service class.
 
@@ -59,7 +58,7 @@ class MetaBaseModelService(type):
         return cls._table
 
     @property
-    def resource(cls: "type[BaseModelService]") -> boto3.resource:
+    def resource(cls: type["BaseModelService"]) -> boto3.resource:
         """
         Returns the DynamoDB resource client.
         """
@@ -68,7 +67,7 @@ class MetaBaseModelService(type):
         return cls._resource
 
     @property
-    def table_name(cls: "type[BaseModelService]") -> str:
+    def table_name(cls: type["BaseModelService"]) -> str:
         """
         Returns the name of the DynamoDB table associated with the service class.
 
@@ -77,7 +76,7 @@ class MetaBaseModelService(type):
         return cls.clazz.__name__.lower()
 
     @property
-    def clazz(cls: "type[BaseModelService]") -> type[BaseModel]:
+    def clazz(cls: type["BaseModelService"]) -> type["BaseModel"]:
         """
         Returns the Pydantic model class associated with the service class.
 
@@ -115,11 +114,11 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return table
 
     @classmethod
-    def all(cls) -> list[BaseModel]:
+    def all(cls) -> list["BaseModel"]:
         return cls.filter()
 
     @classmethod
-    def filter(cls, **kwargs) -> list[BaseModel]:
+    def filter(cls, **kwargs) -> list["BaseModel"]:
         try:
             scan_attributes = {}
             if kwargs:
@@ -193,18 +192,18 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return table
 
     @classmethod
-    def insert_one(cls, item: BaseModel) -> BaseModel:
+    def insert_one(cls, item: "BaseModel") -> "BaseModel":
         cls.table.put_item(Item=item.dynamo_dict())
         return item
 
     @classmethod
-    def insert_many(cls, items: list[BaseModel]) -> NoReturn:
+    def insert_many(cls, items: list["BaseModel"]) -> NoReturn:
         with cls.table.batch_writer() as writer:
             for item in items:
                 writer.put_item(Item=item.dynamo_dict())
 
     @classmethod
-    def update(cls, item: BaseModel, **kwargs) -> NoReturn:
+    def update(cls, item: "BaseModel", **kwargs) -> NoReturn:
         dy_key = {}
         key_schema = cls.clazz.key_schema
         attribute_values = kwargs or item.dynamo_dict()
