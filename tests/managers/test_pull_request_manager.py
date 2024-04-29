@@ -1,14 +1,14 @@
-from unittest.mock import patch, Mock, call
+from unittest.mock import Mock, call, patch
 
 import pytest
 from githubapp import Config
 
 from src.managers.pull_request_manager import (
-    manage,
+    auto_approve,
+    enable_auto_merge,
     get_or_create_pull_request,
     get_title_and_body_from_issue,
-    enable_auto_merge,
-    auto_approve,
+    manage,
 )
 
 
@@ -30,7 +30,13 @@ def pull_request_helper():
     ],
 )
 def test_manage(
-    event, check_run, head_branch, pull_request_user_login, auto_merge_enabled, pull_request, pull_request_helper
+    event,
+    check_run,
+    head_branch,
+    pull_request_user_login,
+    auto_merge_enabled,
+    pull_request,
+    pull_request_helper,
 ):
     event.check_suite.head_branch = head_branch
     pull_request.user.login = pull_request_user_login
@@ -57,7 +63,9 @@ def test_manage(
             check_run.update.assert_called_once_with(
                 title="Done", summary=summary, conclusion="success"
             )
-        pull_request_helper.update_pull_requests.assert_called_once_with(event.repository, head_branch)
+        pull_request_helper.update_pull_requests.assert_called_once_with(
+            event.repository, head_branch
+        )
 
 
 @pytest.mark.parametrize(

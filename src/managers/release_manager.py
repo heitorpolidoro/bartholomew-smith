@@ -1,9 +1,7 @@
 from githubapp import Config
 from githubapp.events import CheckSuiteRequestedEvent
 
-from src.helpers import command_helper
-from src.helpers import pull_request_helper
-from src.helpers import release_helper
+from src.helpers import command_helper, pull_request_helper, release_helper
 
 
 @Config.call_if("release_manager.enabled")
@@ -27,14 +25,18 @@ def manage(event: CheckSuiteRequestedEvent):
             check_suite.before, check_suite.after
         ).commits.reversed
     else:
-        if pull_request := pull_request_helper.get_existing_pull_request(repository, head_branch):
+        if pull_request := pull_request_helper.get_existing_pull_request(
+            repository, head_branch
+        ):
             commits = pull_request.get_commits().reversed
         else:
             check_run.update(title="No Pull Request found", conclusion="success")
             return
 
     for commit in commits:
-        if version_to_release := command_helper.get_command(commit.commit.message, "release"):
+        if version_to_release := command_helper.get_command(
+            commit.commit.message, "release"
+        ):
             break
 
     if not version_to_release:
@@ -43,7 +45,9 @@ def manage(event: CheckSuiteRequestedEvent):
 
     if release_helper.is_relative_release(version_to_release):
         last_version = release_helper.get_last_release(repository)
-        version_to_release = release_helper.get_absolute_release(last_version, version_to_release)
+        version_to_release = release_helper.get_absolute_release(
+            last_version, version_to_release
+        )
 
     if not release_helper.is_valid_release(version_to_release):
         check_run.update(
