@@ -166,7 +166,7 @@ def test_enable_auto_merge(pull_request):
 
 def test_auto_approve(event, repository, pull_request_helper):
     pulls = [Mock() for _ in range(3)]
-    event.check_suite.pull_requests = pulls
+    event.repository.get_pulls.return_value = pulls
     Config.AUTO_APPROVE_PAT = "AUTO_APPROVE_PAT"
     auto_approve(event)
     assert pull_request_helper.approve.call_count == len(pulls)

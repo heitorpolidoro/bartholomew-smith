@@ -122,7 +122,11 @@ def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun):
 def auto_approve(event: CheckSuiteRequestedEvent):
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     repository = event.repository
-    pull_requests = event.check_suite.pull_requests
+    pull_requests = repository.get_pulls(
+        state="open",
+        base=repository.default_branch,
+        head=f"{repository.owner.login}:{event.check_suite.head_branch}",
+    )
     for pull_request in pull_requests:
         pull_request_helper.approve(Config.AUTO_APPROVE_PAT, repository, pull_request)
 
