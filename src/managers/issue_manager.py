@@ -56,16 +56,17 @@ def get_or_create_issue_job(event):
 @Config.call_if("issue_manager.enabled")
 def manage(event: IssuesEvent):
     if isinstance(event, (IssueOpenedEvent, IssueEditedEvent)):
-        handle_task_list(event)
+        return handle_task_list(event)
     if isinstance(event, IssueClosedEvent):
         close_sub_tasks(event)
+    return None
 
 
 @Config.call_if("issue_manager.handle_tasklist")
 def handle_task_list(event):
     issue = event.issue
     if not (tasklist := issue_helper.get_tasklist(issue.body)):
-        return
+        return None
     issue_job = get_or_create_issue_job(event)
     existing_jobs = {}
     created_issues = {}
