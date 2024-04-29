@@ -84,9 +84,9 @@ def handle_issue(event: IssuesEvent):
     - Close/Reopen issues from the checkbox in the task list
 
     """
-    issue_job = issue_manager.manage(event)
-    if issue_job.issue_job_status != IssueJobStatus.RUNNING:
-        process_jobs_endpoint(issue_job.issue_url)
+    if issue_job := issue_manager.manage(event):
+        if issue_job.issue_job_status != IssueJobStatus.RUNNING:
+            process_jobs_endpoint(issue_job.issue_url)
 
 
 @app.route("/process_jobs", methods=["POST"])
