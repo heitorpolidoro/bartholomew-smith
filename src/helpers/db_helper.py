@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Any, ClassVar, Generic, NoReturn, TypeVar
 
 import boto3
+from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 from pydantic import BaseModel
 from pydantic import BaseModel as PydanticBaseModel
@@ -47,7 +48,7 @@ class MetaBaseModelService(type):
         cls._table = None
 
     @property
-    def table(cls: "type[BaseModelService]") -> boto3.dynamodb.Table:
+    def table(cls: "type[BaseModelService]") -> ServiceResource:
         """
         Returns the DynamoDB table associated with the service class.
 
@@ -96,7 +97,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
     _resource = None
 
     @classmethod
-    def get_table(cls) -> boto3.dynamodb.Table:
+    def get_table(cls) -> ServiceResource:
         """
         Returns the DynamoDB table associated with the service class.
 
@@ -148,7 +149,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         ]
 
     @classmethod
-    def create_table(cls) -> boto3.dynamodb.Table:
+    def create_table(cls) -> ServiceResource:
         try:
             key_schema = cls.clazz.key_schema
             if not key_schema:
