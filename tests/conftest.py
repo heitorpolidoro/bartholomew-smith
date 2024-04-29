@@ -19,13 +19,19 @@ default_configs()
 
 
 @pytest.fixture
-def event(issue):
-    return Mock(hook_installation_target_id=1, installation_id=1, issue=issue)
+def event(issue, repository):
+    check_suite = Mock(head_branch="master")
+    return Mock(
+        hook_installation_target_id=1,
+        installation_id=1,
+        issue=issue,
+        repository=repository,
+        check_suite=check_suite,
+    )
 
 
 @pytest.fixture
 def issue(repository):
-
     return Mock(
         repository=repository,
         number=123,
@@ -46,7 +52,7 @@ def repository():
 
 @pytest.fixture
 def pull_request():
-    return Mock()
+    return Mock(number=123)
 
 
 @pytest.fixture

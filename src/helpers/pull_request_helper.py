@@ -24,7 +24,10 @@ def get_existing_pull_request(
 
 
 def create_pull_request(
-    repository: Repository, branch: str, title: str, body: str
+    repository: Repository,
+    branch: str,
+    title: Optional[str] = None,
+    body: Optional[str] = None,
 ) -> Optional[PullRequest]:
     """
     Creates a PR from the default branch to the given branch.
@@ -40,14 +43,13 @@ def create_pull_request(
     in that case ignores the exception, and it returns None.
     """
     try:
-        pr = repository.create_pull(
+        return repository.create_pull(
             repository.default_branch,
             branch,
             title=title or branch,
             body=body or "Pull Request automatically created",
             draft=False,
         )
-        return pr
     except github.GithubException as ghe:
         if ghe.data and any(
             error.get("message")
@@ -62,10 +64,8 @@ def create_pull_request(
     return None
 
 
-def update_pull_requests(repository):
-    for pull_request in repository.get_pulls(
-        state="open", base=repository.default_branch
-    ):
+def update_pull_requests(repository, base_branch):
+    for pull_request in repository.get_pulls(state="open", base=base_branch):
         if pull_request.mergeable_state == "behind":
             pull_request.update_branch()
 
@@ -90,10 +90,7 @@ def approve(auto_approve_pat: str, repository: Repository, pull_request: PullReq
             repository_owner_login,
         )
         return
-    if any(
-        review.user.login == branch_owner_login and review.state == "APPROVED"
-        for review in pull_request.get_reviews()
-    ):
+    if any(review.state == "APPROVED" for review in pull_request.get_reviews()):
         logger.info(
             "Pull Request %s#%d already approved",
             repository.full_name,

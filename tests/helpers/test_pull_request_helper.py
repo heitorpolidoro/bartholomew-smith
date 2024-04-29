@@ -2,53 +2,80 @@ from unittest.mock import Mock, patch
 
 import pytest
 from github import GithubException
+from githubapp import Config
 
 from src.helpers.pull_request_helper import (
-    approve,
-    create_pull_request,
     get_existing_pull_request,
+    create_pull_request,
     update_pull_requests,
+    approve,
 )
 
-OTHER_ERROR = "other error"
+
+@pytest.mark.parametrize(
+    "pull_requests,expected_result_index",
+    [
+        (0, None),
+        (1, 0),
+        (2, 0),
+    ],
+    ids=[
+        "No pull requests",
+        "1 pull request",
+        "2 pull requests",
+    ],
+)
+def test_get_existing_pull_request(repository, expected_result_index, pull_requests):
+    pull_requests = [Mock() for _ in range(pull_requests)]
+
+    repository.get_pulls.return_value = pull_requests
+
+    expected_result = (
+        pull_requests[expected_result_index]
+        if expected_result_index is not None
+        else None
+    )
+    assert get_existing_pull_request(repository, "head_branch") == expected_result
 
 
-@pytest.fixture
-def repository_helper_mock(repository, pull_request):
-    with patch("src.helpers.pull_request_helper.repository_helper") as mock:
-        mock.get_repo_cached.return_value = repository
-        repository.get_pull.return_value = pull_request
-        yield mock
+@pytest.mark.parametrize(
+    "error_message",
+    [
+        "",
+        "No commits between master and branch",
+        "Other",
+    ],
+    ids=[
+        "Create Pull Request",
+        "No commits",
+        "Other error",
+    ],
+)
+def test_create_pull_request(repository, error_message):
+    expected_result = repository.create_pull.return_value
+    if error_message:
+        repository.create_pull.side_effect = GithubException(
+            0, data={"errors": [{"message": error_message}]}
+        )
+        expected_result = None
 
+    if error_message == "Other":
+        with pytest.raises(GithubException):
+            create_pull_request(
+                repository,
+                "branch",
+            )
+    else:
+        assert (
+            create_pull_request(
+                repository,
+                "branch",
+            )
+            == expected_result
+        )
 
-@pytest.fixture
-def pull_request():
-    """
-    This fixture returns a mock PullRequest object with default values for the attributes.
-    :return: Mocked PullRequest
-    """
-    pull_request = Mock()
-    pull_request.get_commits.return_value.reversed = [Mock(sha="sha")]
-    return pull_request
-
-
-def test_get_existing_pull_request_when_there_is_none(repository):
-    repository.get_pulls.return_value = []
-    assert get_existing_pull_request(repository, "branch") is None
-    repository.get_pulls.assert_called_once_with(state="open", head="branch")
-
-
-def test_get_existing_pull_request_when_exists(repository):
-    pull_request = Mock()
-    repository.get_pulls.return_value = [pull_request]
-    assert get_existing_pull_request(repository, "branch") == pull_request
-    repository.get_pulls.assert_called_once_with(state="open", head="branch")
-
-
-def test_create_pull_request(repository):
-    create_pull_request(repository, "branch", "", "")
     repository.create_pull.assert_called_once_with(
-        repository.default_branch,
+        "master",
         "branch",
         title="branch",
         body="Pull Request automatically created",
@@ -56,88 +83,54 @@ def test_create_pull_request(repository):
     )
 
 
-def test_create_pull_request_when_there_is_no_commits(repository):
-    repository.create_pull.side_effect = GithubException(
-        status=400,
-        data={"errors": [{"message": "No commits between master and branch"}]},
-    )
-    assert create_pull_request(repository, "branch", "", "") is None
+@pytest.mark.parametrize("mergeable_state", ["behind", "other"])
+def test_update_pull_request(repository, mergeable_state):
+    pull_request = Mock(mergeable_state=mergeable_state)
+    repository.get_pulls.return_value = [pull_request]
+    update_pull_requests(repository, "branch")
+    if mergeable_state == "behind":
+        pull_request.update_branch.assert_called_once()
+    else:
+        pull_request.update_branch.assert_not_called()
 
 
-def test_create_pull_request_when_other_errors(repository):
-    repository.create_pull.side_effect = GithubException(
-        status=400, message=OTHER_ERROR
-    )
-    with pytest.raises(GithubException) as err:
-        create_pull_request(repository, "branch", "", "")
-    assert err.value.message == OTHER_ERROR
-
-
-def test_create_pull_request_when_other_errors2(repository):
-    repository.create_pull.side_effect = GithubException(
-        status=400, data={"errors": [{"message": OTHER_ERROR}]}
-    )
-    with pytest.raises(GithubException) as err:
-        create_pull_request(repository, "branch", "", "")
-    assert err.value.data["errors"][0]["message"] == OTHER_ERROR
-
-
-def test_auto_update_pull_requests(repository):
-    pull_behind = Mock(mergeable_state="behind")
-    other_pull = Mock(mergeable_state="not behind")
-    pulls = [pull_behind, other_pull]
-    repository.get_pulls.return_value = pulls
-    update_pull_requests(repository)
-
-    pull_behind.update_branch.assert_called_once()
-    other_pull.update_branch.assert_not_called()
-
-
-def test_approve(repository, pull_request, repository_helper_mock):
-    pull_request.get_commits.return_value = [Mock(author=Mock(login="heitorpolidoro"))]
-    pull_request.get_reviews.return_value = []
-    with patch("src.helpers.pull_request_helper.github"):
-        approve("gh_AUTO_APPROVE_PAT", repository, pull_request)
-    pull_request.create_review.assert_called_once_with(event="APPROVE")
-
-
-def test_approve_when_not_same_owner(repository, pull_request, repository_helper_mock):
-    pull_request.get_commits.return_value = [Mock(author=Mock(login="other"))]
-    pull_request.get_reviews.return_value = []
-    with patch("src.helpers.pull_request_helper.github"):
-        approve("gh_AUTO_APPROVE_PAT", repository, pull_request)
-    pull_request.create_review.assert_not_called()
-
-
-def test_approve_when_already_approved(
-    repository, pull_request, repository_helper_mock
+@pytest.mark.parametrize(
+    "first_commit_author,should_approve,approved",
+    [
+        ("heitorpolidoro", True, False),
+        ("allowed_user", True, False),
+        ("other_user", False, False),
+        ("heitorpolidoro", False, True),
+    ],
+    ids=[
+        "Approve when the first commit owner is the same repository owner",
+        "Approve when the first commit owner is in the auto approve login list",
+        "Don't Approve when the first commit owner is not in the auto approve login list nether the repository owner",
+        "Don't Approve if already approved",
+    ],
+)
+def test_approve(
+    repository, pull_request, first_commit_author, should_approve, approved
 ):
-    author = Mock(login="heitorpolidoro")
-    pull_request.get_commits.return_value = [Mock(author=author)]
-    pull_request.get_reviews.return_value = [Mock(user=author, state="APPROVED")]
-    with patch("src.helpers.pull_request_helper.github"):
-        approve("gh_AUTO_APPROVE_PAT", repository, pull_request)
-    pull_request.create_review.assert_not_called()
-
-
-def test_approve_when_review_dismissed(
-    repository, pull_request, repository_helper_mock
-):
-    author = Mock(login="heitorpolidoro")
-    pull_request.get_commits.return_value = [Mock(author=author)]
-    pull_request.get_reviews.return_value = [Mock(user=author, state="DISMISSED")]
-    with patch("src.helpers.pull_request_helper.github"):
-        approve("gh_AUTO_APPROVE_PAT", repository, pull_request)
-    pull_request.create_review.assert_called_once_with(event="APPROVE")
-
-
-def test_approve_when_approved_by_other(
-    repository, pull_request, repository_helper_mock
-):
-    pull_request.get_commits.return_value = [Mock(author=Mock(login="heitorpolidoro"))]
-    pull_request.get_reviews.return_value = [
-        Mock(user=Mock(login="other"), state="APPROVED")
+    pull_request.get_commits.return_value = [
+        Mock(author=Mock(login=first_commit_author))
     ]
-    with patch("src.helpers.pull_request_helper.github"):
-        approve("gh_AUTO_APPROVE_PAT", repository, pull_request)
-    pull_request.create_review.assert_called_once_with(event="APPROVE")
+    if approved:
+        pull_request.get_reviews.return_value = [Mock(state="APPROVED")]
+    else:
+        pull_request.get_reviews.return_value = []
+
+    if first_commit_author == "allowed_user":
+        Config.pull_request_manager.auto_approve_logins = [first_commit_author]
+    with patch(
+        "src.helpers.pull_request_helper.repository_helper"
+    ) as repository_helper:
+        repository_helper.get_repo_cached.return_value.get_pull.return_value = (
+            pull_request
+        )
+        approve("pat", repository, pull_request)
+
+    if should_approve:
+        pull_request.create_review.assert_called_once_with(event="APPROVE")
+    else:
+        pull_request.create_review.assert_not_called()
