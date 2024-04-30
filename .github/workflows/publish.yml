@@ -30,6 +30,7 @@ jobs:
           git fetch --unshallow
           git checkout production
           git pull
+          gh pr checks production --required --watch
           git rebase --no-ff origin/master 
 
       - name: Push changes
