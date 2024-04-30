@@ -9,14 +9,13 @@ from src.managers.pull_request_manager import (
     get_or_create_pull_request,
     get_title_and_body_from_issue,
     manage,
+    auto_update_pull_requests,
 )
 
 
 @pytest.fixture
 def pull_request_helper():
-    with patch(
-        "src.managers.pull_request_manager.pull_request_helper"
-    ) as pull_request_helper_mock:
+    with patch("src.managers.pull_request_manager.pull_request_helper") as pull_request_helper_mock:
         yield pull_request_helper_mock
 
 
@@ -60,12 +59,7 @@ def test_manage(
                 summary = "Pull Request for 'heitorpolidoro:branch' into 'master' (PR#123) already exists"
             if auto_merge_enabled:
                 summary += "\nAuto-merge enabled"
-            check_run.update.assert_called_once_with(
-                title="Done", summary=summary, conclusion="success"
-            )
-        pull_request_helper.update_pull_requests.assert_called_once_with(
-            event.repository, head_branch
-        )
+            check_run.update.assert_called_once_with(title="Done", summary=summary, conclusion="success")
 
 
 @pytest.mark.parametrize(
@@ -81,18 +75,14 @@ def test_manage(
         "Pull Request by other",
     ],
 )
-def test_get_or_create_pull_request(
-    pull_request, pull_request_user_login, repository, pull_request_helper
-):
+def test_get_or_create_pull_request(pull_request, pull_request_user_login, repository, pull_request_helper):
     check_run = Mock()
     pull_request_helper.get_existing_pull_request.return_value = pull_request
     get_or_create_pull_request(repository, "head_branch", check_run)
     if pull_request:
         pull_request_helper.create_pull_request.assert_not_called()
     else:
-        pull_request_helper.create_pull_request.assert_called_once_with(
-            repository, "head_branch", "head_branch", ""
-        )
+        pull_request_helper.create_pull_request.assert_called_once_with(repository, "head_branch", "head_branch", "")
     if pull_request is None or pull_request.user.login == Config.BOT_NAME:
         check_run.update.assert_called_with(title="Pull Request created")
     else:
@@ -150,18 +140,14 @@ def test_get_or_create_pull_request(
         "No issues in branch name",
     ],
 )
-def test_get_title_and_body_from_issue(
-    branch, repository, expected_title_and_body, get_issue_returns
-):
+def test_get_title_and_body_from_issue(branch, repository, expected_title_and_body, get_issue_returns):
     repository.get_issue.side_effect = get_issue_returns
     assert get_title_and_body_from_issue(repository, branch) == expected_title_and_body
 
 
 def test_enable_auto_merge(pull_request):
     enable_auto_merge(pull_request, Mock())
-    pull_request.enable_automerge.assert_called_once_with(
-        merge_method=Config.pull_request_manager.merge_method
-    )
+    pull_request.enable_automerge.assert_called_once_with(merge_method=Config.pull_request_manager.merge_method)
 
 
 def test_auto_approve(event, repository, pull_request_helper):
@@ -170,6 +156,9 @@ def test_auto_approve(event, repository, pull_request_helper):
     Config.AUTO_APPROVE_PAT = "AUTO_APPROVE_PAT"
     auto_approve(event)
     assert pull_request_helper.approve.call_count == len(pulls)
-    pull_request_helper.approve.assert_has_calls(
-        [call(Config.AUTO_APPROVE_PAT, repository, p) for p in pulls]
-    )
+    pull_request_helper.approve.assert_has_calls([call(Config.AUTO_APPROVE_PAT, repository, p) for p in pulls])
+
+
+def test_auto_update_pull_requests(event, pull_request_helper):
+    auto_update_pull_requests(event)
+    pull_request_helper.update_pull_requests.assert_called_once_with(event.repository, event.check_suite.head_branch)

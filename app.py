@@ -23,7 +23,6 @@ from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 from config import default_configs
 from src.helpers import request_helper
 from src.managers import issue_manager, pull_request_manager, release_manager
-from src.managers.pull_request_manager import auto_update_pull_requests
 from src.models import IssueJobStatus
 from src.services import IssueJobService
 
@@ -88,7 +87,7 @@ def handle_check_suite_completed(event: CheckSuiteCompletedEvent) -> NoReturn:
     - Update Pull Requests
     - Auto approve Pull Requests
     """
-    auto_update_pull_requests(event)
+    pull_request_manager.auto_update_pull_requests(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
