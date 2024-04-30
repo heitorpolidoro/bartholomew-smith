@@ -69,6 +69,7 @@ def create_pull_request(
 def update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
     """Updates all the pull requests in the given branch if is updatable."""
     for pull_request in repository.get_pulls(state="open", base=base_branch):
+        print(pull_request.mergeable_state)
         if pull_request.mergeable_state == "behind":
             pull_request.update_branch()
 

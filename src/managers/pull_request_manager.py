@@ -51,12 +51,12 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
             )
         if auto_merge_enabled:
             summary.append("Auto-merge enabled")
-        check_run.update(
-            title="Done",
-            summary="\n".join(summary),
-            conclusion="success",
-        )
     auto_update_pull_requests(repository, head_branch)
+    check_run.update(
+        title="Done",
+        summary="\n".join(summary),
+        conclusion="success",
+    )
 
 
 def get_or_create_pull_request(
