@@ -23,6 +23,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Wait for checks to complete
+        env:
+         GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr checks production --required --watch
+
       - name: Merge master into production
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -30,7 +36,6 @@ jobs:
           git fetch --unshallow
           git checkout production
           git pull
-          gh pr checks production --required --watch
           git rebase --no-ff origin/master 
 
       - name: Push changes
