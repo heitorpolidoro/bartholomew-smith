@@ -33,8 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# pragma: no cover
-def sentry_init() -> NoReturn:
+def sentry_init() -> NoReturn:  # pragma: no cover
     """Initialize sentry only if SENTRY_DSN is present"""
     if sentry_dsn := os.getenv("SENTRY_DSN"):
         # Initialize Sentry SDK for error logging
@@ -114,8 +113,7 @@ def process_jobs_endpoint(issue_url: str = None) -> tuple[Response, int]:
 
 
 @app.route("/", methods=["GET"])
-# pragma: no cover
-def index() -> str:
+def index() -> str:  # pragma: no cover
     """Return the index homepage"""
     with open("README.md") as f:
         md = f.read()
@@ -125,16 +123,14 @@ def index() -> str:
 
 
 @app.route("/marketplace", methods=["POST"])
-# pragma: no cover
-def marketplace() -> str:
+def marketplace() -> str:  # pragma: no cover
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
     print(f"Marketplace event: {request.json}")
     return "OK"
 
 
-# pragma: no cover
-def create_tables() -> str:
+def create_tables() -> str:  # pragma: no cover
     """Create the database tables"""
     from src.helpers.db_helper import BaseModelService
 

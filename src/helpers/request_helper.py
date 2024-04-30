@@ -11,7 +11,6 @@ import flask
 import requests
 
 
-# pragma: no cover
 def make_thread_request(request_url: str, issue_url: str) -> NoReturn:
     """Make a request through a thread"""
     thread = threading.Thread(target=make_request, args=(request_url, issue_url))
