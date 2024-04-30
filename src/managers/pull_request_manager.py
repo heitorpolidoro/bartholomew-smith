@@ -8,7 +8,7 @@ from typing import NoReturn
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config, EventCheckRun
-from githubapp.events import CheckSuiteRequestedEvent
+from githubapp.events import CheckSuiteRequestedEvent, CheckSuiteCompletedEvent
 
 from src.helpers import pull_request_helper
 
@@ -51,7 +51,6 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
             )
         if auto_merge_enabled:
             summary.append("Auto-merge enabled")
-    auto_update_pull_requests(repository, head_branch)
     check_run.update(
         title="Done",
         summary="\n".join(summary),
@@ -137,6 +136,6 @@ def auto_approve(event: CheckSuiteRequestedEvent) -> NoReturn:
 
 
 @Config.call_if("pull_request_manager.auto_update")
-def auto_update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
+def auto_update_pull_requests(event: CheckSuiteCompletedEvent) -> NoReturn:
     """Updates all the pull requests in the given branch if is updatable."""
-    pull_request_helper.update_pull_requests(repository, base_branch)
+    pull_request_helper.update_pull_requests(event.repository, event.check_suite.head_branch)
