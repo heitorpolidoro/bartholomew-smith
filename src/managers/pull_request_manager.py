@@ -1,6 +1,9 @@
+"""This module contains the logic to create and update Pull Requests."""
+
 import logging
 import re
 from string import Template
+from typing import NoReturn
 
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -21,7 +24,7 @@ Closes #$issue_num
 
 
 @Config.call_if("pull_request_manager.enabled")
-def manage(event: CheckSuiteRequestedEvent):
+def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
     """
     Create a Pull Request, if the config is enabled and no Pull Request for the same head branch exists
     Enable auto-merge for the Pull Request, if the config is enabled
@@ -56,7 +59,9 @@ def manage(event: CheckSuiteRequestedEvent):
     auto_update_pull_requests(repository, head_branch)
 
 
-def get_or_create_pull_request(repository, head_branch, check_run):
+def get_or_create_pull_request(
+    repository: Repository, head_branch: str, check_run: EventCheckRun
+) -> PullRequest:
     """Get an existing Pull Request or create a new one"""
     if pull_request := pull_request_helper.get_existing_pull_request(
         repository, f"{repository.owner.login}:{head_branch}"
@@ -110,7 +115,7 @@ def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, 
 
 
 @Config.call_if("pull_request_manager.enable_auto_merge")
-def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun):
+def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun) -> bool:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
     check_run.update(title="Enabling auto-merge")
     pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
@@ -119,7 +124,7 @@ def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun):
 
 
 @Config.call_if("AUTO_APPROVE_PAT")
-def auto_approve(event: CheckSuiteRequestedEvent):
+def auto_approve(event: CheckSuiteRequestedEvent) -> NoReturn:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     repository = event.repository
     pull_requests = repository.get_pulls(
@@ -132,6 +137,6 @@ def auto_approve(event: CheckSuiteRequestedEvent):
 
 
 @Config.call_if("pull_request_manager.auto_update")
-def auto_update_pull_requests(repository: Repository, base_branch: str):
+def auto_update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
     """Updates all the pull requests in the given branch if is updatable."""
     pull_request_helper.update_pull_requests(repository, base_branch)

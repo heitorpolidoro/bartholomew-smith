@@ -1,3 +1,5 @@
+"""Helper to manage commands in texts"""
+
 import re
 from typing import Optional
 
@@ -12,7 +14,7 @@ def get_command(text: str, command_prefix: str) -> Optional[str]:
     :return: The extracted command or None if there is no command.
     :raises: ValueError if the command is not valid.
     """
-    command_pattern = rf"\[{command_prefix}:(.+?)\]"
+    command_pattern = r"\[" + command_prefix + r":(.*?)\]"
     commands_found = re.findall(command_pattern, text)
     if commands_found:
         return commands_found[-1].strip()

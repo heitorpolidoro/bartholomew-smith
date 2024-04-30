@@ -1,3 +1,7 @@
+"""This module contains the logic for managing releases."""
+
+from typing import NoReturn
+
 from githubapp import Config
 from githubapp.events import CheckSuiteRequestedEvent
 
@@ -5,7 +9,7 @@ from src.helpers import command_helper, pull_request_helper, release_helper
 
 
 @Config.call_if("release_manager.enabled")
-def manage(event: CheckSuiteRequestedEvent):
+def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
     """Create a release if there is a command in the commit message"""
     repository = event.repository
 

@@ -1,5 +1,7 @@
+"""Method to helps with Github PullRequests"""
+
 import logging
-from typing import Optional
+from typing import NoReturn, Optional
 
 import github
 from github.PullRequest import PullRequest
@@ -64,14 +66,16 @@ def create_pull_request(
     return None
 
 
-def update_pull_requests(repository, base_branch):
+def update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
     """Updates all the pull requests in the given branch if is updatable."""
     for pull_request in repository.get_pulls(state="open", base=base_branch):
         if pull_request.mergeable_state == "behind":
             pull_request.update_branch()
 
 
-def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest):
+def approve(
+    auto_approve_pat: str, repository: Repository, pull_request: PullRequest
+) -> NoReturn:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     pr_commits = pull_request.get_commits()
     first_commit = pr_commits[0]

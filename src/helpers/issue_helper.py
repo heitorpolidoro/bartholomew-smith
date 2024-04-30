@@ -1,6 +1,10 @@
+"""Methods to helps with Github Issues"""
+
 import re
+from typing import Optional
 
 from github.Issue import Issue
+from github.IssueComment import IssueComment
 from githubapp import Config
 
 
@@ -20,12 +24,12 @@ def get_tasklist(issue_body: str) -> list[tuple[str, bool]]:
     return tasks
 
 
-def get_issue_ref(issue):
+def get_issue_ref(issue: Issue) -> str:
     """Return an issue reference {owner}/{repo}#{issue_number}"""
     return f"{issue.repository.full_name}#{issue.number}"
 
 
-def handle_issue_state(checked: bool, task_issue: Issue):
+def handle_issue_state(checked: bool, task_issue: Issue) -> bool:
     """
     Handle the state of the issue.
     If the issue is closed and the checkbox is checked, open the issue.
@@ -41,7 +45,10 @@ def handle_issue_state(checked: bool, task_issue: Issue):
     return False
 
 
-def update_issue_comment_status(issue, comment, issue_comment_id=None):
+def update_issue_comment_status(
+    issue: Issue, comment: str, issue_comment_id: Optional[int] = None
+) -> IssueComment:
+    """Update a github issue comment. If `issue_commend_id` is None, create a new github issue comment"""
     if issue_comment_id:
         issue_comment = issue.get_comment(issue_comment_id)
         issue_comment.edit(comment)

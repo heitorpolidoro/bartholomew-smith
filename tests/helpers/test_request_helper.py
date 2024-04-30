@@ -30,7 +30,9 @@ def test_make_thread_request(request_url, issue_url):
 def test_make_request(request_url, issue_url):
     with patch("requests.post") as MockPost:
         request_helper.make_request(request_url, issue_url)
-        MockPost.assert_called_once_with(request_url, json={"issue_url": issue_url})
+        MockPost.assert_called_once_with(
+            request_url, json={"issue_url": issue_url}, timeout=60
+        )
 
 
 @pytest.mark.parametrize(

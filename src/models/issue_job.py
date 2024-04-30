@@ -1,12 +1,13 @@
-from enum import Enum
-from typing import Optional
+"""IssueJob model"""
 
-from pydantic import ConfigDict
+from enum import Enum
 
 from src.helpers.db_helper import BaseModel
 
 
 class IssueJobStatus(Enum):
+    """IssueJobStatus enum"""
+
     PENDING = "pending"
     RUNNING = "running"
     ERROR = "error"
@@ -14,6 +15,8 @@ class IssueJobStatus(Enum):
 
 
 class IssueJob(BaseModel):
+    """IssueJob model"""
+
     key_schema = ["issue_url"]
     issue_url: str
     repository_url: str

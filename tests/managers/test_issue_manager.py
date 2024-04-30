@@ -9,7 +9,7 @@ from githubapp.events.issues import IssueClosedEvent
 from src.helpers.text_helper import markdown_progress
 from src.managers.issue_manager import (
     _get_repository,
-    _get_title_and_repository_url,
+    _get_repository_url_and_title,
     _instantiate_github_class,
     close_issue_if_all_checked,
     close_sub_tasks,
@@ -219,7 +219,7 @@ def test_get_title_and_repository_url(
     with patch(
         "src.managers.issue_manager._get_repository", return_value=get_repository_return
     ):
-        result_url, result_title = _get_title_and_repository_url(issue_job, task)
+        result_url, result_title = _get_repository_url_and_title(issue_job, task)
     assert result_url == expected_url
     assert result_title == expected_title
 

@@ -1,3 +1,5 @@
+"""Repository helper functions."""
+
 from functools import lru_cache
 from typing import Optional
 
@@ -23,7 +25,10 @@ def get_repository(
 
 
 @lru_cache
-def get_repo_cached(repository_name, gh=None, pat=None):
+def get_repo_cached(
+    repository_name: str, gh: github.Github = None, pat: str = None
+) -> Repository:
+    """Get repository by name."""
     if gh is None:
         gh = github.Github(auth=github.Auth.Token(pat))
     return gh.get_repo(repository_name)

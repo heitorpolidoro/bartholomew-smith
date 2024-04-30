@@ -1,9 +1,16 @@
+"""
+Database Helper Functions
+
+This module contains helper functions for interacting with DynamoDB tables using the AWS SDK.
+"""
+
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic, NoReturn, TypeVar
 
 import boto3
+from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field
@@ -28,41 +35,75 @@ type_map = {
 
 
 class MetaBaseModelService(type):
-    def __init__(cls, *args):
+    """
+    Metaclass for BaseModelService classes.
+
+    This metaclass manages table and resource access for the service class.
+    """
+
+    def __init__(cls: type["BaseModelService"], *args) -> NoReturn:
         super().__init__(*args)
         cls._resource = None
         cls._table = None
 
     @property
-    def table(cls: "type[BaseModelService]"):
+    def table(cls: type["BaseModelService"]) -> ServiceResource:
+        """
+        Returns the DynamoDB table associated with the service class.
+
+        If the table doesn't exist, it attempts to create it.
+        """
         if cls._table is None:
             cls._table = cls.get_table()
         return cls._table
 
     @property
-    def resource(cls: "type[BaseModelService]"):
+    def resource(cls: type["BaseModelService"]) -> boto3.resource:
+        """Returns the DynamoDB resource client."""
         if cls._resource is None:
             cls._resource = boto3.resource("dynamodb", region_name="us-east-1")
         return cls._resource
 
     @property
-    def table_name(cls: "type[BaseModelService]"):
+    def table_name(cls: type["BaseModelService"]) -> str:
+        """
+        Returns the name of the DynamoDB table associated with the service class.
+
+        The table name is derived from the class name in lowercase.
+        """
         return cls.clazz.__name__.lower()
 
     @property
-    def clazz(cls: "type[BaseModelService]"):
+    def clazz(cls: type["BaseModelService"]) -> type["BaseModel"]:
+        """
+        Returns the Pydantic model class associated with the service class.
+
+        This is retrieved from the first type argument of the service class's base class.
+        """
         return cls.__orig_bases__[0].__args__[0]
 
 
 class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
+    """
+    This class defines a base model service that other model services can inherit
+    from. It provides common functionality for retrieving, creating, updating and
+    deleting models from the database.
+    """
+
     _table = None
     _resource = None
 
     @classmethod
-    def get_table(cls):
+    def get_table(cls) -> ServiceResource:
+        """
+        Returns the DynamoDB table associated with the service class.
+
+        If the table doesn't exist, it attempts to create it.
+        """
         try:
             table = BaseModelService.resource.Table(cls.table_name)
-            assert table.creation_date_time
+            if not table.creation_date_time:
+                raise AssertionError("Table doesn't exist")
         except ClientError as err:
             # This will not result in a failed assertion
             if err.response["Error"]["Code"] == "ResourceNotFoundException":
@@ -71,11 +112,13 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return table
 
     @classmethod
-    def all(cls):
+    def all(cls) -> list["BaseModel"]:
+        """Return all models from the table."""
         return cls.filter()
 
     @classmethod
-    def filter(cls, **kwargs):
+    def filter(cls, **kwargs) -> list[T]:
+        """Return all models from the table matching the filter."""
         try:
             scan_attributes = {}
             if kwargs:
@@ -105,10 +148,12 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         ]
 
     @classmethod
-    def create_table(cls):
+    def create_table(cls) -> ServiceResource:
+        """Creates a DynamoDB table"""
         try:
             key_schema = cls.clazz.key_schema
-            assert key_schema
+            if not key_schema:
+                raise AssertionError("Key schema doesn't exist")
             dy_key_schema = []
             attribute_definitions = []
             for attr_name in key_schema:
@@ -148,18 +193,21 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return table
 
     @classmethod
-    def insert_one(cls, item):
+    def insert_one(cls, item: T) -> T:
+        """Insert one item in the table"""
         cls.table.put_item(Item=item.dynamo_dict())
         return item
 
     @classmethod
-    def insert_many(cls, items):
+    def insert_many(cls, items: list["BaseModel"]) -> NoReturn:
+        """Insert a list of items in the table"""
         with cls.table.batch_writer() as writer:
             for item in items:
                 writer.put_item(Item=item.dynamo_dict())
 
     @classmethod
-    def update(cls, item, **kwargs):
+    def update(cls, item: "BaseModel", **kwargs) -> NoReturn:
+        """Update an item in the table"""
         dy_key = {}
         key_schema = cls.clazz.key_schema
         attribute_values = kwargs or item.dynamo_dict()
@@ -183,17 +231,24 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
 
 
 class BaseModel(PydanticBaseModel):
+    """
+    The BaseModel class acts as a base class for all other model classes.
+    Any model class that needs to interact with the database should inherit from this class.
+    """
+
     key_schema: ClassVar[list[str]] = None
 
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
-    def dynamo_dict(self):
+    def dynamo_dict(self) -> dict[str, Any]:
+        """Returns a dict that dynamo will understand"""
         return {
             k: v.value if isinstance(v, Enum) else v
             for k, v in self.model_dump().items()
         }
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """Return the hash of this item"""
         key_schema = self.key_schema
         hash_dict = {}
         for attr in key_schema:

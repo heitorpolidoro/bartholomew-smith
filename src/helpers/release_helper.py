@@ -1,3 +1,5 @@
+"""Methods to help with release versions"""
+
 from github import UnknownObjectException
 from github.Repository import Repository
 

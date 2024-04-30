@@ -26,7 +26,12 @@ def test_markdown_progress(count, total, expected_result):
     "task, expected_result",
     [
         ("owner/repo#123", True),
+        ("owner/repo#not_num", False),
+        ("owner/repo/other#123", False),
         ("test_task", False),
+        ("#123", True),
+        ("#not_num", False),
+        ("#12.3", False),
     ],
 )
 def test_is_issue_ref(task, expected_result):
@@ -36,18 +41,10 @@ def test_is_issue_ref(task, expected_result):
 @pytest.mark.parametrize(
     "task, expected_result",
     [
-        ("[repo] test_task", True),
-        ("test task with no brackets", False),
-    ],
-)
-def test_is_repo_title_syntax(task, expected_result):
-    assert text_helper.is_repo_title_syntax(task) == expected_result
-
-
-@pytest.mark.parametrize(
-    "task, expected_result",
-    [
         ("[repo] test_task", ("repo", "test_task")),
+        ("   [repo] test_task", ("repo", "test_task")),
+        ("[    repo    ] test_task", ("repo", "test_task")),
+        ("repo] test_task", None),
         ("test task with no brackets", None),
     ],
 )
