@@ -1,7 +1,12 @@
+"""Module to create the githubapp Configs"""
+
+from typing import NoReturn
+
 from githubapp import Config
 
 
-def default_configs():
+def default_configs() -> NoReturn:
+    """Create the default configs"""
     Config.BOT_NAME = "bartholomew-smith[bot]"
     Config.TIMEOUT = "8"
 
