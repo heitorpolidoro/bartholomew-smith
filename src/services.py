@@ -1,6 +1,4 @@
-"""
-DB services for the models
-"""
+"""DB services for the models"""
 
 from src.helpers.db_helper import BaseModelService
 from src.models import IssueJob, Job
