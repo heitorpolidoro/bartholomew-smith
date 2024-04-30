@@ -20,8 +20,7 @@ def is_issue_ref(text: str) -> bool:
     repository, issue_num = split
     if not issue_num.isdigit() or repository and repository.count("/") != 1:
         return False
-    else:
-        return True
+    return True
 
 
 def extract_repo_title(text: str) -> Optional[tuple[Union[str, Any], ...]]:
