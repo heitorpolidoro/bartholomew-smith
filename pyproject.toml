@@ -38,5 +38,8 @@ omit = [
 relative_files = true
 
 [tool.black]
-max_line_length = 120
+line_length = 120
+
+[tool.pylint]
+max-line-length = 120
 

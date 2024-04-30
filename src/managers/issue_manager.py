@@ -1,6 +1,9 @@
+"""This module contains the logic for managing Github Issues."""
+
 import logging
 import re
 from functools import lru_cache
+from typing import Optional, NoReturn, TypeVar
 
 import github
 from github import Consts, UnknownObjectException
@@ -22,16 +25,17 @@ from src.helpers.repository_helper import get_repository
 from src.helpers.text_helper import (
     extract_repo_title,
     is_issue_ref,
-    is_repo_title_syntax,
     markdown_progress,
 )
 from src.models import IssueJob, IssueJobStatus, Job, JobStatus
 from src.services import IssueJobService, JobService
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
-def get_or_create_issue_job(event):
+def get_or_create_issue_job(event: IssuesEvent) -> IssueJob:
+    """Get or create an issue job."""
     issue = event.issue
     if not (issue_job := next(iter(IssueJobService.filter(issue_url=issue.url)), None)):
         issue_comment = issue_helper.update_issue_comment_status(
@@ -54,7 +58,8 @@ def get_or_create_issue_job(event):
 
 
 @Config.call_if("issue_manager.enabled")
-def manage(event: IssuesEvent):
+def manage(event: IssuesEvent) -> Optional[IssueJob]:
+    """Manage an issue or they task list."""
     if isinstance(event, (IssueOpenedEvent, IssueEditedEvent)):
         return handle_task_list(event)
     if isinstance(event, IssueClosedEvent):
@@ -63,7 +68,8 @@ def manage(event: IssuesEvent):
 
 
 @Config.call_if("issue_manager.handle_tasklist")
-def handle_task_list(event):
+def handle_task_list(event: IssuesEvent) -> Optional[IssueJob]:
+    """Handle the task list of an issue."""
     issue = event.issue
     if not (tasklist := issue_helper.get_tasklist(issue.body or "")):
         return None
@@ -78,10 +84,9 @@ def handle_task_list(event):
     for task, checked in tasklist:
         if task in existing_jobs:
             continue
-        if created_issue := created_issues.get(task):  # issue created in a previous run
-            JobService.update(
-                created_issue, checked=checked, job_status=JobStatus.PENDING
-            )
+        # issue created in a previous run
+        if created_issue := created_issues.get(task):
+            JobService.update(created_issue, checked=checked, job_status=JobStatus.PENDING)
         else:
             jobs.append(
                 Job(
@@ -100,19 +105,20 @@ def handle_task_list(event):
 
 
 @lru_cache
-def _cached_get_auth(hook_installation_target_id, installation_id) -> github.Auth:
+def _cached_get_auth(hook_installation_target_id: int, installation_id: int) -> github.Auth:
+    """Get the auth for the given installation, cached."""
     return _get_auth(hook_installation_target_id, installation_id)
 
 
 @lru_cache
-def _get_gh(hook_installation_target_id, installation_id) -> github.Github:
-    return github.Github(
-        auth=_cached_get_auth(hook_installation_target_id, installation_id)
-    )
+def _get_gh(hook_installation_target_id: int, installation_id: int) -> github.Github:
+    """Get the Github object for the given installation, cached"""
+    return github.Github(auth=_cached_get_auth(hook_installation_target_id, installation_id))
 
 
 @lru_cache
-def _get_requester(hook_installation_target_id, installation_id):
+def _get_requester(hook_installation_target_id: int, installation_id: int) -> Requester:
+    """Get the Requester object for the given installation, cached"""
     return Requester(
         auth=_cached_get_auth(hook_installation_target_id, installation_id),
         base_url=Consts.DEFAULT_BASE_URL,
@@ -126,7 +132,8 @@ def _get_requester(hook_installation_target_id, installation_id):
 
 
 @lru_cache
-def _get_repository(issue_job: IssueJob, repository_name) -> Repository:
+def _get_repository(issue_job: IssueJob, repository_name: str) -> Repository:
+    """Get the Repository object for the given installation, cached"""
     gh = _get_gh(
         issue_job.hook_installation_target_id,
         issue_job.installation_id,
@@ -138,7 +145,8 @@ def _get_repository(issue_job: IssueJob, repository_name) -> Repository:
 
 
 @lru_cache
-def _instantiate_github_class(clazz, hook_installation_target_id, installation_id, url):
+def _instantiate_github_class(clazz: type[T], hook_installation_target_id: int, installation_id: int, url: str) -> T:
+    """Instantiate a Github class, cached"""
     return clazz(
         requester=_get_requester(hook_installation_target_id, installation_id),
         headers={},
@@ -147,17 +155,20 @@ def _instantiate_github_class(clazz, hook_installation_target_id, installation_i
     )
 
 
-def set_jobs_to_done(jobs: list[Job], issue_job: IssueJob):
+def set_jobs_to_done(jobs: list[Job], issue_job: IssueJob) -> NoReturn:
+    """Set the jobs to done."""
     for job in jobs:
         JobService.update(job, job_status=JobStatus.DONE)
     process_update_progress(issue_job)
 
 
-def process_jobs(issue_url):
+def process_jobs(issue_url: str) -> Optional[IssueJobStatus]:
+    """Process the jobs."""
     if issue_job := next(iter(IssueJobService.filter(issue_url=issue_url)), None):
         if issue_job.issue_job_status == IssueJobStatus.PENDING:
             IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.RUNNING)
-            process_update_issue_body(issue_job)  # Update not updated jobs
+            # Update not updated jobs
+            process_update_issue_body(issue_job)
             process_pending_jobs(issue_job)
             process_update_issue_status(issue_job)
             process_create_issue(issue_job)
@@ -170,15 +181,17 @@ def process_jobs(issue_url):
     return None
 
 
-def _repository_url(repository):
+def _repository_url(repository: str) -> str:
+    """Get the repository url."""
     return f"{Consts.DEFAULT_BASE_URL}/repos/{repository}"
 
 
-def _get_title_and_repository_url(issue_job, task):
+def _get_repository_url_and_title(issue_job: IssueJob, task: str) -> tuple[str, str]:
+    """Get the title and repository url from the issue job os task."""
     title = issue_job.title
     repository_url = issue_job.repository_url
-    if is_repo_title_syntax(task):
-        repository, task_title = extract_repo_title(task)
+    if repo_title := extract_repo_title(task):
+        repository, task_title = repo_title
         if "/" in repository:
             repository_url = _repository_url(repository)
         else:
@@ -193,10 +206,9 @@ def _get_title_and_repository_url(issue_job, task):
     return repository_url, title
 
 
-def process_pending_jobs(issue_job):
-    for job in JobService.filter(
-        original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING
-    ):
+def process_pending_jobs(issue_job: IssueJob) -> NoReturn:
+    """Process the pending jobs separating what is a job to create an issue from a job to update an issue"""
+    for job in JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING):
         task = job.task
         if job.issue_ref or is_issue_ref(task):
             issue_ref = job.issue_ref or task
@@ -212,7 +224,7 @@ def process_pending_jobs(issue_job):
                 issue_url=issue_url,
             )
         else:
-            repository_url, title = _get_title_and_repository_url(issue_job, task)
+            repository_url, title = _get_repository_url_and_title(issue_job, task)
 
             JobService.update(
                 job,
@@ -222,10 +234,9 @@ def process_pending_jobs(issue_job):
             )
 
 
-def process_update_issue_status(issue_job):
-    for job in JobService.filter(
-        original_issue_url=issue_job.issue_url, job_status=JobStatus.UPDATE_ISSUE_STATUS
-    ):
+def process_update_issue_status(issue_job: IssueJob) -> NoReturn:
+    """Process the update issue status jobs."""
+    for job in JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.UPDATE_ISSUE_STATUS):
         issue = _instantiate_github_class(
             Issue,
             issue_job.hook_installation_target_id,
@@ -236,22 +247,20 @@ def process_update_issue_status(issue_job):
             handle_issue_state(job.checked, issue)
             set_jobs_to_done([job], issue_job)
         except UnknownObjectException:
-            logger.warning(f"Issue {issue.url} not found")
+            logger.warning("Issue %s not found", issue.url)
             JobService.update(job, job_status=JobStatus.ERROR)
 
 
 @Config.call_if("issue_manager.create_issues_from_tasklist")
-def process_create_issue(issue_job):
-    for job in JobService.filter(
-        original_issue_url=issue_job.issue_url, job_status=JobStatus.CREATE_ISSUE
-    ):
+def process_create_issue(issue_job: IssueJob) -> NoReturn:
+    """Process the create issue status jobs."""
+    for job in JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.CREATE_ISSUE):
         repository = _instantiate_github_class(
             Repository,
             issue_job.hook_installation_target_id,
             issue_job.installation_id,
             job.repository_url,
         )
-        # TODO milestone
         created_issue = repository.create_issue(title=job.title)
         JobService.update(
             job,
@@ -260,7 +269,8 @@ def process_create_issue(issue_job):
         )
 
 
-def process_update_issue_body(issue_job):
+def process_update_issue_body(issue_job: IssueJob) -> NoReturn:
+    """Process the update issue body jobs."""
     issue = _instantiate_github_class(
         Issue,
         issue_job.hook_installation_target_id,
@@ -273,7 +283,7 @@ def process_update_issue_body(issue_job):
     )
     for job in update_issue_body_jobs:
         body = re.sub(
-            rf"(\[[ x]]) {job.task}(?=\s|$)",
+            r"(\[[ x]]) " + job.task + r"(?=\s|$)",
             f"\\1 {job.issue_ref}",
             body,
         )
@@ -281,7 +291,8 @@ def process_update_issue_body(issue_job):
     set_jobs_to_done(update_issue_body_jobs, issue_job)
 
 
-def close_issue_if_all_checked(issue_job):
+def close_issue_if_all_checked(issue_job: IssueJob) -> NoReturn:
+    """Close the issue if all the tasks are checked."""
     issue = _instantiate_github_class(
         Issue,
         issue_job.hook_installation_target_id,
@@ -293,19 +304,14 @@ def close_issue_if_all_checked(issue_job):
         issue.edit(state="closed")
 
 
-def process_update_progress(issue_job):
+def process_update_progress(issue_job: IssueJob) -> NoReturn:
+    """Update the progress in the issue comment."""
     if issue_job.issue_job_status == IssueJobStatus.DONE:
         comment = "Job's done"
     else:
-        done = len(
-            JobService.filter(
-                original_issue_url=issue_job.issue_url, job_status=JobStatus.DONE
-            )
-        )
+        done = len(JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.DONE))
         total = len(JobService.filter(original_issue_url=issue_job.issue_url))
-        comment = (
-            f"Analyzing the tasklist [{done}/{total}]\n{markdown_progress(done, total)}"
-        )
+        comment = f"Analyzing the tasklist [{done}/{total}]\n{markdown_progress(done, total)}"
     issue = _instantiate_github_class(
         Issue,
         issue_job.hook_installation_target_id,
@@ -320,12 +326,8 @@ def process_update_progress(issue_job):
 
 
 @Config.call_if("issue_manager.close_subtasks")
-def close_sub_tasks(event: IssuesEvent):
-    """
-    Close all issues in the tasklist.
-    :param event:
-    :return:
-    """
+def close_sub_tasks(event: IssuesEvent) -> NoReturn:
+    """Close all issues in the tasklist."""
     repository = event.repository
     issue = event.issue
     issue_body = issue.body

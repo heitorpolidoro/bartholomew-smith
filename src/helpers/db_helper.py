@@ -117,7 +117,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return cls.filter()
 
     @classmethod
-    def filter(cls, **kwargs) -> list["BaseModel"]:
+    def filter(cls, **kwargs) -> list[T]:
         """Return all models from the table matching the filter."""
         try:
             scan_attributes = {}
@@ -193,7 +193,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return table
 
     @classmethod
-    def insert_one(cls, item: "BaseModel") -> "BaseModel":
+    def insert_one(cls, item: T) -> T:
         """Insert one item in the table"""
         cls.table.put_item(Item=item.dynamo_dict())
         return item

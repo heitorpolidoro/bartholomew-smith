@@ -1,3 +1,4 @@
+"""Job model"""
 from enum import Enum
 from typing import Optional
 
@@ -5,6 +6,7 @@ from src.helpers.db_helper import BaseModel
 
 
 class JobStatus(Enum):
+    """Job status"""
     PENDING = "pending"
     UPDATE_ISSUE_STATUS = "update_issue_status"
     CREATE_ISSUE = "create_issue"
@@ -14,6 +16,7 @@ class JobStatus(Enum):
 
 
 class Job(BaseModel):
+    """Job model"""
     key_schema = ["task", "original_issue_url"]
     task: str
     original_issue_url: str
