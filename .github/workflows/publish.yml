@@ -21,14 +21,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Merge master into production
         run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git fetch --unshallow
           git checkout production
           git pull
-          git merge --no-ff master 
+          git merge --no-ff origin/master 
 
       - name: Push changes
         run: |

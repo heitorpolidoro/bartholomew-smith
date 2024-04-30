@@ -1,14 +1,18 @@
+"""This module contains the main application logic."""
+
 import logging
 import os
 import sys
 from multiprocessing import Process
+from typing import NoReturn
 
 import markdown
 import sentry_sdk
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
+    CheckSuiteCompletedEvent,
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
     IssueEditedEvent,
@@ -30,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def sentry_init():  # pragma: no cover
+def sentry_init() -> NoReturn:  # pragma: no cover
     """Initialize sentry only if SENTRY_DSN is present"""
     if sentry_dsn := os.getenv("SENTRY_DSN"):
         # Initialize Sentry SDK for error logging
@@ -59,7 +63,7 @@ default_configs()
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
 @webhook_handler.add_handler(CheckSuiteRerequestedEvent)
-def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
+def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> NoReturn:
     """
     handle the Check Suite Request and Rerequest events
     Calling the Pull Request manager to:
@@ -73,10 +77,23 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
     pull_request_manager.auto_approve(event)
 
 
+@webhook_handler.add_handler(CheckSuiteCompletedEvent)
+def handle_check_suite_completed(event: CheckSuiteCompletedEvent) -> NoReturn:
+    """
+    handle the Check Suite Request and Rerequest events
+    Calling the Pull Request manager to:
+    - Create Pull Request
+    - Enable auto merge
+    - Update Pull Requests
+    - Auto approve Pull Requests
+    """
+    pull_request_manager.auto_update_pull_requests(event)
+
+
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
 @webhook_handler.add_handler(IssueClosedEvent)
-def handle_issue(event: IssuesEvent):
+def handle_issue(event: IssuesEvent) -> NoReturn:
     """
     handle the Issues Open, Edit and Close events
     Calling the Issue Manager to:
@@ -90,8 +107,8 @@ def handle_issue(event: IssuesEvent):
 
 
 @app.route("/process_jobs", methods=["POST"])
-def process_jobs_endpoint(issue_url=None):
-    """ """
+def process_jobs_endpoint(issue_url: str = None) -> tuple[Response, int]:
+    """Process the jobs for the given issue_url"""
     issue_url = issue_url or request.get_json(force=True).get("issue_url")
     if not issue_url:
         return jsonify({"error": "issue_url is required"}), 400
@@ -110,7 +127,7 @@ def process_jobs_endpoint(issue_url=None):
 
 
 @app.route("/", methods=["GET"])
-def index():  # pragma: no cover
+def index() -> str:  # pragma: no cover
     """Return the index homepage"""
     with open("README.md") as f:
         md = f.read()
@@ -120,14 +137,15 @@ def index():  # pragma: no cover
 
 
 @app.route("/marketplace", methods=["POST"])
-def marketplace():  # pragma: no cover
+def marketplace() -> str:  # pragma: no cover
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
     print(f"Marketplace event: {request.json}")
     return "OK"
 
 
-def create_tables():  # pragma: no cover
+def create_tables() -> str:  # pragma: no cover
+    """Create the database tables"""
     from src.helpers.db_helper import BaseModelService
 
     for subclass in BaseModelService.__subclasses__():

@@ -8,7 +8,7 @@ from typing import NoReturn
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config, EventCheckRun
-from githubapp.events import CheckSuiteRequestedEvent
+from githubapp.events import CheckSuiteCompletedEvent, CheckSuiteRequestedEvent
 
 from src.helpers import pull_request_helper
 
@@ -37,11 +37,11 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
         event.check_suite.head_sha,
         "Initializing...",
     )
+    summary = []
     if head_branch != repository.default_branch:
         pull_request = get_or_create_pull_request(repository, head_branch, check_run)
         auto_merge_enabled = enable_auto_merge(pull_request, check_run)
 
-        summary = []
         if pull_request.user.login == Config.BOT_NAME:
             summary.append(f"Pull Request #{pull_request.number} created")
         else:
@@ -51,12 +51,11 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
             )
         if auto_merge_enabled:
             summary.append("Auto-merge enabled")
-        check_run.update(
-            title="Done",
-            summary="\n".join(summary),
-            conclusion="success",
-        )
-    auto_update_pull_requests(repository, head_branch)
+    check_run.update(
+        title="Done",
+        summary="\n".join(summary),
+        conclusion="success",
+    )
 
 
 def get_or_create_pull_request(
@@ -137,6 +136,8 @@ def auto_approve(event: CheckSuiteRequestedEvent) -> NoReturn:
 
 
 @Config.call_if("pull_request_manager.auto_update")
-def auto_update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
+def auto_update_pull_requests(event: CheckSuiteCompletedEvent) -> NoReturn:
     """Updates all the pull requests in the given branch if is updatable."""
-    pull_request_helper.update_pull_requests(repository, base_branch)
+    pull_request_helper.update_pull_requests(
+        event.repository, event.check_suite.head_branch
+    )
