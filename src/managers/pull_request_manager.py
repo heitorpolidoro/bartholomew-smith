@@ -37,11 +37,11 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
         event.check_suite.head_sha,
         "Initializing...",
     )
+    summary = []
     if head_branch != repository.default_branch:
         pull_request = get_or_create_pull_request(repository, head_branch, check_run)
         auto_merge_enabled = enable_auto_merge(pull_request, check_run)
 
-        summary = []
         if pull_request.user.login == Config.BOT_NAME:
             summary.append(f"Pull Request #{pull_request.number} created")
         else:
