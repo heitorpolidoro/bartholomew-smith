@@ -124,7 +124,6 @@ def base_model_service_stub():
             "src.helpers.db_helper.BaseModelService", new_callable=BaseModelServiceStub
         ) as base_model_service_stub,
     ):
-
         yield base_model_service_stub
         for sub_service in BaseModelService.__subclasses__():
             sub_service._table = None
