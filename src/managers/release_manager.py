@@ -1,4 +1,5 @@
 """This module contains the logic for managing releases."""
+
 from typing import NoReturn
 
 from githubapp import Config

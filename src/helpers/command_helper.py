@@ -1,4 +1,4 @@
-""" Helper to manage commands in texts """
+"""Helper to manage commands in texts"""
 
 import re
 from typing import Optional

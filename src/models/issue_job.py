@@ -1,4 +1,4 @@
-"""IssueJob model """
+"""IssueJob model"""
 
 from enum import Enum
 
@@ -6,7 +6,8 @@ from src.helpers.db_helper import BaseModel
 
 
 class IssueJobStatus(Enum):
-    """IssueJobStatus enum """
+    """IssueJobStatus enum"""
+
     PENDING = "pending"
     RUNNING = "running"
     ERROR = "error"
@@ -14,7 +15,8 @@ class IssueJobStatus(Enum):
 
 
 class IssueJob(BaseModel):
-    """IssueJob model """
+    """IssueJob model"""
+
     key_schema = ["issue_url"]
     issue_url: str
     repository_url: str

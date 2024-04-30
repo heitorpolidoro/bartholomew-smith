@@ -1,7 +1,7 @@
-""" General Methods for text """
+"""General Methods for text"""
 
 import re
-from typing import Optional, Any, Union
+from typing import Any, Optional, Union
 
 
 def markdown_progress(count: int, total: int) -> str:

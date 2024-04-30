@@ -1,7 +1,7 @@
-""" Method to helps with Github PullRequests"""
+"""Method to helps with Github PullRequests"""
 
 import logging
-from typing import Optional, NoReturn
+from typing import NoReturn, Optional
 
 import github
 from github.PullRequest import PullRequest
@@ -13,7 +13,9 @@ from src.helpers import repository_helper
 logger = logging.getLogger(__name__)
 
 
-def get_existing_pull_request(repository: Repository, head: str) -> Optional[PullRequest]:
+def get_existing_pull_request(
+    repository: Repository, head: str
+) -> Optional[PullRequest]:
     """
     Returns an existing PR if it exists.
     :param repository: The Repository to get the PR from.
@@ -52,10 +54,13 @@ def create_pull_request(
         )
     except github.GithubException as ghe:
         if ghe.data and any(
-            error.get("message") == f"No commits between {repository.default_branch} and {branch}"
+            error.get("message")
+            == f"No commits between {repository.default_branch} and {branch}"
             for error in ghe.data["errors"]
         ):
-            logger.warning("No commits between '%s' and '%s'", repository.default_branch, branch)
+            logger.warning(
+                "No commits between '%s' and '%s'", repository.default_branch, branch
+            )
         else:
             raise
     return None
@@ -68,7 +73,9 @@ def update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
             pull_request.update_branch()
 
 
-def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest) -> NoReturn:
+def approve(
+    auto_approve_pat: str, repository: Repository, pull_request: PullRequest
+) -> NoReturn:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     pr_commits = pull_request.get_commits()
     first_commit = pr_commits[0]
@@ -76,7 +83,9 @@ def approve(auto_approve_pat: str, repository: Repository, pull_request: PullReq
     branch_owner = first_commit.author
     repository_owner_login = repository.owner.login
     branch_owner_login = branch_owner.login
-    allowed_logins = Config.pull_request_manager.auto_approve_logins + [repository_owner_login]
+    allowed_logins = Config.pull_request_manager.auto_approve_logins + [
+        repository_owner_login
+    ]
     if branch_owner_login not in allowed_logins:
         logger.info(
             'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
@@ -94,8 +103,10 @@ def approve(auto_approve_pat: str, repository: Repository, pull_request: PullReq
         )
         return
 
-    pull_request = repository_helper.get_repo_cached(repository.full_name, pat=auto_approve_pat).get_pull(
-        pull_request.number
-    )
+    pull_request = repository_helper.get_repo_cached(
+        repository.full_name, pat=auto_approve_pat
+    ).get_pull(pull_request.number)
     pull_request.create_review(event="APPROVE")
-    logger.info("Pull Request %s#%d approved", repository.full_name, pull_request.number)
+    logger.info(
+        "Pull Request %s#%d approved", repository.full_name, pull_request.number
+    )

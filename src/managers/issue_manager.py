@@ -3,7 +3,7 @@
 import logging
 import re
 from functools import lru_cache
-from typing import Optional, NoReturn, TypeVar
+from typing import NoReturn, Optional, TypeVar
 
 import github
 from github import Consts, UnknownObjectException
@@ -22,11 +22,7 @@ from githubapp.webhook_handler import _get_auth
 from src.helpers import issue_helper
 from src.helpers.issue_helper import get_issue_ref, handle_issue_state
 from src.helpers.repository_helper import get_repository
-from src.helpers.text_helper import (
-    extract_repo_title,
-    is_issue_ref,
-    markdown_progress,
-)
+from src.helpers.text_helper import extract_repo_title, is_issue_ref, markdown_progress
 from src.models import IssueJob, IssueJobStatus, Job, JobStatus
 from src.services import IssueJobService, JobService
 
@@ -86,7 +82,9 @@ def handle_task_list(event: IssuesEvent) -> Optional[IssueJob]:
             continue
         # issue created in a previous run
         if created_issue := created_issues.get(task):
-            JobService.update(created_issue, checked=checked, job_status=JobStatus.PENDING)
+            JobService.update(
+                created_issue, checked=checked, job_status=JobStatus.PENDING
+            )
         else:
             jobs.append(
                 Job(
@@ -105,7 +103,9 @@ def handle_task_list(event: IssuesEvent) -> Optional[IssueJob]:
 
 
 @lru_cache
-def _cached_get_auth(hook_installation_target_id: int, installation_id: int) -> github.Auth:
+def _cached_get_auth(
+    hook_installation_target_id: int, installation_id: int
+) -> github.Auth:
     """Get the auth for the given installation, cached."""
     return _get_auth(hook_installation_target_id, installation_id)
 
@@ -113,7 +113,9 @@ def _cached_get_auth(hook_installation_target_id: int, installation_id: int) -> 
 @lru_cache
 def _get_gh(hook_installation_target_id: int, installation_id: int) -> github.Github:
     """Get the Github object for the given installation, cached"""
-    return github.Github(auth=_cached_get_auth(hook_installation_target_id, installation_id))
+    return github.Github(
+        auth=_cached_get_auth(hook_installation_target_id, installation_id)
+    )
 
 
 @lru_cache
@@ -145,7 +147,9 @@ def _get_repository(issue_job: IssueJob, repository_name: str) -> Repository:
 
 
 @lru_cache
-def _instantiate_github_class(clazz: type[T], hook_installation_target_id: int, installation_id: int, url: str) -> T:
+def _instantiate_github_class(
+    clazz: type[T], hook_installation_target_id: int, installation_id: int, url: str
+) -> T:
     """Instantiate a Github class, cached"""
     return clazz(
         requester=_get_requester(hook_installation_target_id, installation_id),
@@ -208,7 +212,9 @@ def _get_repository_url_and_title(issue_job: IssueJob, task: str) -> tuple[str, 
 
 def process_pending_jobs(issue_job: IssueJob) -> NoReturn:
     """Process the pending jobs separating what is a job to create an issue from a job to update an issue"""
-    for job in JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING):
+    for job in JobService.filter(
+        original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING
+    ):
         task = job.task
         if job.issue_ref or is_issue_ref(task):
             issue_ref = job.issue_ref or task
@@ -236,7 +242,9 @@ def process_pending_jobs(issue_job: IssueJob) -> NoReturn:
 
 def process_update_issue_status(issue_job: IssueJob) -> NoReturn:
     """Process the update issue status jobs."""
-    for job in JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.UPDATE_ISSUE_STATUS):
+    for job in JobService.filter(
+        original_issue_url=issue_job.issue_url, job_status=JobStatus.UPDATE_ISSUE_STATUS
+    ):
         issue = _instantiate_github_class(
             Issue,
             issue_job.hook_installation_target_id,
@@ -254,7 +262,9 @@ def process_update_issue_status(issue_job: IssueJob) -> NoReturn:
 @Config.call_if("issue_manager.create_issues_from_tasklist")
 def process_create_issue(issue_job: IssueJob) -> NoReturn:
     """Process the create issue status jobs."""
-    for job in JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.CREATE_ISSUE):
+    for job in JobService.filter(
+        original_issue_url=issue_job.issue_url, job_status=JobStatus.CREATE_ISSUE
+    ):
         repository = _instantiate_github_class(
             Repository,
             issue_job.hook_installation_target_id,
@@ -309,9 +319,15 @@ def process_update_progress(issue_job: IssueJob) -> NoReturn:
     if issue_job.issue_job_status == IssueJobStatus.DONE:
         comment = "Job's done"
     else:
-        done = len(JobService.filter(original_issue_url=issue_job.issue_url, job_status=JobStatus.DONE))
+        done = len(
+            JobService.filter(
+                original_issue_url=issue_job.issue_url, job_status=JobStatus.DONE
+            )
+        )
         total = len(JobService.filter(original_issue_url=issue_job.issue_url))
-        comment = f"Analyzing the tasklist [{done}/{total}]\n{markdown_progress(done, total)}"
+        comment = (
+            f"Analyzing the tasklist [{done}/{total}]\n{markdown_progress(done, total)}"
+        )
     issue = _instantiate_github_class(
         Issue,
         issue_job.hook_installation_target_id,

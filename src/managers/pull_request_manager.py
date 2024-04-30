@@ -59,7 +59,9 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
     auto_update_pull_requests(repository, head_branch)
 
 
-def get_or_create_pull_request(repository: Repository, head_branch: str, check_run: EventCheckRun) -> PullRequest:
+def get_or_create_pull_request(
+    repository: Repository, head_branch: str, check_run: EventCheckRun
+) -> PullRequest:
     """Get an existing Pull Request or create a new one"""
     if pull_request := pull_request_helper.get_existing_pull_request(
         repository, f"{repository.owner.login}:{head_branch}"
@@ -82,11 +84,15 @@ def get_or_create_pull_request(repository: Repository, head_branch: str, check_r
 
 
 @Config.call_if("pull_request_manager.create_pull_request")
-def create_pull_request(repository: Repository, branch: str, check_run: EventCheckRun) -> PullRequest:
+def create_pull_request(
+    repository: Repository, branch: str, check_run: EventCheckRun
+) -> PullRequest:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
     title, body = get_title_and_body_from_issue(repository, branch)
     check_run.update(title="Creating Pull Request")
-    pull_request = pull_request_helper.create_pull_request(repository, branch, title, body)
+    pull_request = pull_request_helper.create_pull_request(
+        repository, branch, title, body
+    )
     check_run.update(title="Pull Request created")
     return pull_request
 
