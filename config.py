@@ -1,4 +1,5 @@
 """Module to create the githubapp Configs"""
+
 from typing import NoReturn
 
 from githubapp import Config
