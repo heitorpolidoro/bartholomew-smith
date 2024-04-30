@@ -1,4 +1,5 @@
 """This module contains the main application logic."""
+
 import logging
 import os
 import sys
@@ -7,7 +8,7 @@ from typing import NoReturn
 
 import markdown
 import sentry_sdk
-from flask import Flask, jsonify, render_template, request, Response
+from flask import Flask, Response, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -52,7 +53,9 @@ def sentry_init() -> NoReturn:
 
 app = Flask(__name__)
 sentry_init()
-webhook_handler.handle_with_flask(app, use_default_index=False, config_file=".bartholomew.yaml")
+webhook_handler.handle_with_flask(
+    app, use_default_index=False, config_file=".bartholomew.yaml"
+)
 
 load_dotenv()
 default_configs()
@@ -92,7 +95,7 @@ def handle_issue(event: IssuesEvent) -> NoReturn:
 
 @app.route("/process_jobs", methods=["POST"])
 def process_jobs_endpoint(issue_url: str = None) -> tuple[Response, int]:
-    """ Process the jobs for the given issue_url """
+    """Process the jobs for the given issue_url"""
     issue_url = issue_url or request.get_json(force=True).get("issue_url")
     if not issue_url:
         return jsonify({"error": "issue_url is required"}), 400
@@ -102,7 +105,9 @@ def process_jobs_endpoint(issue_url: str = None) -> tuple[Response, int]:
     if issue_job := next(iter(IssueJobService.filter(issue_url=issue_url)), None):
         if process.is_alive():
             IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
-            request_helper.make_thread_request(request_helper.get_request_url("process_jobs_endpoint"), issue_url)
+            request_helper.make_thread_request(
+                request_helper.get_request_url("process_jobs_endpoint"), issue_url
+            )
         process.terminate()
         return jsonify({"status": issue_job.issue_job_status.value}), 200
     return jsonify({"error": f"IssueJob for {issue_url=} not found"}), 404
