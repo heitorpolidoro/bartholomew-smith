@@ -1,11 +1,13 @@
+"""This module contains the main application logic."""
 import logging
 import os
 import sys
 from multiprocessing import Process
+from typing import NoReturn
 
 import markdown
 import sentry_sdk
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, Response
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
@@ -30,7 +32,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def sentry_init():  # pragma: no cover
+# pragma: no cover
+def sentry_init() -> NoReturn:
     """Initialize sentry only if SENTRY_DSN is present"""
     if sentry_dsn := os.getenv("SENTRY_DSN"):
         # Initialize Sentry SDK for error logging
@@ -49,9 +52,7 @@ def sentry_init():  # pragma: no cover
 
 app = Flask(__name__)
 sentry_init()
-webhook_handler.handle_with_flask(
-    app, use_default_index=False, config_file=".bartholomew.yaml"
-)
+webhook_handler.handle_with_flask(app, use_default_index=False, config_file=".bartholomew.yaml")
 
 load_dotenv()
 default_configs()
@@ -59,7 +60,7 @@ default_configs()
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
 @webhook_handler.add_handler(CheckSuiteRerequestedEvent)
-def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
+def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> NoReturn:
     """
     handle the Check Suite Request and Rerequest events
     Calling the Pull Request manager to:
@@ -76,7 +77,7 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent):
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
 @webhook_handler.add_handler(IssueClosedEvent)
-def handle_issue(event: IssuesEvent):
+def handle_issue(event: IssuesEvent) -> NoReturn:
     """
     handle the Issues Open, Edit and Close events
     Calling the Issue Manager to:
@@ -90,8 +91,8 @@ def handle_issue(event: IssuesEvent):
 
 
 @app.route("/process_jobs", methods=["POST"])
-def process_jobs_endpoint(issue_url=None):
-    """ """
+def process_jobs_endpoint(issue_url: str = None) -> tuple[Response, int]:
+    """ Process the jobs for the given issue_url """
     issue_url = issue_url or request.get_json(force=True).get("issue_url")
     if not issue_url:
         return jsonify({"error": "issue_url is required"}), 400
@@ -101,16 +102,15 @@ def process_jobs_endpoint(issue_url=None):
     if issue_job := next(iter(IssueJobService.filter(issue_url=issue_url)), None):
         if process.is_alive():
             IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
-            request_helper.make_thread_request(
-                request_helper.get_request_url("process_jobs_endpoint"), issue_url
-            )
+            request_helper.make_thread_request(request_helper.get_request_url("process_jobs_endpoint"), issue_url)
         process.terminate()
         return jsonify({"status": issue_job.issue_job_status.value}), 200
     return jsonify({"error": f"IssueJob for {issue_url=} not found"}), 404
 
 
 @app.route("/", methods=["GET"])
-def index():  # pragma: no cover
+# pragma: no cover
+def index() -> str:
     """Return the index homepage"""
     with open("README.md") as f:
         md = f.read()
@@ -120,14 +120,17 @@ def index():  # pragma: no cover
 
 
 @app.route("/marketplace", methods=["POST"])
-def marketplace():  # pragma: no cover
+# pragma: no cover
+def marketplace() -> str:
     """Marketplace events"""
     logger.info(f"Marketplace event: {request.json}")
     print(f"Marketplace event: {request.json}")
     return "OK"
 
 
-def create_tables():  # pragma: no cover
+# pragma: no cover
+def create_tables() -> str:
+    """Create the database tables"""
     from src.helpers.db_helper import BaseModelService
 
     for subclass in BaseModelService.__subclasses__():
