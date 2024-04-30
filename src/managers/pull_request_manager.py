@@ -8,7 +8,7 @@ from typing import NoReturn
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config, EventCheckRun
-from githubapp.events import CheckSuiteRequestedEvent, CheckSuiteCompletedEvent
+from githubapp.events import CheckSuiteCompletedEvent, CheckSuiteRequestedEvent
 
 from src.helpers import pull_request_helper
 
@@ -138,4 +138,6 @@ def auto_approve(event: CheckSuiteRequestedEvent) -> NoReturn:
 @Config.call_if("pull_request_manager.auto_update")
 def auto_update_pull_requests(event: CheckSuiteCompletedEvent) -> NoReturn:
     """Updates all the pull requests in the given branch if is updatable."""
-    pull_request_helper.update_pull_requests(event.repository, event.check_suite.head_branch)
+    pull_request_helper.update_pull_requests(
+        event.repository, event.check_suite.head_branch
+    )
