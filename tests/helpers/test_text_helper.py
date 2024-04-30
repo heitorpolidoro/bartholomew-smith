@@ -26,7 +26,12 @@ def test_markdown_progress(count, total, expected_result):
     "task, expected_result",
     [
         ("owner/repo#123", True),
+        ("owner/repo#not_num", False),
+        ("owner/repo/other#123", False),
         ("test_task", False),
+        ("#123", True),
+        ("#not_num", False),
+        ("#12.3", False),
     ],
 )
 def test_is_issue_ref(task, expected_result):
@@ -37,6 +42,9 @@ def test_is_issue_ref(task, expected_result):
     "task, expected_result",
     [
         ("[repo] test_task", ("repo", "test_task")),
+        ("   [repo] test_task", ("repo", "test_task")),
+        ("[    repo    ] test_task", ("repo", "test_task")),
+        ("repo] test_task", None),
         ("test task with no brackets", None),
     ],
 )
