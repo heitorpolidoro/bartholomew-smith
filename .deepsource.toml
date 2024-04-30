@@ -12,7 +12,7 @@ name = "test-coverage"
 name = "python"
 
   [analyzers.meta]
-  max_line_length = 100
+  max_line_length = 120
   runtime_version = "3.x.x"
 
 [[transformers]]
