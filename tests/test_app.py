@@ -3,7 +3,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from app import app, handle_check_suite_requested, handle_issue
+from app import (
+    app,
+    handle_check_suite_completed,
+    handle_check_suite_requested,
+    handle_issue,
+)
 from src.models import IssueJob, IssueJobStatus
 
 
@@ -53,6 +58,11 @@ def test_handle_check_suite_requested(event, pull_request_manager, release_manag
     pull_request_manager.manage.assert_called_once_with(event)
     release_manager.manage.assert_called_once_with(event)
     pull_request_manager.auto_approve.assert_called_once_with(event)
+
+
+def test_handle_check_suite_completed(event, pull_request_manager):
+    handle_check_suite_completed(event)
+    pull_request_manager.auto_update_pull_requests.assert_called_once_with(event)
 
 
 def test_handle_issue(event, issue_manager, issue_job_service):

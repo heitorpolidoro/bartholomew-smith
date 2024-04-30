@@ -5,6 +5,7 @@ from githubapp import Config
 
 from src.managers.pull_request_manager import (
     auto_approve,
+    auto_update_pull_requests,
     enable_auto_merge,
     get_or_create_pull_request,
     get_title_and_body_from_issue,
@@ -63,9 +64,6 @@ def test_manage(
             check_run.update.assert_called_once_with(
                 title="Done", summary=summary, conclusion="success"
             )
-        pull_request_helper.update_pull_requests.assert_called_once_with(
-            event.repository, head_branch
-        )
 
 
 @pytest.mark.parametrize(
@@ -172,4 +170,11 @@ def test_auto_approve(event, repository, pull_request_helper):
     assert pull_request_helper.approve.call_count == len(pulls)
     pull_request_helper.approve.assert_has_calls(
         [call(Config.AUTO_APPROVE_PAT, repository, p) for p in pulls]
+    )
+
+
+def test_auto_update_pull_requests(event, pull_request_helper):
+    auto_update_pull_requests(event)
+    pull_request_helper.update_pull_requests.assert_called_once_with(
+        event.repository, event.check_suite.head_branch
     )

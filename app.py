@@ -12,6 +12,7 @@ from flask import Flask, Response, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
+    CheckSuiteCompletedEvent,
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
     IssueEditedEvent,
@@ -74,6 +75,19 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> NoReturn:
     pull_request_manager.manage(event)
     release_manager.manage(event)
     pull_request_manager.auto_approve(event)
+
+
+@webhook_handler.add_handler(CheckSuiteCompletedEvent)
+def handle_check_suite_completed(event: CheckSuiteCompletedEvent) -> NoReturn:
+    """
+    handle the Check Suite Request and Rerequest events
+    Calling the Pull Request manager to:
+    - Create Pull Request
+    - Enable auto merge
+    - Update Pull Requests
+    - Auto approve Pull Requests
+    """
+    pull_request_manager.auto_update_pull_requests(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
