@@ -91,13 +91,11 @@ def base_model_service_stub():
             self.items = []
 
         def scan(self, *args, ExpressionAttributeValues=None, **kwargs):
-            def scan_filter(item, key, value):
-                return item[key[1:]] == value
-
-            items = self.items
             ExpressionAttributeValues = ExpressionAttributeValues or {}
-            for k, v in ExpressionAttributeValues.items():
-                items = list(filter(lambda i: scan_filter(i, k, v), items))
+            items = []
+            for item in self.items:
+                if all(item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()):
+                    items.append(item)
 
             return {"Items": items}
 
