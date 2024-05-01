@@ -139,7 +139,7 @@ def index() -> str:  # pragma: no cover
 @app.route("/marketplace", methods=["POST"])
 def marketplace() -> str:  # pragma: no cover
     """Marketplace events"""
-    logger.info(f"Marketplace event: {request.json}")
+    logger.info("Marketplace event: %s", request.json)
     print(f"Marketplace event: {request.json}")
     return "OK"
 
@@ -149,6 +149,6 @@ def create_tables() -> str:  # pragma: no cover
     from src.helpers.db_helper import BaseModelService
 
     for subclass in BaseModelService.__subclasses__():
-        logger.info(f"Creating table for {subclass.clazz.__name__}")
+        logger.info("Creating table for %s", subclass.clazz.__name__)
         subclass.create_table()
     return "OK"
