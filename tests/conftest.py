@@ -94,7 +94,9 @@ def base_model_service_stub():
             ExpressionAttributeValues = ExpressionAttributeValues or {}
             items = []
             for item in self.items:
-                if all(item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()):
+                if all(
+                    item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()
+                ):
                     items.append(item)
 
             return {"Items": items}
