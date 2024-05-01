@@ -3,8 +3,8 @@
 </div>
 
 [![Code Quality](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml/badge.svg)](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/code_quality.yml)
-![Vercel](https://vercelbadge.vercel.app/api/heitorpolidoro/bartholomew-smith)
 <br>
+[![Release](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/publish.yml/badge.svg)](https://github.com/heitorpolidoro/bartholomew-smith/actions/workflows/publish.yml)
 [![Latest Version](https://img.shields.io/github/v/release/heitorpolidoro/bartholomew-smith?label=Latest%20Version)](https://github.com/heitorpolidoro/bartholomew-smith/releases/latest)
 ![GitHub Release Date](https://img.shields.io/github/release-date/heitorpolidoro/bartholomew-smith)
 ![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/heitorpolidoro/bartholomew-smith/latest)
@@ -20,7 +20,7 @@
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=heitorpolidoro_bartholomew-smith&metric=bugs)](https://sonarcloud.io/summary/new_code?id=heitorpolidoro_bartholomew-smith)
-<br>
+
 ![Vercel](https://vercelbadge.vercel.app/api/heitorpolidoro/bartholomew-smith)
 # Bartholomew "The Butler" Smith
 
