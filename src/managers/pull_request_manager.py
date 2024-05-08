@@ -99,7 +99,11 @@ def create_pull_request(
     if isinstance(pull_request, PullRequest):
         check_run.update(title="Pull Request created")
         return pull_request
-    check_run.update(title="Pull Request creation failure", summary=pull_request,  conclusion="failure")
+    check_run.update(
+        title="Pull Request creation failure",
+        summary=pull_request,
+        conclusion="failure",
+    )
     return None
 
 
