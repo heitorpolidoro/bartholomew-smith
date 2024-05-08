@@ -1,7 +1,7 @@
 """Method to helps with Github PullRequests"""
 
 import logging
-from typing import NoReturn, Optional
+from typing import NoReturn, Optional, Union
 
 import github
 from github.PullRequest import PullRequest
@@ -30,7 +30,7 @@ def create_pull_request(
     branch: str,
     title: Optional[str] = None,
     body: Optional[str] = None,
-) -> Optional[PullRequest]:
+) -> Optional[Union[PullRequest, str]]:
     """
     Creates a PR from the default branch to the given branch.
 
@@ -53,17 +53,17 @@ def create_pull_request(
             draft=False,
         )
     except github.GithubException as ghe:
-        if ghe.data and any(
-            error.get("message")
-            == f"No commits between {repository.default_branch} and {branch}"
-            for error in ghe.data["errors"]
-        ):
-            logger.warning(
-                "No commits between '%s' and '%s'", repository.default_branch, branch
-            )
-        else:
-            raise
-    return None
+        possible_errors = [
+            f"No commits between {repository.default_branch} and {branch}",
+            f"The {branch} branch has no history in common with main",
+        ]
+        for error in ghe.data["errors"]:
+            message = error.get("message")
+            if message in possible_errors:
+                logger.warning(message)
+                return message
+
+        raise
 
 
 def update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
