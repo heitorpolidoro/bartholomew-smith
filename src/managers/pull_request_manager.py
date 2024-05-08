@@ -3,7 +3,7 @@
 import logging
 import re
 from string import Template
-from typing import NoReturn
+from typing import NoReturn, Optional
 
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -24,7 +24,7 @@ Closes #$issue_num
 
 
 @Config.call_if("pull_request_manager.enabled")
-def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
+def manage(event: CheckSuiteRequestedEvent) -> None:
     """
     Create a Pull Request, if the config is enabled and no Pull Request for the same head branch exists
     Enable auto-merge for the Pull Request, if the config is enabled
@@ -40,6 +40,8 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
     summary = []
     if head_branch != repository.default_branch:
         pull_request = get_or_create_pull_request(repository, head_branch, check_run)
+        if not pull_request:
+            return
         auto_merge_error = enable_auto_merge(pull_request, check_run)
 
         if pull_request.user.login == Config.BOT_NAME:
@@ -87,15 +89,18 @@ def get_or_create_pull_request(
 @Config.call_if("pull_request_manager.create_pull_request")
 def create_pull_request(
     repository: Repository, branch: str, check_run: EventCheckRun
-) -> PullRequest:
+) -> Optional[PullRequest]:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
     title, body = get_title_and_body_from_issue(repository, branch)
     check_run.update(title="Creating Pull Request")
     pull_request = pull_request_helper.create_pull_request(
         repository, branch, title, body
     )
-    check_run.update(title="Pull Request created")
-    return pull_request
+    if isinstance(pull_request, PullRequest):
+        check_run.update(title="Pull Request created")
+        return pull_request
+    check_run.update(title="Pull Request creation failure", summary=pull_request,  conclusion="failure")
+    return None
 
 
 @Config.call_if("pull_request_manager.link_issue", return_on_not_call=("", ""))
