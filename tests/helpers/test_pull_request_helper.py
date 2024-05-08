@@ -43,11 +43,13 @@ def test_get_existing_pull_request(repository, expected_result_index, pull_reque
     [
         "",
         "No commits between master and branch",
+        "The branch branch has no history in common with main",
         "Other",
     ],
     ids=[
         "Create Pull Request",
         "No commits",
+        "No commits in common",
         "Other error",
     ],
 )
@@ -57,7 +59,7 @@ def test_create_pull_request(repository, error_message):
         repository.create_pull.side_effect = GithubException(
             0, data={"errors": [{"message": error_message}]}
         )
-        expected_result = None
+        expected_result = error_message
 
     if error_message == "Other":
         with pytest.raises(GithubException):
