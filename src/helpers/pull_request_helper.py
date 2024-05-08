@@ -76,7 +76,7 @@ def update_pull_requests(repository: Repository, base_branch: str) -> NoReturn:
 
 def approve(
     auto_approve_pat: str, repository: Repository, pull_request: PullRequest
-) -> NoReturn:
+) -> None:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     pr_commits = pull_request.get_commits()
     first_commit = pr_commits[0]

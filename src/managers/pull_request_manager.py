@@ -40,7 +40,7 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
     summary = []
     if head_branch != repository.default_branch:
         pull_request = get_or_create_pull_request(repository, head_branch, check_run)
-        auto_merge_enabled = enable_auto_merge(pull_request, check_run)
+        auto_merge_error = enable_auto_merge(pull_request, check_run)
 
         if pull_request.user.login == Config.BOT_NAME:
             summary.append(f"Pull Request #{pull_request.number} created")
@@ -49,7 +49,9 @@ def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
                 f"Pull Request for '{repository.owner.login}:{head_branch}' into "
                 f"'{repository.default_branch}' (PR#{pull_request.number}) already exists"
             )
-        if auto_merge_enabled:
+        if auto_merge_error:
+            summary.append(f"Auto-merge failure: {auto_merge_error}")
+        else:
             summary.append("Auto-merge enabled")
     check_run.update(
         title="Done",
@@ -114,12 +116,15 @@ def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, 
 
 
 @Config.call_if("pull_request_manager.enable_auto_merge")
-def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun) -> bool:
+def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun) -> str:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
+    if pull_request.mergeable_state == "unstable":
+        return "Unable to enable auto-merge when the mergeable_state is unstable"
+
     check_run.update(title="Enabling auto-merge")
     pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
     check_run.update(title="Auto-merge enabled")
-    return True
+    return ""
 
 
 @Config.call_if("AUTO_APPROVE_PAT")

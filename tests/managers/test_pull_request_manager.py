@@ -22,12 +22,12 @@ def pull_request_helper():
 
 
 @pytest.mark.parametrize(
-    "head_branch, pull_request_user_login, auto_merge_enabled",
+    "head_branch, pull_request_user_login, auto_merge_error",
     [
-        ["master", "heitorpolidoro", True],
-        ["branch", "heitorpolidoro", True],
-        ["branch", Config.BOT_NAME, True],
-        ["branch", "heitorpolidoro", False],
+        ["master", "heitorpolidoro", ""],
+        ["branch", "heitorpolidoro", ""],
+        ["branch", Config.BOT_NAME, ""],
+        ["branch", "heitorpolidoro", "Some error"],
     ],
 )
 def test_manage(
@@ -35,7 +35,7 @@ def test_manage(
     check_run,
     head_branch,
     pull_request_user_login,
-    auto_merge_enabled,
+    auto_merge_error,
     pull_request,
     pull_request_helper,
 ):
@@ -48,7 +48,7 @@ def test_manage(
         ),
         patch(
             "src.managers.pull_request_manager.enable_auto_merge",
-            return_value=auto_merge_enabled,
+            return_value=auto_merge_error,
         ),
     ):
         manage(event)
@@ -59,7 +59,9 @@ def test_manage(
                 summary = "Pull Request #123 created"
             else:
                 summary = "Pull Request for 'heitorpolidoro:branch' into 'master' (PR#123) already exists"
-            if auto_merge_enabled:
+            if auto_merge_error:
+                summary += f"\nAuto-merge failure: {auto_merge_error}"
+            else:
                 summary += "\nAuto-merge enabled"
             check_run.update.assert_called_once_with(
                 title="Done", summary=summary, conclusion="success"
@@ -162,6 +164,12 @@ def test_enable_auto_merge(pull_request):
     )
 
 
+def test_dont_enable_auto_merge_when_mergeable_state_is_unstable(pull_request):
+    pull_request.mergeable_state = "unstable"
+    enable_auto_merge(pull_request, Mock())
+    pull_request.enable_automerge.assert_not_called()
+
+
 def test_auto_approve(event, repository, pull_request_helper):
     pulls = [Mock() for _ in range(3)]
     event.repository.get_pulls.return_value = pulls
@@ -173,7 +181,7 @@ def test_auto_approve(event, repository, pull_request_helper):
     )
 
 
-def test_auto_update_pull_requests(event, pull_request_helper):
+def test_auto_update_pull_requests(event, pull_request_helper, repository):
     auto_update_pull_requests(event)
     pull_request_helper.update_pull_requests.assert_called_once_with(
         event.repository, event.check_suite.head_branch
