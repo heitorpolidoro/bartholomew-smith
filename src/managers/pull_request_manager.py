@@ -118,7 +118,7 @@ def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, 
 @Config.call_if("pull_request_manager.enable_auto_merge")
 def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun) -> str:
     """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
-    if pull_request.mergeable_state == 'unstable':
+    if pull_request.mergeable_state == "unstable":
         return "Unable to enable auto-merge when the mergeable_state is unstable"
 
     check_run.update(title="Enabling auto-merge")
