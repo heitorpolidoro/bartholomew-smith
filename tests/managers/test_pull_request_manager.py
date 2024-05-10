@@ -1,6 +1,7 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
+from github.PullRequest import PullRequest
 from githubapp import Config
 
 from src.managers.pull_request_manager import (
@@ -22,12 +23,13 @@ def pull_request_helper():
 
 
 @pytest.mark.parametrize(
-    "head_branch, pull_request_user_login, auto_merge_error",
+    "head_branch, pull_request_user_login, auto_merge_error, create_pull_request",
     [
-        ["master", "heitorpolidoro", ""],
-        ["branch", "heitorpolidoro", ""],
-        ["branch", Config.BOT_NAME, ""],
-        ["branch", "heitorpolidoro", "Some error"],
+        ["master", "heitorpolidoro", "", True],
+        ["branch", "heitorpolidoro", "", True],
+        ["branch", Config.BOT_NAME, "", True],
+        ["branch", "heitorpolidoro", "Some error", True],
+        ["branch", "heitorpolidoro", "", False],
     ],
 )
 def test_manage(
@@ -36,11 +38,14 @@ def test_manage(
     head_branch,
     pull_request_user_login,
     auto_merge_error,
+    create_pull_request,
     pull_request,
     pull_request_helper,
 ):
     event.check_suite.head_branch = head_branch
     pull_request.user.login = pull_request_user_login
+    if not create_pull_request:
+        pull_request = None
     with (
         patch(
             "src.managers.pull_request_manager.get_or_create_pull_request",
@@ -49,12 +54,12 @@ def test_manage(
         patch(
             "src.managers.pull_request_manager.enable_auto_merge",
             return_value=auto_merge_error,
-        ),
+        ) as enable_auto_merge,
     ):
         manage(event)
         if head_branch == "master":
             check_run.assert_not_called()
-        else:
+        elif create_pull_request:
             if pull_request_user_login == Config.BOT_NAME:
                 summary = "Pull Request #123 created"
             else:
@@ -66,26 +71,44 @@ def test_manage(
             check_run.update.assert_called_once_with(
                 title="Done", summary=summary, conclusion="success"
             )
+            enable_auto_merge.assert_called_once()
+        else:
+            enable_auto_merge.assert_not_called()
 
 
 @pytest.mark.parametrize(
-    "pull_request,pull_request_user_login",
+    "pull_request,pull_request_user_login,error_creating_pull_request",
     [
-        (None, None),
-        (Mock(user=Mock(login=Config.BOT_NAME)), None),
-        (Mock(user=Mock(login="other")), None),
+        (None, None, False),
+        (None, None, True),
+        (Mock(user=Mock(login=Config.BOT_NAME)), None, None),
+        (Mock(user=Mock(login="other")), None, None),
     ],
     ids=[
         "Creating Pull Request",
+        "Error in creating Pull Request",
         "Pull Request by Bartholomew",
         "Pull Request by other",
     ],
 )
 def test_get_or_create_pull_request(
-    pull_request, pull_request_user_login, repository, pull_request_helper
+    pull_request,
+    pull_request_user_login,
+    error_creating_pull_request,
+    repository,
+    pull_request_helper,
 ):
     check_run = Mock()
-    pull_request_helper.get_existing_pull_request.return_value = pull_request
+    if error_creating_pull_request:
+        pull_request_helper.get_existing_pull_request.return_value = None
+        pull_request_helper.create_pull_request.return_value = (
+            "Error in creating Pull Request"
+        )
+    else:
+        pull_request_helper.get_existing_pull_request.return_value = pull_request
+        pull_request_helper.create_pull_request.return_value = PullRequest(
+            None, None, {}, None
+        )
     get_or_create_pull_request(repository, "head_branch", check_run)
     if pull_request:
         pull_request_helper.create_pull_request.assert_not_called()
@@ -93,7 +116,14 @@ def test_get_or_create_pull_request(
         pull_request_helper.create_pull_request.assert_called_once_with(
             repository, "head_branch", "head_branch", ""
         )
-    if pull_request is None or pull_request.user.login == Config.BOT_NAME:
+
+    if error_creating_pull_request:
+        check_run.update.assert_called_with(
+            title="Pull Request creation failure",
+            summary="Error in creating Pull Request",
+            conclusion="failure",
+        )
+    elif pull_request is None or pull_request.user.login == Config.BOT_NAME:
         check_run.update.assert_called_with(title="Pull Request created")
     else:
         check_run.update.assert_not_called()
