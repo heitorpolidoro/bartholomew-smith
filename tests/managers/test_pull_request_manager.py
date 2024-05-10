@@ -23,13 +23,14 @@ def pull_request_helper():
 
 
 @pytest.mark.parametrize(
-    "head_branch, pull_request_user_login, auto_merge_error, create_pull_request",
+    "head_branch, pull_request_user_login, auto_merge_error, create_pull_request, create_pull_request_error",
     [
-        ["master", "heitorpolidoro", "", True],
-        ["branch", "heitorpolidoro", "", True],
-        ["branch", Config.BOT_NAME, "", True],
-        ["branch", "heitorpolidoro", "Some error", True],
-        ["branch", "heitorpolidoro", "", False],
+        ["master", "heitorpolidoro", "", True, ""],
+        ["branch", "heitorpolidoro", "", True, ""],
+        ["branch", "heitorpolidoro", "", True, "Error in creating Pull Request"],
+        ["branch", Config.BOT_NAME, "", True, ""],
+        ["branch", "heitorpolidoro", "Error in enable auto merge", True, ""],
+        ["branch", "heitorpolidoro", "", False, ""],
     ],
 )
 def test_manage(
@@ -39,6 +40,7 @@ def test_manage(
     pull_request_user_login,
     auto_merge_error,
     create_pull_request,
+    create_pull_request_error,
     pull_request,
     pull_request_helper,
 ):
@@ -46,6 +48,8 @@ def test_manage(
     pull_request.user.login = pull_request_user_login
     if not create_pull_request:
         pull_request = None
+    if create_pull_request_error:
+        pull_request = create_pull_request_error
     with (
         patch(
             "src.managers.pull_request_manager.get_or_create_pull_request",
@@ -54,12 +58,12 @@ def test_manage(
         patch(
             "src.managers.pull_request_manager.enable_auto_merge",
             return_value=auto_merge_error,
-        ) as enable_auto_merge,
+        ) as enable_auto_merge_mock,
     ):
         manage(event)
         if head_branch == "master":
             check_run.assert_not_called()
-        elif create_pull_request:
+        elif create_pull_request and not create_pull_request_error:
             if pull_request_user_login == Config.BOT_NAME:
                 summary = "Pull Request #123 created"
             else:
@@ -71,9 +75,9 @@ def test_manage(
             check_run.update.assert_called_once_with(
                 title="Done", summary=summary, conclusion="success"
             )
-            enable_auto_merge.assert_called_once()
+            enable_auto_merge_mock.assert_called_once()
         else:
-            enable_auto_merge.assert_not_called()
+            enable_auto_merge_mock.assert_not_called()
 
 
 @pytest.mark.parametrize(

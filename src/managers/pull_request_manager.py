@@ -40,7 +40,7 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     summary = []
     if head_branch != repository.default_branch:
         pull_request = get_or_create_pull_request(repository, head_branch, check_run)
-        if not pull_request:
+        if not pull_request or isinstance(pull_request, str):
             return
         auto_merge_error = enable_auto_merge(pull_request, check_run)
 
