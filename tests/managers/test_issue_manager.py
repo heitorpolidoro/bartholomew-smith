@@ -77,24 +77,25 @@ def test_get_or_create_issue_job(
 
 
 @pytest.mark.parametrize(
-    "event, handle_task_list_called, close_sub_tasks_called",
+    "event, handle_task_list_called, close_sub_tasks_called, has_task_list",
     [
-        (IssueOpenedEvent, True, False),
-        (IssueEditedEvent, True, False),
-        (IssueClosedEvent, False, True),
-        (None, False, False),  # Any other type of event
+        (IssueOpenedEvent, True, False, True),
+        (IssueOpenedEvent, False, False, False),
+        (IssueEditedEvent, True, False, True),
+        (IssueClosedEvent, False, True, True),
+        (IssueClosedEvent, False, False, False),
+        (None, False, False, True),  # Any other type of event
     ],
 )
 def test_manage(
-    event,
-    handle_task_list_called,
-    close_sub_tasks_called,
+    event, handle_task_list_called, close_sub_tasks_called, has_task_list, issue_helper
 ):
+    issue_helper.has_tasklist.return_value = has_task_list
     with (
         patch("src.managers.issue_manager.handle_task_list") as handle_task_list_mock,
         patch("src.managers.issue_manager.close_sub_tasks") as close_sub_tasks_mock,
     ):
-        manage(Mock(spec=event))
+        manage(Mock(spec=event, issue=Mock()))
         assert handle_task_list_mock.called == handle_task_list_called
         assert close_sub_tasks_mock.called == close_sub_tasks_called
 
@@ -124,11 +125,6 @@ def test_manage(
             IssueJobStatus.DONE,
         ],
         [
-            [],
-            [],
-            None,
-        ],
-        [
             [("task1", False), ("task2", False)],
             [
                 {"task": "task1", "checked": False},
@@ -141,7 +137,6 @@ def test_manage(
         "All new tasks",
         "Existing tasks and add new task",
         "Editing issue, with new task",
-        "No task list",
         "No new task in task list",
     ],
 )
@@ -151,6 +146,7 @@ def test_handle_task_list(
     for existing_task in existing_tasks:
         JobService.insert_one(Job(original_issue_url=event.issue.url, **existing_task))
 
+    issue_helper.has_tasklist.return_value = bool(tasks)
     issue_helper.get_tasklist.return_value = tasks
     issue_job = Mock(issue_job_status=issue_job_status)
     with patch(
@@ -458,15 +454,18 @@ def test_process_update_issue_body(issue_job):
         [[("task1", False), ("task2", False)], False],
         [[("task1", True), ("task2", True)], True],
         [[("task1", True), ("task2", False)], False],
+        [[], False],
     ],
     ids=[
         "All opened",
         "All closed",
         "1 closed",
+        "No tasks",
     ],
 )
 def test_close_issue_if_all_checked(tasks, issue_job, issue_helper, should_close):
     issue = Mock()
+    issue_helper.has_tasklist.return_value = bool(tasks)
     issue_helper.get_tasklist.return_value = tasks
 
     with (

@@ -13,9 +13,10 @@ from src.helpers.issue_helper import (
 
 
 def _task_list_data():
+    # "issue_body, expected_tasks, assert_fail_message"
     return {
         "argvalues": [
-            ("", [], "Empty string should not have a tasklist"),
+            (None, [], "Empty string should not have a tasklist"),
             (
                 "This is a sample issue description.",
                 [],
@@ -62,7 +63,7 @@ def test_has_tasklist(issue_body, expected, assert_fail_message):
 )
 def test_get_tasklist(issue_body, expected_tasks, assert_fail_message):
     """Test get_tasklist with various inputs using parametrize"""
-    result = get_tasklist(issue_body)
+    result = get_tasklist(issue_body or "")
     assert result == expected_tasks, assert_fail_message
 
 

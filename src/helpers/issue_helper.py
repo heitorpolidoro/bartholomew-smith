@@ -10,7 +10,7 @@ from githubapp import Config
 
 def has_tasklist(issue_body: str) -> bool:
     """Return if the issue has a tasklist"""
-    return bool(re.search(r"- \[(.)] (.*)", issue_body))
+    return bool(issue_body) and bool(re.search(r"- \[(.)] (.*)", issue_body))
 
 
 def get_tasklist(issue_body: str) -> list[tuple[str, bool]]:

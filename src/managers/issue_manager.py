@@ -56,10 +56,12 @@ def get_or_create_issue_job(event: IssuesEvent) -> IssueJob:
 @Config.call_if("issue_manager.enabled")
 def manage(event: IssuesEvent) -> Optional[IssueJob]:
     """Manage an issue or they task list."""
-    if isinstance(event, (IssueOpenedEvent, IssueEditedEvent)):
-        return handle_task_list(event)
-    if isinstance(event, IssueClosedEvent):
-        close_sub_tasks(event)
+    issue = event.issue
+    if issue_helper.has_tasklist(issue.body):
+        if isinstance(event, (IssueOpenedEvent, IssueEditedEvent)):
+            return handle_task_list(event)
+        if isinstance(event, IssueClosedEvent):
+            close_sub_tasks(event)
     return None
 
 
@@ -67,9 +69,7 @@ def manage(event: IssuesEvent) -> Optional[IssueJob]:
 def handle_task_list(event: IssuesEvent) -> Optional[IssueJob]:
     """Handle the task list of an issue."""
     issue = event.issue
-    if not (tasklist := issue_helper.get_tasklist(issue.body or "")):
-        return None
-    issue_job = get_or_create_issue_job(event)
+    tasklist = issue_helper.get_tasklist(issue.body)
     existing_jobs = {}
     created_issues = {}
     for j in JobService.filter(original_issue_url=issue.url):
@@ -77,6 +77,7 @@ def handle_task_list(event: IssuesEvent) -> Optional[IssueJob]:
         if j.issue_ref:
             created_issues[j.issue_ref] = j
     jobs = []
+
     for task, checked in tasklist:
         if task in existing_jobs:
             continue
@@ -97,6 +98,7 @@ def handle_task_list(event: IssuesEvent) -> Optional[IssueJob]:
     if jobs:
         JobService.insert_many(jobs)
 
+    issue_job = get_or_create_issue_job(event)
     if issue_job.issue_job_status == IssueJobStatus.DONE:
         IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
     return issue_job
@@ -309,9 +311,11 @@ def close_issue_if_all_checked(issue_job: IssueJob) -> NoReturn:
         issue_job.installation_id,
         issue_job.issue_url,
     )
-    tasklist = issue_helper.get_tasklist(issue.body)
-    if tasklist and all(checked for _, checked in tasklist):
-        issue.edit(state="closed")
+    issue_body = issue.body
+    if issue_helper.has_tasklist(issue_body):
+        tasklist = issue_helper.get_tasklist(issue_body)
+        if tasklist and all(checked for _, checked in tasklist):
+            issue.edit(state="closed")
 
 
 def process_update_progress(issue_job: IssueJob) -> NoReturn:
