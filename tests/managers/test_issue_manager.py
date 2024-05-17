@@ -53,9 +53,7 @@ def issue_helper(request):
         (True, True),
     ],
 )
-def test_get_or_create_issue_job(
-    issue_job_service_output, issue_job_exists, event, issue, issue_helper, issue_job
-):
+def test_get_or_create_issue_job(issue_job_service_output, issue_job_exists, event, issue, issue_helper, issue_job):
     if issue_job_exists:
         IssueJobService.insert_one(issue_job)
     # Now we can call the function and check its output
@@ -77,24 +75,23 @@ def test_get_or_create_issue_job(
 
 
 @pytest.mark.parametrize(
-    "event, handle_task_list_called, close_sub_tasks_called",
+    "event, handle_task_list_called, close_sub_tasks_called, has_task_list",
     [
-        (IssueOpenedEvent, True, False),
-        (IssueEditedEvent, True, False),
-        (IssueClosedEvent, False, True),
-        (None, False, False),  # Any other type of event
+        (IssueOpenedEvent, True, False, True),
+        (IssueOpenedEvent, False, False, False),
+        (IssueEditedEvent, True, False, True),
+        (IssueClosedEvent, False, True, True),
+        (IssueClosedEvent, False, False, False),
+        (None, False, False, True),  # Any other type of event
     ],
 )
-def test_manage(
-    event,
-    handle_task_list_called,
-    close_sub_tasks_called,
-):
+def test_manage(event, handle_task_list_called, close_sub_tasks_called, has_task_list, issue_helper):
+    issue_helper.has_tasklist.return_value = has_task_list
     with (
         patch("src.managers.issue_manager.handle_task_list") as handle_task_list_mock,
         patch("src.managers.issue_manager.close_sub_tasks") as close_sub_tasks_mock,
     ):
-        manage(Mock(spec=event))
+        manage(Mock(spec=event, issue=Mock()))
         assert handle_task_list_mock.called == handle_task_list_called
         assert close_sub_tasks_mock.called == close_sub_tasks_called
 
@@ -124,11 +121,6 @@ def test_manage(
             IssueJobStatus.DONE,
         ],
         [
-            [],
-            [],
-            None,
-        ],
-        [
             [("task1", False), ("task2", False)],
             [
                 {"task": "task1", "checked": False},
@@ -141,21 +133,17 @@ def test_manage(
         "All new tasks",
         "Existing tasks and add new task",
         "Editing issue, with new task",
-        "No task list",
         "No new task in task list",
     ],
 )
-def test_handle_task_list(
-    event, issue, tasks, existing_tasks: list[dict], issue_job_status, issue_helper
-):
+def test_handle_task_list(event, issue, tasks, existing_tasks: list[dict], issue_job_status, issue_helper):
     for existing_task in existing_tasks:
         JobService.insert_one(Job(original_issue_url=event.issue.url, **existing_task))
 
+    issue_helper.has_tasklist.return_value = bool(tasks)
     issue_helper.get_tasklist.return_value = tasks
     issue_job = Mock(issue_job_status=issue_job_status)
-    with patch(
-        "src.managers.issue_manager.get_or_create_issue_job", return_value=issue_job
-    ):
+    with patch("src.managers.issue_manager.get_or_create_issue_job", return_value=issue_job):
         result = handle_task_list(event)
         if tasks:
             assert result == issue_job
@@ -213,12 +201,8 @@ def test_handle_task_list(
         "owner/repo with task title",
     ],
 )
-def test_get_title_and_repository_url(
-    task, expected_url, expected_title, issue_job, get_repository_return, github
-):
-    with patch(
-        "src.managers.issue_manager._get_repository", return_value=get_repository_return
-    ):
+def test_get_title_and_repository_url(task, expected_url, expected_title, issue_job, get_repository_return, github):
+    with patch("src.managers.issue_manager._get_repository", return_value=get_repository_return):
         result_url, result_title = _get_repository_url_and_title(issue_job, task)
     assert result_url == expected_url
     assert result_title == expected_title
@@ -270,9 +254,7 @@ def test_set_jobs_to_done(issue_job):
         ),
     ]
     JobService.insert_many(jobs)
-    with patch(
-        "src.managers.issue_manager.process_update_progress"
-    ) as process_update_progress_mock:
+    with patch("src.managers.issue_manager.process_update_progress") as process_update_progress_mock:
         set_jobs_to_done(jobs, issue_job)
         process_update_progress_mock.assert_called_once_with(issue_job)
 
@@ -346,14 +328,10 @@ def test_process_jobs(issue_job_status, expected_return, issue_job):
         "Is issue ref (just #num)",
     ],
 )
-def test_process_pending_jobs(
-    task, expected_job_update_values, _get_repository_return, issue_job, github
-):
+def test_process_pending_jobs(task, expected_job_update_values, _get_repository_return, issue_job, github):
     github.Github().get_repo.return_value = _get_repository_return
 
-    JobService.insert_one(
-        Job(original_issue_url=issue_job.issue_url, task=task, checked=False)
-    )
+    JobService.insert_one(Job(original_issue_url=issue_job.issue_url, task=task, checked=False))
     with patch(
         "src.managers.issue_manager._get_repository",
         return_value=_get_repository_return,
@@ -385,11 +363,7 @@ def test_process_update_issue_status(issue_state, checked, issue_job, final_job_
         )
     )
     issue = Mock(state=issue_state)
-    with (
-        patch(
-            "src.managers.issue_manager._instantiate_github_class", return_value=issue
-        ),
-    ):
+    with (patch("src.managers.issue_manager._instantiate_github_class", return_value=issue),):
         if final_job_status == JobStatus.ERROR:
             issue.edit.side_effect = UnknownObjectException(0)
         process_update_issue_status(issue_job)
@@ -458,15 +432,18 @@ def test_process_update_issue_body(issue_job):
         [[("task1", False), ("task2", False)], False],
         [[("task1", True), ("task2", True)], True],
         [[("task1", True), ("task2", False)], False],
+        [[], False],
     ],
     ids=[
         "All opened",
         "All closed",
         "1 closed",
+        "No tasks",
     ],
 )
 def test_close_issue_if_all_checked(tasks, issue_job, issue_helper, should_close):
     issue = Mock()
+    issue_helper.has_tasklist.return_value = bool(tasks)
     issue_helper.get_tasklist.return_value = tasks
 
     with (
@@ -482,9 +459,7 @@ def test_close_issue_if_all_checked(tasks, issue_job, issue_helper, should_close
             issue.edit.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    "issue_job_status", [IssueJobStatus.DONE, IssueJobStatus.RUNNING]
-)
+@pytest.mark.parametrize("issue_job_status", [IssueJobStatus.DONE, IssueJobStatus.RUNNING])
 def test_process_update_progress(issue_job, issue_job_status, issue_helper):
     issue_job.issue_job_status = issue_job_status
     issue = Mock()
@@ -557,15 +532,11 @@ def test_close_sub_tasks(event, issue_helper):
                 call(ANY, ANY, ANY, "https://api.github.com/repos/owner/repo/issues/1"),
                 call(ANY, ANY, ANY, "repository.url/issues/2"),
                 call(ANY, ANY, ANY, "repository.url/issues/0"),
-                call(
-                    ANY, ANY, ANY, "https://api.github.com/repos/owner/error/issues/3"
-                ),
+                call(ANY, ANY, ANY, "https://api.github.com/repos/owner/error/issues/3"),
             ]
         )
         for issue in issues:
             if issue.state == "closed":
                 issue.edit.assert_not_called()
             else:
-                issue.edit.assert_called_once_with(
-                    state="closed", state_reason=event.issue.state_reason
-                )
+                issue.edit.assert_called_once_with(state="closed", state_reason=event.issue.state_reason)
