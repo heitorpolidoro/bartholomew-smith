@@ -26,5 +26,7 @@ def default_configs() -> NoReturn:
         enabled=True,
         handle_tasklist=True,
         create_issues_from_tasklist=True,
+        close_parent=True,
         close_subtasks=True,
+        handle_checkbox=True,
     )
