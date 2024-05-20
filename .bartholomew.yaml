@@ -1,2 +1,3 @@
 pull_request_manager:
+  auto_approve: true
   auto_approve_logins: ['deepsource-autofix[bot]']

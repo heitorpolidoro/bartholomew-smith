@@ -136,7 +136,7 @@ def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun) -> st
     return ""
 
 
-@Config.call_if("AUTO_APPROVE_PAT")
+@Config.call_if("pull_request_manager.auto_approve")
 def auto_approve(event: CheckSuiteRequestedEvent) -> NoReturn:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     repository = event.repository
