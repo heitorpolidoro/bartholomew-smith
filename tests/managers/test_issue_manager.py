@@ -3,6 +3,7 @@ from unittest.mock import ANY, Mock, call, patch
 
 import pytest
 from github import Consts, UnknownObjectException
+from githubapp import Config
 from githubapp.events import IssueEditedEvent, IssueOpenedEvent
 from githubapp.events.issues import IssueClosedEvent
 
@@ -420,6 +421,30 @@ def test_process_create_issue(issue_job):
         repository.create_issue.assert_called_once_with(title="title")
         job = JobService.all()[0]
         assert job.job_status == JobStatus.UPDATE_ISSUE_BODY
+
+
+def test_process_not_create_issue(issue_job):
+    JobService.insert_one(
+        Job(
+            original_issue_url=issue_job.issue_url,
+            task="task",
+            checked=False,
+            job_status=JobStatus.CREATE_ISSUE,
+            title="title",
+        )
+    )
+    repository = Mock()
+    with (
+        patch(
+            "src.managers.issue_manager._instantiate_github_class",
+            return_value=repository,
+        ),
+    ):
+        Config.issue_manager.create_issues_from_tasklist = False
+        process_create_issue(issue_job)
+        repository.create_issue.assert_not_called()
+        job = JobService.all()[0]
+        assert job.job_status == JobStatus.DONE
 
 
 def test_process_update_issue_body(issue_job):

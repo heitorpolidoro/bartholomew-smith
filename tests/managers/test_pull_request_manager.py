@@ -208,6 +208,7 @@ def test_auto_approve(event, repository, pull_request_helper):
     pulls = [Mock() for _ in range(3)]
     event.repository.get_pulls.return_value = pulls
     Config.AUTO_APPROVE_PAT = "AUTO_APPROVE_PAT"
+    Config.pull_request_manager.auto_approve = True
     auto_approve(event)
     assert pull_request_helper.approve.call_count == len(pulls)
     pull_request_helper.approve.assert_has_calls(

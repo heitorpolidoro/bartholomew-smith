@@ -19,6 +19,7 @@ def default_configs() -> NoReturn:
         merge_method="SQUASH",
         auto_approve_logins=[],
         auto_update=True,
+        auto_approve=False,
     )
     Config.create_config("release_manager", enabled=True)
     Config.create_config(
