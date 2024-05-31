@@ -3,14 +3,16 @@
 import logging
 import re
 from string import Template
-from typing import NoReturn, Optional
 
-from github.PullRequest import PullRequest
+from github import GithubException
 from github.Repository import Repository
-from githubapp import Config, EventCheckRun
-from githubapp.events import CheckSuiteCompletedEvent, CheckSuiteRequestedEvent
 
+from githubapp import Config, EventCheckRun
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
+from githubapp.events import CheckSuiteRequestedEvent
+from githubapp.exceptions import GihubAppRuntimeException
 from src.helpers import pull_request_helper
+from src.helpers.exception_helper import extract_github_error
 
 logger = logging.getLogger(__name__)
 
@@ -29,82 +31,127 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     Create a Pull Request, if the config is enabled and no Pull Request for the same head branch exists
     Enable auto-merge for the Pull Request, if the config is enabled
     Update all Pull Requests with the base branch is the event head branch
+    Auto approve, if the config is enabled
     """
     repository = event.repository
     head_branch = event.check_suite.head_branch
     check_run = event.start_check_run(
-        "Pull Request Manager",
-        event.check_suite.head_sha,
-        "Initializing...",
+        "Pull Request Manager", event.check_suite.head_sha, "Initializing...", status=CheckRunStatus.IN_PROGRESS
     )
-    summary = []
-    if head_branch != repository.default_branch:
-        pull_request = get_or_create_pull_request(repository, head_branch, check_run)
-        if not pull_request or isinstance(pull_request, str):
-            return
-        auto_merge_error = enable_auto_merge(pull_request, check_run)
-
-        if pull_request.user.login == Config.BOT_NAME:
-            summary.append(f"Pull Request #{pull_request.number} created")
+    create_pull_request_sub_run = check_run.create_sub_run("Create Pull Request")
+    enable_auto_merge_sub_run = check_run.create_sub_run("Enable auto-merge")
+    auto_update_pull_requests_sub_run = check_run.create_sub_run("Auto Update Pull Requests")
+    try:
+        if head_branch != repository.default_branch:
+            create_pull_request(repository, head_branch, create_pull_request_sub_run)
+            enable_auto_merge(repository, head_branch, enable_auto_merge_sub_run)
         else:
-            summary.append(
-                f"Pull Request for '{repository.owner.login}:{head_branch}' into "
-                f"'{repository.default_branch}' (PR#{pull_request.number}) already exists"
+            ignoring_title = f"In the default branch '{head_branch}', ignoring."
+            create_pull_request_sub_run.update(title=ignoring_title, conclusion=CheckRunConclusion.SKIPPED)
+            enable_auto_merge_sub_run.update(title=ignoring_title, conclusion=CheckRunConclusion.SKIPPED)
+    finally:
+        auto_update_pull_requests(repository, head_branch, auto_update_pull_requests_sub_run)
+    check_run.finish()
+
+
+"""TODO return a ManagerResult
+ManagerResult
+- success
+- error
+- method_return
+
+Return True if the pr was created
+when creates put the pr in some kind of pull_request_helper.cache
+"""
+
+
+def create_pull_request(repository: Repository, branch: str, sub_run: EventCheckRun.SubRun) -> bool:
+    """Try to create a Pull Request"""
+    if Config.pull_request_manager.create_pull_request:
+        sub_run.update(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS)
+        title, body = get_title_and_body_from_issue(repository, branch)
+        try:
+            pull_request_helper.create_pull_request(
+                repository,
+                branch,
+                title=title,
+                body=body,
             )
-        if auto_merge_error:
-            summary.append(f"Auto-merge failure: {auto_merge_error}")
-        else:
-            summary.append("Auto-merge enabled")
-    check_run.update(
-        title="Done",
-        summary="\n".join(summary),
-        conclusion="success",
-    )
-
-
-def get_or_create_pull_request(
-    repository: Repository, head_branch: str, check_run: EventCheckRun
-) -> PullRequest:
-    """Get an existing Pull Request or create a new one"""
-    if pull_request := pull_request_helper.get_existing_pull_request(
-        repository, f"{repository.owner.login}:{head_branch}"
-    ):
-        print(
-            f"Pull Request already exists for '{repository.owner.login}:{head_branch}' into "
-            f"'{repository.default_branch} (PR#{pull_request.number})'"
-        )
-        logger.info(
-            "Pull Request already exists for '%s:%s' into '%s'",
-            repository.owner.login,
-            head_branch,
-            repository.default_branch,
-        )
-        if pull_request.user.login == Config.BOT_NAME:
-            check_run.update(title="Pull Request created")
+            sub_run.update(title="Pull Request created", conclusion=CheckRunConclusion.SUCCESS)
+            return True
+        except GithubException as ghe:
+            error = extract_github_error(ghe)
+            if error == f"A pull request already exists for {repository.owner.login}:{branch}.":
+                sub_run.update(title="Pull Request already exists", conclusion=CheckRunConclusion.SUCCESS)
+                return False
+            sub_run.update(
+                title="Pull Request creation failure",
+                summary=error,
+                conclusion=CheckRunConclusion.FAILURE,
+            )
+            raise GihubAppRuntimeException from ghe
     else:
-        pull_request = create_pull_request(repository, head_branch, check_run)
-    return pull_request
+        sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
 
 
-@Config.call_if("pull_request_manager.create_pull_request")
-def create_pull_request(
-    repository: Repository, branch: str, check_run: EventCheckRun
-) -> Optional[PullRequest]:
-    """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
-    title, body = get_title_and_body_from_issue(repository, branch)
-    check_run.update(title="Creating Pull Request")
-    pull_request = pull_request_helper.create_pull_request(
-        repository, branch, title, body
-    )
-    if isinstance(pull_request, PullRequest):
-        check_run.update(title="Pull Request created")
-        return pull_request
-    check_run.update(
-        title="Pull Request creation failure",
-        summary=pull_request,
-        conclusion="failure",
-    )
-    return None
+def enable_auto_merge(repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun) -> bool:
+    """Enable the auto merge"""
+    if Config.pull_request_manager.enable_auto_merge:
+        sub_run.update(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS)
+        default_branch = repository.get_branch(repository.default_branch)
+        if default_branch.protected:
+            if pull_request := pull_request_helper.get_existing_pull_request(repository, branch_name):
+                try:
+                    pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
+                    sub_run.update(title="Auto-merge enabled", conclusion=CheckRunConclusion.SUCCESS)
+                    return True
+                except GithubException as ghe:
+                    error = extract_github_error(ghe)
+                    sub_run.update(
+                        title="Enabling auto-merge failure",
+                        summary=error,
+                        conclusion=CheckRunConclusion.FAILURE,
+                    )
+                    return False
+            else:
+                sub_run.update(
+                    title="Enabling auto-merge failure",
+                    summary=f"There is no Pull Request for the head branch {branch_name}",
+                    conclusion=CheckRunConclusion.FAILURE,
+                )
+
+        else:
+            sub_run.update(
+                title="Cannot enable auto-merge in a repository with no protected branch.",
+                summary="Check [Enabling auto-merge](https://docs.github.com/en/pull-requests/"
+                "collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/"
+                "automatically-merging-a-pull-request#enabling-auto-merge) for more information",
+                conclusion=CheckRunConclusion.FAILURE,
+            )
+    else:
+        sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
+    return False
+
+
+def auto_update_pull_requests(repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun) -> bool:
+    """Updates all the pull requests in the given branch if is updatable."""
+    if Config.pull_request_manager.auto_update:
+        sub_run.update("Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS)
+        if updated_pull_requests := pull_request_helper.update_pull_requests(repository, branch_name):
+            sub_run.update(
+                "Pull Requests Updated",
+                summary="\n".join(f"#{pr.number} {pr.title}" for pr in updated_pull_requests),
+                conclusion=CheckRunConclusion.SUCCESS,
+            )
+        else:
+            sub_run.update(
+                "No Pull Requests Updated",
+                conclusion=CheckRunConclusion.SUCCESS,
+            )
+        return True
+    else:
+        sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
+    return False
 
 
 @Config.call_if("pull_request_manager.link_issue", return_on_not_call=("", ""))
@@ -121,37 +168,16 @@ def get_title_and_body_from_issue(repository: Repository, branch: str) -> (str, 
             body=issue.body or "",
         )
 
-    return title or branch, body
-
-
-@Config.call_if("pull_request_manager.enable_auto_merge")
-def enable_auto_merge(pull_request: PullRequest, check_run: EventCheckRun) -> str:
-    """Creates a Pull Request, if not exists, and/or enable the auto merge flag"""
-    if pull_request.mergeable_state == "unstable":
-        return "Unable to enable auto-merge when the mergeable_state is unstable"
-
-    check_run.update(title="Enabling auto-merge")
-    pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
-    check_run.update(title="Auto-merge enabled")
-    return ""
+    return title, body
 
 
 @Config.call_if("pull_request_manager.auto_approve")
-def auto_approve(event: CheckSuiteRequestedEvent) -> NoReturn:
+def auto_approve(repository: Repository, branch_name: str) -> None:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
-    repository = event.repository
     pull_requests = repository.get_pulls(
         state="open",
         base=repository.default_branch,
-        head=f"{repository.owner.login}:{event.check_suite.head_branch}",
+        head=f"{repository.owner.login}:{branch_name}",
     )
     for pull_request in pull_requests:
         pull_request_helper.approve(Config.AUTO_APPROVE_PAT, repository, pull_request)
-
-
-@Config.call_if("pull_request_manager.auto_update")
-def auto_update_pull_requests(event: CheckSuiteCompletedEvent) -> NoReturn:
-    """Updates all the pull requests in the given branch if is updatable."""
-    pull_request_helper.update_pull_requests(
-        event.repository, event.check_suite.head_branch
-    )

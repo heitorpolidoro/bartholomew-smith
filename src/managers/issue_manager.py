@@ -161,7 +161,7 @@ def _instantiate_github_class(
     )
 
 
-def set_jobs_to_done(jobs: list[Job], issue_job: IssueJob) -> NoReturn:
+def set_jobs_to_done(jobs: list[Job], issue_job: IssueJob) -> None:
     """Set the jobs to done."""
     for job in jobs:
         JobService.update(job, job_status=JobStatus.DONE)
@@ -212,7 +212,7 @@ def _get_repository_url_and_title(issue_job: IssueJob, task: str) -> tuple[str, 
     return repository_url, title
 
 
-def process_pending_jobs(issue_job: IssueJob) -> NoReturn:
+def process_pending_jobs(issue_job: IssueJob) -> None:
     """Process the pending jobs separating what is a job to create an issue from a job to update an issue"""
     for job in JobService.filter(
         original_issue_url=issue_job.issue_url, job_status=JobStatus.PENDING
@@ -242,7 +242,7 @@ def process_pending_jobs(issue_job: IssueJob) -> NoReturn:
             )
 
 
-def process_update_issue_status(issue_job: IssueJob) -> NoReturn:
+def process_update_issue_status(issue_job: IssueJob) -> None:
     """Process the update issue status jobs."""
     for job in JobService.filter(
         original_issue_url=issue_job.issue_url, job_status=JobStatus.UPDATE_ISSUE_STATUS
@@ -265,7 +265,7 @@ def process_update_issue_status(issue_job: IssueJob) -> NoReturn:
 
 
 @Config.call_if("issue_manager.handle_checkbox")
-def _handle_checkbox(issue: Issue, checked: bool) -> NoReturn:
+def _handle_checkbox(issue: Issue, checked: bool) -> None:
     """
     Handle the state of the issue.
     If the issue is closed and the checkbox is checked, open the issue.
@@ -274,7 +274,7 @@ def _handle_checkbox(issue: Issue, checked: bool) -> NoReturn:
     handle_issue_state(checked, issue)
 
 
-def process_create_issue(issue_job: IssueJob) -> NoReturn:
+def process_create_issue(issue_job: IssueJob) -> None:
     """Process the create_issue status jobs."""
     for job in JobService.filter(
         original_issue_url=issue_job.issue_url, job_status=JobStatus.CREATE_ISSUE
@@ -305,7 +305,7 @@ def _create_issue(issue_job: IssueJob, job: Job) -> Issue:
     return created_issue
 
 
-def process_update_issue_body(issue_job: IssueJob) -> NoReturn:
+def process_update_issue_body(issue_job: IssueJob) -> None:
     """Process the update issue body jobs."""
     issue = _instantiate_github_class(
         Issue,
@@ -328,7 +328,7 @@ def process_update_issue_body(issue_job: IssueJob) -> NoReturn:
 
 
 @Config.call_if("issue_manager.close_parent")
-def close_issue_if_all_checked(issue_job: IssueJob) -> NoReturn:
+def close_issue_if_all_checked(issue_job: IssueJob) -> None:
     """Close the issue if all the tasks are checked."""
     issue = _instantiate_github_class(
         Issue,
@@ -343,7 +343,7 @@ def close_issue_if_all_checked(issue_job: IssueJob) -> NoReturn:
             issue.edit(state="closed")
 
 
-def process_update_progress(issue_job: IssueJob) -> NoReturn:
+def process_update_progress(issue_job: IssueJob) -> None:
     """Update the progress in the issue comment."""
     if issue_job.issue_job_status == IssueJobStatus.DONE:
         comment = "Job's done"
@@ -371,7 +371,7 @@ def process_update_progress(issue_job: IssueJob) -> NoReturn:
 
 
 @Config.call_if("issue_manager.close_subtasks")
-def close_sub_tasks(event: IssuesEvent) -> NoReturn:
+def close_sub_tasks(event: IssuesEvent) -> None:
     """Close all issues in the tasklist."""
     repository = event.repository
     issue = event.issue

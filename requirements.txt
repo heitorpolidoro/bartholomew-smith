@@ -6,3 +6,4 @@ python-dotenv<2
 pymdown-extensions<11
 boto3<2
 pydantic<3
+cachetools<6

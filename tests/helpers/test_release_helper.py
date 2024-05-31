@@ -66,11 +66,11 @@ def test_get_absolute_release(last_release, relative_version, expected):
     assert get_absolute_release(last_release, relative_version) == expected
 
 
-def test_get_last_release(repository):
+def test_get_last_release(repository_mock):
     # test case when latest release exists
-    repository.get_latest_release().tag_name = "v1.0.0"
-    assert get_last_release(repository) == "v1.0.0"
+    repository_mock.get_latest_release().tag_name = "v1.0.0"
+    assert get_last_release(repository_mock) == "v1.0.0"
 
     # test case when latest release does not exist
-    repository.get_latest_release.side_effect = UnknownObjectException(0)
-    assert get_last_release(repository) == "0"
+    repository_mock.get_latest_release.side_effect = UnknownObjectException(0)
+    assert get_last_release(repository_mock) == "0"

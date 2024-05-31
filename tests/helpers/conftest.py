@@ -1,72 +1,47 @@
-# import datetime
-# from contextlib import contextmanager
-# from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
-#
 import pytest
-from github.Repository import Repository
-
-#
-from config import default_configs
-
-# from src.helpers.db_helper import BaseModelService
-# from src.models import IssueJob, IssueJobStatus
-#
-default_configs()
 
 
-#
-#
-# @pytest.fixture
-# def check_run():
-#     yield Mock()
-#
-#
-# @pytest.fixture
-# def event(issue, repository, check_run):
-#     check_suite = Mock(head_branch="master")
-#     event = Mock(
-#         hook_installation_target_id=1,
-#         installation_id=1,
-#         issue=issue,
-#         repository=repository,
-#         check_suite=check_suite,
-#     )
-#     event.start_check_run.return_value = check_run
-#     return event
-#
-#
-# @pytest.fixture
-# def issue(repository):
-#     return Mock(
-#         repository=repository,
-#         number=123,
-#         url="issue.url",
-#         title="Test issue",
-#     )
 @pytest.fixture
-def repository_mock():
+def check_run():
+    yield Mock()
+
+
+@pytest.fixture
+def event(issue, repository_mock, check_run):
+    check_suite = Mock(head_branch="master")
+    event = Mock(
+        hook_installation_target_id=1,
+        installation_id=1,
+        issue=issue,
+        repository=repository_mock,
+        check_suite=check_suite,
+    )
+    event.start_check_run.return_value = check_run
+    return event
+
+
+@pytest.fixture
+def issue(repository_mock):
     return Mock(
-        sepc=Repository,
-        default_branch="master",
-        full_name="heitorpolidoro/bartholomew-smith",
-        url="repository.url",
-        owner=Mock(login="heitorpolidoro"),
+        repository=repository_mock,
+        number=123,
+        url="issue.url",
+        title="Test issue",
     )
 
 
-#
-# @pytest.fixture
-# def pull_request():
-#     return Mock(number=123)
-#
-#
-# @pytest.fixture
-# def gh():
-#     return Mock()
-#
-#
+@pytest.fixture
+def pull_request():
+    return Mock(number=123)
+
+
+@pytest.fixture
+def gh():
+    return Mock()
+
+
 # @pytest.fixture
 # def issue_job():
 #     return IssueJob(
@@ -133,6 +108,3 @@ def repository_mock():
 #         yield base_model_service_stub
 #         for sub_service in BaseModelService.__subclasses__():
 #             sub_service._table = None
-from unittest.mock import Mock
-
-import pytest

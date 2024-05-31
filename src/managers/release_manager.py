@@ -9,7 +9,7 @@ from src.helpers import command_helper, pull_request_helper, release_helper
 
 
 @Config.call_if("release_manager.enabled")
-def manage(event: CheckSuiteRequestedEvent) -> NoReturn:
+def manage(event: CheckSuiteRequestedEvent) -> None:
     """Create a release if there is a command in the commit message"""
     repository = event.repository
 

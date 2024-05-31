@@ -75,9 +75,9 @@ def test_get_tasklist(issue_body, expected_tasks, assert_fail_message):
         ("very/long/repo/name", 789, "very/long/repo/name#789"),
     ],
 )
-def test_get_issue_ref(repository_full_name, number, expected_ref, issue, repository):
+def test_get_issue_ref(repository_full_name, number, expected_ref, issue, repository_mock):
     """Test get_issue_ref with various inputs using parametrize"""
-    repository.full_name = repository_full_name
+    repository_mock.full_name = repository_full_name
     issue.number = number
     result = get_issue_ref(issue)
     assert result == expected_ref

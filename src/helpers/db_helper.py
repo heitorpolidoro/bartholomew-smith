@@ -41,7 +41,7 @@ class MetaBaseModelService(type):
     This metaclass manages table and resource access for the service class.
     """
 
-    def __init__(cls: type["BaseModelService"], *args) -> NoReturn:
+    def __init__(cls: type["BaseModelService"], *args) -> None:
         super().__init__(*args)
         cls._resource = None
         cls._table = None
@@ -199,14 +199,14 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return item
 
     @classmethod
-    def insert_many(cls, items: list["BaseModel"]) -> NoReturn:
+    def insert_many(cls, items: list["BaseModel"]) -> None:
         """Insert a list of items in the table"""
         with cls.table.batch_writer() as writer:
             for item in items:
                 writer.put_item(Item=item.dynamo_dict())
 
     @classmethod
-    def update(cls, item: "BaseModel", **kwargs) -> NoReturn:
+    def update(cls, item: "BaseModel", **kwargs) -> None:
         """Update an item in the table"""
         dy_key = {}
         key_schema = cls.clazz.key_schema

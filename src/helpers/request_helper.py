@@ -11,7 +11,7 @@ import flask
 import requests
 
 
-def make_thread_request(request_url: str, issue_url: str) -> NoReturn:
+def make_thread_request(request_url: str, issue_url: str) -> None:
     """Make a request through a thread"""
     thread = threading.Thread(target=make_request, args=(request_url, issue_url))
     thread.start()
@@ -19,7 +19,7 @@ def make_thread_request(request_url: str, issue_url: str) -> NoReturn:
     time.sleep(1)
 
 
-def make_request(request_url: str, issue_url: str) -> NoReturn:
+def make_request(request_url: str, issue_url: str) -> None:
     """Make a post request"""
     requests.post(request_url, json={"issue_url": issue_url}, timeout=60)
 
