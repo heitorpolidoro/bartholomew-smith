@@ -1,4 +1,4 @@
-""" Module to help with GithubExceptions """
+"""Module to help with GithubExceptions"""
 
 from github import GithubException
 
