@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
 
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -478,7 +478,10 @@ class TestCheckSuiteRequested(TestCase):
                 [
                     call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
                     call(title="Checking for release command..."),
-                    call(title="No release command found", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="No release command found",
+                        conclusion=CheckRunConclusion.SUCCESS,
+                    ),
                 ],
             )
 
@@ -611,7 +614,10 @@ class TestCheckSuiteRequested(TestCase):
                 "Releaser",
                 [
                     call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Request found", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="No Pull Request found",
+                        conclusion=CheckRunConclusion.SUCCESS,
+                    ),
                 ],
             )
 

@@ -75,9 +75,7 @@ def test_get_tasklist(issue_body, expected_tasks, assert_fail_message):
         ("very/long/repo/name", 789, "very/long/repo/name#789"),
     ],
 )
-def test_get_issue_ref(
-    repository_full_name, number, expected_ref, issue, repository_mock
-):
+def test_get_issue_ref(repository_full_name, number, expected_ref, issue, repository_mock):
     """Test get_issue_ref with various inputs using parametrize"""
     repository_mock.full_name = repository_full_name
     issue.number = number
@@ -93,11 +91,7 @@ def test_get_issue_ref(
         (False, "open", "open"),  # Unchecked, open issue -> no change
         (False, "closed", "open"),  # Unchecked, closed issue -> no change
     ],
-    ids=lambda value: (
-        (("not " if value is False else "") + "checked")
-        if isinstance(value, bool)
-        else value
-    ),
+    ids=lambda value: ((("not " if value is False else "") + "checked") if isinstance(value, bool) else value),
 )
 def test_handle_issue_state(checked, initial_state, expected_state, issue):
     """Test handle_issue_state with various inputs using parametrize"""
@@ -138,9 +132,7 @@ def test_handle_issue_state(checked, initial_state, expected_state, issue):
         "with existing comment passing the id",
     ],
 )
-def test_update_issue_comment_status(
-    existing_comment, issue_comment_id, comment, issue
-):
+def test_update_issue_comment_status(existing_comment, issue_comment_id, comment, issue):
     """Test update_issue_comment_status with various inputs using parametrize"""
     mock_comments = [
         Mock(user=Mock(login="user1")),

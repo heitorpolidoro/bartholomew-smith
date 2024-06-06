@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 cache = Cache(10)
 
 
-def get_existing_pull_request(
-    repository: Repository, branch: str
-) -> Optional[PullRequest]:
+def get_existing_pull_request(repository: Repository, branch: str) -> Optional[PullRequest]:
     """
     Returns an existing PR if it exists.
     :param repository: The Repository to get the PR from.
@@ -30,9 +28,7 @@ def get_existing_pull_request(
     return next(iter(repository.get_pulls(state="open", head=key)), None)
 
 
-def create_pull_request(
-    repository: Repository, branch: str, title: str = None, body: str = None
-) -> None:
+def create_pull_request(repository: Repository, branch: str, title: str = None, body: str = None) -> None:
     """
     Create a pull request in the given repository.
 
@@ -66,9 +62,7 @@ def update_pull_requests(repository: Repository, base_branch: str) -> list[PullR
     return updated_pull_requests
 
 
-def approve(
-    auto_approve_pat: str, repository: Repository, pull_request: PullRequest
-) -> None:
+def approve(auto_approve_pat: str, repository: Repository, pull_request: PullRequest) -> None:
     """Approve the Pull Request if the branch creator is the same of the repository owner"""
     pr_commits = pull_request.get_commits()
     first_commit = pr_commits[0]
@@ -76,9 +70,7 @@ def approve(
     branch_owner = first_commit.author
     repository_owner_login = repository.owner.login
     branch_owner_login = branch_owner.login
-    allowed_logins = Config.pull_request_manager.auto_approve_logins + [
-        repository_owner_login
-    ]
+    allowed_logins = Config.pull_request_manager.auto_approve_logins + [repository_owner_login]
     if branch_owner_login not in allowed_logins:
         logger.info(
             'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
@@ -96,10 +88,8 @@ def approve(
         )
         return
 
-    pull_request = repository_helper.get_repo_cached(
-        repository.full_name, pat=auto_approve_pat
-    ).get_pull(pull_request.number)
-    pull_request.create_review(event="APPROVE")
-    logger.info(
-        "Pull Request %s#%d approved", repository.full_name, pull_request.number
+    pull_request = repository_helper.get_repo_cached(repository.full_name, pat=auto_approve_pat).get_pull(
+        pull_request.number
     )
+    pull_request.create_review(event="APPROVE")
+    logger.info("Pull Request %s#%d approved", repository.full_name, pull_request.number)

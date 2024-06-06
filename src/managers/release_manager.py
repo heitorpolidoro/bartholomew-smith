@@ -3,7 +3,7 @@
 from typing import NoReturn
 
 from githubapp import Config
-from githubapp.event_check_run import CheckRunStatus, CheckRunConclusion
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.events import CheckSuiteRequestedEvent
 
 from src.helpers import command_helper, pull_request_helper, release_helper
@@ -59,7 +59,10 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     if is_default_branch:
         check_run.update(title=f"Releasing {version_to_release}...")
         repository.create_git_release(tag=version_to_release, generate_release_notes=True)
-        check_run.update(title=f"{version_to_release} released ✅", conclusion=CheckRunConclusion.SUCCESS)
+        check_run.update(
+            title=f"{version_to_release} released ✅",
+            conclusion=CheckRunConclusion.SUCCESS,
+        )
     else:
         check_run.update(
             title=f"Ready to release {version_to_release}",
