@@ -8,7 +8,7 @@ from src.helpers.exception_helper import extract_message_from_error
     [
         ({"message": "Error Message"}, "Error Message"),
         ({"field": "Field", "code": "Code"}, "Field Code"),
-        ({"data": "any_data"}, "{'data': 'any_data'}")
+        ({"data": "any_data"}, "{'data': 'any_data'}"),
     ],
 )
 def test_extract_message_from_error(error_dict, expected_return):
