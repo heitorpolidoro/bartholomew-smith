@@ -1,8 +1,6 @@
 from unittest.mock import Mock, patch
 
-from github.Repository import Repository
 from githubapp import Config
-
 from src.managers.pull_request_manager import (
     auto_approve,
     get_title_and_body_from_issue,

@@ -9,7 +9,7 @@ from github.Repository import Repository
 from githubapp import Config, EventCheckRun
 from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.events import CheckSuiteRequestedEvent
-from githubapp.exceptions import GihubAppRuntimeException
+from githubapp.exceptions import GithubAppRuntimeException
 
 from src.helpers import pull_request_helper
 from src.helpers.exception_helper import extract_github_error
@@ -110,7 +110,7 @@ def create_pull_request(
                 summary=error,
                 conclusion=CheckRunConclusion.FAILURE,
             )
-            raise GihubAppRuntimeException from ghe
+            raise GithubAppRuntimeException from ghe
     else:
         sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
 

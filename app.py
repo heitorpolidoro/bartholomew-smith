@@ -77,19 +77,6 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> None:
     release_manager.manage(event)
 
 
-@webhook_handler.add_handler(CheckSuiteCompletedEvent)
-def handle_check_suite_completed(event: CheckSuiteCompletedEvent) -> None:
-    """
-    handle the Check Suite Request and Rerequest events
-    Calling the Pull Request manager to:
-    - Create Pull Request
-    - Enable auto merge
-    - Update Pull Requests
-    - Auto approve Pull Requests
-    """
-    pull_request_manager.auto_update_pull_requests(event)
-
-
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
 @webhook_handler.add_handler(IssueClosedEvent)
