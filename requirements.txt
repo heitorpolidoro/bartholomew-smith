@@ -1,9 +1,8 @@
-github-app-handler<1
-sentry-sdk<3
-flask<4
-PyGithub<3
-python-dotenv<2
-pymdown-extensions<11
-boto3<2
-pydantic<3
-cachetools<6
+github-app-handler==0.28.3
+PyGithub==2.3.0
+sentry-sdk==2.5.1
+flask==3.0.3
+pymdown-extensions==10.8.1
+boto3==1.34.122
+pydantic==2.7.3
+cachetools==5.3.3
