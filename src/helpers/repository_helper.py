@@ -9,9 +9,7 @@ from github.Repository import Repository
 
 
 @lru_cache
-def get_repository(
-    gh: Github, repository_name: str, repository_owner_login: str = None
-) -> Optional[Repository]:
+def get_repository(gh: Github, repository_name: str, repository_owner_login: str = None) -> Optional[Repository]:
     """
     Try to get repository by name. If the repository is not found, try to get the repository by owner and name.
     If the repository is not found by owner and name, return None.
@@ -25,9 +23,7 @@ def get_repository(
 
 
 @lru_cache
-def get_repo_cached(
-    repository_name: str, gh: github.Github = None, pat: str = None
-) -> Repository:
+def get_repo_cached(repository_name: str, gh: github.Github = None, pat: str = None) -> Repository:
     """Get repository by name."""
     if gh is None:
         gh = github.Github(auth=github.Auth.Token(pat))

@@ -45,9 +45,7 @@ def handle_issue_state(checked: bool, task_issue: Issue) -> bool:
     return False
 
 
-def update_issue_comment_status(
-    issue: Issue, comment: str, issue_comment_id: Optional[int] = None
-) -> IssueComment:
+def update_issue_comment_status(issue: Issue, comment: str, issue_comment_id: Optional[int] = None) -> IssueComment:
     """Update a github issue comment. If `issue_commend_id` is None, create a new github issue comment"""
     if issue_comment_id:
         issue_comment = issue.get_comment(issue_comment_id)

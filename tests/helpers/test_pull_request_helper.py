@@ -1,7 +1,6 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from github import GithubException
 from githubapp import Config
 
 from src.helpers.pull_request_helper import (

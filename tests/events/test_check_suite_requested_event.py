@@ -45,7 +45,7 @@ class TestCheckSuiteRequested(TestCase):
             final_state = kwargs.get(f"final_{sub_run_name}")
             if isinstance(final_state, dict):
                 return final_state
-            elif final_state == "ignore":
+            if final_state == "ignore":
                 return None
 
             return {"title": final_state}
@@ -622,5 +622,5 @@ class TestCheckSuiteRequested(TestCase):
             )
 
 
-class TestCheckSuiteRerequested(TestCheckSuiteRequested):
+class TestCheckSuiteRerequested(TestCheckSuiteRequested):  # skipcq: PTC-W0046
     event_type = CheckSuiteRerequestedEvent

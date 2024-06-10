@@ -57,17 +57,6 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     check_run.finish()
 
 
-"""TODO return a ManagerResult
-ManagerResult
-- success
-- error
-- method_return
-
-Return True if the pr was created
-when creates put the pr in some kind of pull_request_helper.cache
-"""
-
-
 def create_pull_request(repository: Repository, branch: str, sub_run: EventCheckRun.SubRun) -> bool:
     """Try to create a Pull Request"""
     if Config.pull_request_manager.create_pull_request:
@@ -98,6 +87,7 @@ def create_pull_request(repository: Repository, branch: str, sub_run: EventCheck
             raise GithubAppRuntimeException from ghe
     else:
         sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
+        return False
 
 
 def enable_auto_merge(repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun) -> bool:
@@ -158,8 +148,8 @@ def auto_update_pull_requests(repository: Repository, branch_name: str, sub_run:
                 conclusion=CheckRunConclusion.SUCCESS,
             )
         return True
-    else:
-        sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
+
+    sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
     return False
 
 

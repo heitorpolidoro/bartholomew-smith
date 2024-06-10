@@ -1,9 +1,8 @@
-"""Method to helps with Github PullRequests"""
+"""Method to helps with GitHub PullRequests"""
 
 import logging
-from typing import NoReturn, Optional, Union
+from typing import Optional
 
-import github
 from cachetools import Cache
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -56,9 +55,8 @@ def update_pull_requests(repository: Repository, base_branch: str) -> list[PullR
     """Updates all the pull requests in the given branch if is updatable."""
     updated_pull_requests = []
     for pull_request in repository.get_pulls(state="open", base=base_branch):
-        if pull_request.mergeable_state == "behind":
-            if pull_request.update_branch():
-                updated_pull_requests.append(pull_request)
+        if pull_request.mergeable_state == "behind" and pull_request.update_branch():
+            updated_pull_requests.append(pull_request)
     return updated_pull_requests
 
 
