@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 from multiprocessing import Process
-from typing import NoReturn
 
 import markdown
 import sentry_sdk
@@ -12,13 +11,13 @@ from flask import Flask, Response, jsonify, render_template, request
 from flask.cli import load_dotenv
 from githubapp import Config, webhook_handler
 from githubapp.events import (
-    CheckSuiteCompletedEvent,
     CheckSuiteRequestedEvent,
     CheckSuiteRerequestedEvent,
+    IssueClosedEvent,
     IssueEditedEvent,
     IssueOpenedEvent,
+    IssuesEvent,
 )
-from githubapp.events.issues import IssueClosedEvent, IssuesEvent
 
 from config import default_configs
 from src.helpers import request_helper
@@ -34,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def sentry_init() -> NoReturn:  # pragma: no cover
+def sentry_init() -> None:  # pragma: no cover
     """Initialize sentry only if SENTRY_DSN is present"""
     if sentry_dsn := os.getenv("SENTRY_DSN"):
         # Initialize Sentry SDK for error logging
@@ -53,9 +52,7 @@ def sentry_init() -> NoReturn:  # pragma: no cover
 
 app = Flask(__name__)
 sentry_init()
-webhook_handler.handle_with_flask(
-    app, use_default_index=False, config_file=".bartholomew.yaml"
-)
+webhook_handler.handle_with_flask(app, use_default_index=False, config_file=".bartholomew.yaml")
 
 load_dotenv()
 default_configs()
@@ -63,7 +60,7 @@ default_configs()
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
 @webhook_handler.add_handler(CheckSuiteRerequestedEvent)
-def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> NoReturn:
+def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> None:
     """
     handle the Check Suite Request and Rerequest events
     Calling the Pull Request manager to:
@@ -74,26 +71,12 @@ def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> NoReturn:
     """
     pull_request_manager.manage(event)
     release_manager.manage(event)
-    pull_request_manager.auto_approve(event)
-
-
-@webhook_handler.add_handler(CheckSuiteCompletedEvent)
-def handle_check_suite_completed(event: CheckSuiteCompletedEvent) -> NoReturn:
-    """
-    handle the Check Suite Request and Rerequest events
-    Calling the Pull Request manager to:
-    - Create Pull Request
-    - Enable auto merge
-    - Update Pull Requests
-    - Auto approve Pull Requests
-    """
-    pull_request_manager.auto_update_pull_requests(event)
 
 
 @webhook_handler.add_handler(IssueOpenedEvent)
 @webhook_handler.add_handler(IssueEditedEvent)
 @webhook_handler.add_handler(IssueClosedEvent)
-def handle_issue(event: IssuesEvent) -> NoReturn:
+def handle_issue(event: IssuesEvent) -> None:
     """
     handle the Issues Open, Edit and Close events
     Calling the Issue Manager to:
@@ -118,9 +101,7 @@ def process_jobs_endpoint(issue_url: str = None) -> tuple[Response, int]:
     if issue_job := next(iter(IssueJobService.filter(issue_url=issue_url)), None):
         if process.is_alive():
             IssueJobService.update(issue_job, issue_job_status=IssueJobStatus.PENDING)
-            request_helper.make_thread_request(
-                request_helper.get_request_url("process_jobs_endpoint"), issue_url
-            )
+            request_helper.make_thread_request(request_helper.get_request_url("process_jobs_endpoint"), issue_url)
         process.terminate()
         return jsonify({"status": issue_job.issue_job_status.value}), 200
     return jsonify({"error": f"IssueJob for {issue_url=} not found"}), 404

@@ -5,7 +5,7 @@ from typing import NoReturn
 from githubapp import Config
 
 
-def default_configs() -> NoReturn:
+def default_configs() -> None:
     """Create the default configs"""
     Config.BOT_NAME = "bartholomew-smith[bot]"
     Config.TIMEOUT = "8"

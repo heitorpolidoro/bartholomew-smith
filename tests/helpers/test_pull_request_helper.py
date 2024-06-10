@@ -1,12 +1,10 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from github import GithubException
 from githubapp import Config
 
 from src.helpers.pull_request_helper import (
     approve,
-    create_pull_request,
     get_existing_pull_request,
     update_pull_requests,
 )
@@ -25,71 +23,20 @@ from src.helpers.pull_request_helper import (
         "2 pull requests",
     ],
 )
-def test_get_existing_pull_request(repository, expected_result_index, pull_requests):
+def test_get_existing_pull_request(repository_mock, expected_result_index, pull_requests):
     pull_requests = [Mock() for _ in range(pull_requests)]
 
-    repository.get_pulls.return_value = pull_requests
+    repository_mock.get_pulls.return_value = pull_requests
 
-    expected_result = (
-        pull_requests[expected_result_index]
-        if expected_result_index is not None
-        else None
-    )
-    assert get_existing_pull_request(repository, "head_branch") == expected_result
-
-
-@pytest.mark.parametrize(
-    "error_message",
-    [
-        "",
-        "No commits between master and branch",
-        "The branch branch has no history in common with main",
-        "Other",
-    ],
-    ids=[
-        "Create Pull Request",
-        "No commits",
-        "No commits in common",
-        "Other error",
-    ],
-)
-def test_create_pull_request(repository, error_message):
-    expected_result = repository.create_pull.return_value
-    if error_message:
-        repository.create_pull.side_effect = GithubException(
-            0, data={"errors": [{"message": error_message}]}
-        )
-        expected_result = error_message
-
-    if error_message == "Other":
-        with pytest.raises(GithubException):
-            create_pull_request(
-                repository,
-                "branch",
-            )
-    else:
-        assert (
-            create_pull_request(
-                repository,
-                "branch",
-            )
-            == expected_result
-        )
-
-    repository.create_pull.assert_called_once_with(
-        "master",
-        "branch",
-        title="branch",
-        body="Pull Request automatically created",
-        draft=False,
-    )
+    expected_result = pull_requests[expected_result_index] if expected_result_index is not None else None
+    assert get_existing_pull_request(repository_mock, "head_branch") == expected_result
 
 
 @pytest.mark.parametrize("mergeable_state", ["behind", "other"])
-def test_update_pull_request(repository, mergeable_state):
+def test_update_pull_request(repository_mock, mergeable_state):
     pull_request = Mock(mergeable_state=mergeable_state)
-    repository.get_pulls.return_value = [pull_request]
-    update_pull_requests(repository, "branch")
+    repository_mock.get_pulls.return_value = [pull_request]
+    update_pull_requests(repository_mock, "branch")
     if mergeable_state == "behind":
         pull_request.update_branch.assert_called_once()
     else:
@@ -111,12 +58,8 @@ def test_update_pull_request(repository, mergeable_state):
         "Don't Approve if already approved",
     ],
 )
-def test_approve(
-    repository, pull_request, first_commit_author, should_approve, approved
-):
-    pull_request.get_commits.return_value = [
-        Mock(author=Mock(login=first_commit_author))
-    ]
+def test_approve(repository_mock, pull_request, first_commit_author, should_approve, approved):
+    pull_request.get_commits.return_value = [Mock(author=Mock(login=first_commit_author))]
     if approved:
         pull_request.get_reviews.return_value = [Mock(state="APPROVED")]
     else:
@@ -124,13 +67,9 @@ def test_approve(
 
     if first_commit_author == "allowed_user":
         Config.pull_request_manager.auto_approve_logins = [first_commit_author]
-    with patch(
-        "src.helpers.pull_request_helper.repository_helper"
-    ) as repository_helper:
-        repository_helper.get_repo_cached.return_value.get_pull.return_value = (
-            pull_request
-        )
-        approve("pat", repository, pull_request)
+    with patch("src.helpers.pull_request_helper.repository_helper") as repository_helper:
+        repository_helper.get_repo_cached.return_value.get_pull.return_value = pull_request
+        approve("pat", repository_mock, pull_request)
 
     if should_approve:
         pull_request.create_review.assert_called_once_with(event="APPROVE")

@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from github.Repository import Repository
 
 from config import default_configs
 from src.helpers.db_helper import BaseModelService
@@ -18,13 +19,13 @@ def check_run():
 
 
 @pytest.fixture
-def event(issue, repository, check_run):
+def event(issue, repository_mock, check_run):
     check_suite = Mock(head_branch="master")
     event = Mock(
         hook_installation_target_id=1,
         installation_id=1,
         issue=issue,
-        repository=repository,
+        repository=repository_mock,
         check_suite=check_suite,
     )
     event.start_check_run.return_value = check_run
@@ -32,9 +33,9 @@ def event(issue, repository, check_run):
 
 
 @pytest.fixture
-def issue(repository):
+def issue(repository_mock):
     return Mock(
-        repository=repository,
+        repository=repository_mock,
         number=123,
         url="issue.url",
         title="Test issue",
@@ -42,23 +43,14 @@ def issue(repository):
 
 
 @pytest.fixture
-def repository():
+def repository_mock():
     return Mock(
+        sepc=Repository,
         default_branch="master",
-        full_name="heitorpolidoro/bartholomew_smith",
+        full_name="heitorpolidoro/bartholomew-smith",
         url="repository.url",
         owner=Mock(login="heitorpolidoro"),
     )
-
-
-@pytest.fixture
-def pull_request():
-    return Mock(number=123)
-
-
-@pytest.fixture
-def gh():
-    return Mock()
 
 
 @pytest.fixture
@@ -94,9 +86,7 @@ def base_model_service_stub():
             ExpressionAttributeValues = ExpressionAttributeValues or {}
             items = []
             for item in self.items:
-                if all(
-                    item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()
-                ):
+                if all(item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()):
                     items.append(item)
 
             return {"Items": items}
@@ -107,9 +97,7 @@ def base_model_service_stub():
         def update_item(self, Key, ExpressionAttributeValues, **kw):
             for item in self.items:
                 if all(item.get(k) == v for k, v in Key.items()):
-                    item.update(
-                        {k[1:]: v for k, v in ExpressionAttributeValues.items()}
-                    )
+                    item.update({k[1:]: v for k, v in ExpressionAttributeValues.items()})
                     return
 
         @contextmanager
@@ -120,9 +108,7 @@ def base_model_service_stub():
         resource = Mock(Table=TableStub)
 
     with (
-        patch(
-            "src.helpers.db_helper.BaseModelService", new_callable=BaseModelServiceStub
-        ) as base_model_service_stub,
+        patch("src.helpers.db_helper.BaseModelService", new_callable=BaseModelServiceStub) as base_model_service_stub,
     ):
         yield base_model_service_stub
         for sub_service in BaseModelService.__subclasses__():

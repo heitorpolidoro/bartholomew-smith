@@ -41,7 +41,7 @@ class MetaBaseModelService(type):
     This metaclass manages table and resource access for the service class.
     """
 
-    def __init__(cls: type["BaseModelService"], *args) -> NoReturn:
+    def __init__(cls: type["BaseModelService"], *args) -> None:
         super().__init__(*args)
         cls._resource = None
         cls._table = None
@@ -142,10 +142,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
                 err.response["Error"]["Message"],
             )
             raise
-        return [
-            cls.clazz(**item)
-            for item in sorted(response["Items"], key=lambda item: item["created_at"])
-        ]
+        return [cls.clazz(**item) for item in sorted(response["Items"], key=lambda item: item["created_at"])]
 
     @classmethod
     def create_table(cls) -> ServiceResource:
@@ -169,9 +166,7 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
                     python_type = python_type.__args__[0]
                 elif issubclass(python_type, Enum):
                     python_type = str
-                attribute_definitions.append(
-                    {"AttributeName": attr_name, "AttributeType": type_map[python_type]}
-                )
+                attribute_definitions.append({"AttributeName": attr_name, "AttributeType": type_map[python_type]})
             table = cls.resource.create_table(
                 TableName=cls.table_name,
                 KeySchema=dy_key_schema,
@@ -199,14 +194,14 @@ class BaseModelService(Generic[T], metaclass=MetaBaseModelService):
         return item
 
     @classmethod
-    def insert_many(cls, items: list["BaseModel"]) -> NoReturn:
+    def insert_many(cls, items: list["BaseModel"]) -> None:
         """Insert a list of items in the table"""
         with cls.table.batch_writer() as writer:
             for item in items:
                 writer.put_item(Item=item.dynamo_dict())
 
     @classmethod
-    def update(cls, item: "BaseModel", **kwargs) -> NoReturn:
+    def update(cls, item: "BaseModel", **kwargs) -> None:
         """Update an item in the table"""
         dy_key = {}
         key_schema = cls.clazz.key_schema
@@ -242,10 +237,7 @@ class BaseModel(PydanticBaseModel):
 
     def dynamo_dict(self) -> dict[str, Any]:
         """Returns a dict that dynamo will understand"""
-        return {
-            k: v.value if isinstance(v, Enum) else v
-            for k, v in self.model_dump().items()
-        }
+        return {k: v.value if isinstance(v, Enum) else v for k, v in self.model_dump().items()}
 
     def __hash__(self) -> int:
         """Return the hash of this item"""
