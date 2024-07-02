@@ -26,6 +26,9 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     version_to_release = None
     check_suite = event.check_suite
     is_default_branch = head_branch == repository.default_branch
+    if check_suite.before == "0000000000000000000000000000000000000000":
+        check_run.update(title="First commit", conclusion=CheckRunConclusion.SUCCESS)
+        return
     if is_default_branch:
         commits = repository.compare(check_suite.before, check_suite.after).commits.reversed
     else:
