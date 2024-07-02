@@ -621,6 +621,9 @@ class TestCheckSuiteRequested(TestCase):
                 ],
             )
 
+    def test_update_in_file(self):
+        assert False
+
 
 class TestCheckSuiteRerequested(TestCheckSuiteRequested):  # skipcq: PTC-W0046
     event_type = CheckSuiteRerequestedEvent

@@ -21,7 +21,7 @@ def default_configs() -> None:
         auto_approve_logins=[],
         auto_update=True,
     )
-    Config.create_config("release_manager", enabled=True)
+    Config.create_config("release_manager", enabled=True, update_in_file=False)
     Config.create_config(
         "issue_manager",
         enabled=True,
