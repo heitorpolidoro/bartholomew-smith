@@ -24,7 +24,9 @@ def get_existing_pull_request(repository: Repository, branch: str) -> Optional[P
     key = f"{repository.owner.login}:{branch}"
     if pull_request := cache.get(key):
         return pull_request
-    return next(iter(repository.get_pulls(state="open", head=key)), None)
+    if pull_request := next(iter(repository.get_pulls(state="open", head=key)), None):
+        cache[key] = pull_request
+    return pull_request
 
 
 def create_pull_request(repository: Repository, branch: str, title: str = None, body: str = None) -> None:

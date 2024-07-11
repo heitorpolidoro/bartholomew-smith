@@ -1,9 +1,13 @@
 """This module contains the logic for managing releases."""
 
+import re
+from string import Template
 from typing import NoReturn
 
+from github import UnknownObjectException
+from github.Repository import Repository
 from githubapp import Config
-from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus, EventCheckRun
 from githubapp.events import CheckSuiteRequestedEvent
 
 from src.helpers import command_helper, pull_request_helper, release_helper
@@ -17,7 +21,7 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     head_branch = event.check_suite.head_branch
 
     check_run = event.start_check_run(
-        "Releaser",
+        "Release Manager",
         event.check_suite.head_sha,
         "Initializing...",
         status=CheckRunStatus.IN_PROGRESS,
@@ -72,3 +76,39 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
             summary="Release command found ✅",
             conclusion=CheckRunConclusion.SUCCESS,
         )
+        update_in_file(repository, event.check_suite.head_sha, head_branch, version_to_release, check_run)
+
+
+@Config.call_if("release_manager.update_in_file")
+def update_in_file(
+    repository: Repository, sha: str, branch: str, version_to_release: str, check_run: EventCheckRun
+) -> None:  # pragma: no cover
+    """Update the version in the file"""
+    # TODO validations
+    # config format: must have a file_path and a pattern
+    # pattern format: must have a $version variable
+
+    update_in_file_config = Config.release_manager.update_in_file
+    file_path = update_in_file_config["file_path"]
+    pattern = update_in_file_config["pattern"]
+    pattern_regex = Template(pattern).substitute(version=".*")
+
+    check_run.update(title="Updating release file")
+    try:
+        content = repository.get_contents(file_path, ref=repository.default_branch).decoded_content
+        if re.search(pattern_regex, content):
+            version_to_release = Template(pattern).substitute(version=version_to_release)
+            content = re.sub(pattern_regex, version_to_release, content)
+            repository.update_file(file_path, f"Updating file '{file_path}' for release", content, sha, branch=branch)
+            check_run.update(
+                title=f"Ready to release {version_to_release}",
+                summary="Release command found ✅\nVersion file updated ✅",
+                conclusion=CheckRunConclusion.SUCCESS,
+            )
+        else:
+            check_run.update(
+                title=f"Pattern {pattern} not found in file '{file_path}'", conclusion=CheckRunConclusion.FAILURE
+            )
+    except UnknownObjectException:
+        check_run.update(title=f"File '{file_path}' not found", conclusion=CheckRunConclusion.FAILURE)
+

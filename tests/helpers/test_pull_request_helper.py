@@ -7,7 +7,12 @@ from src.helpers.pull_request_helper import (
     approve,
     get_existing_pull_request,
     update_pull_requests,
+    cache,
 )
+
+
+def teardown_function():
+    cache.clear()
 
 
 @pytest.mark.parametrize(
@@ -30,6 +35,18 @@ def test_get_existing_pull_request(repository_mock, expected_result_index, pull_
 
     expected_result = pull_requests[expected_result_index] if expected_result_index is not None else None
     assert get_existing_pull_request(repository_mock, "head_branch") == expected_result
+
+
+def test_get_existing_pull_request_from_cache(repository_mock):
+    repository_mock.get_pulls.return_value = [Mock(number=1)]
+
+    pull_request = get_existing_pull_request(repository_mock, "head_branch")
+    assert pull_request.number == 1
+
+    repository_mock.get_pulls.return_value = [Mock(number=2)]
+    pull_request = get_existing_pull_request(repository_mock, "head_branch")
+    assert pull_request.number == 1
+
 
 
 @pytest.mark.parametrize("mergeable_state", ["behind", "other"])

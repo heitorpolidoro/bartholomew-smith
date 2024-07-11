@@ -17,6 +17,7 @@ from src.helpers.repository_helper import get_repo_cached, get_repository
         ("repository_name", None, "repository_name"),  # repository found with name
         ("repository_name", None, None),  # repository not found
     ],
+    # ids=["oi"]
 )
 def test_get_repository(repository_name, repository_owner_login, expected, gh):
     if expected:  # if repository is expected to be found
