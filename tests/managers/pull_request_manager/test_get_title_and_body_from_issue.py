@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from githubapp import Config
 
@@ -11,7 +11,6 @@ def test_when_disabled():
         "link_issue",
         False,
     ):
-
         assert get_title_and_body_from_issue(None, None) == ("", "")
 
 

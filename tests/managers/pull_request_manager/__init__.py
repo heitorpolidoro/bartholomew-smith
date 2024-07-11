@@ -1,7 +1,7 @@
 from unittest.mock import call
 
 from githubapp import Config
-from githubapp.event_check_run import CheckRunStatus, CheckRunConclusion
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.test_helper import TestCase
 
 from app import app
@@ -46,7 +46,11 @@ class ManagerCheckRunTestCase(TestCase):
         self.assert_pull_request_manager_check_run_calls(**params)
 
     def assert_pull_request_manager_calls(
-        self, create_pull_call=None, pull_request=None, pull_requests_auto_update=None, **_
+        self,
+        create_pull_call=None,
+        pull_request=None,
+        pull_requests_auto_update=None,
+        **_,
     ):
         # Create Pull Request
         self.assert_create_pull_request_calls(create_pull_call)
@@ -152,7 +156,9 @@ class ManagerCheckRunTestCase(TestCase):
 
         if self.auto_update_enabled:
             self.assert_subrun_calls(
-                "Pull Request Manager", "Auto Update Pull Requests", auto_update_pull_requests_calls
+                "Pull Request Manager",
+                "Auto Update Pull Requests",
+                auto_update_pull_requests_calls,
             )
         else:
             self.assert_subrun_calls_when_disabled(

@@ -61,7 +61,11 @@ def create_pull_request(repository: Repository, branch: str, sub_run: EventCheck
     if Config.pull_request_manager.create_pull_request:
         if branch == repository.default_branch:
             ignoring_title = f"In the default branch '{branch}', ignoring."
-            sub_run.update(title=ignoring_title, conclusion=CheckRunConclusion.SKIPPED, update_check_run=False)
+            sub_run.update(
+                title=ignoring_title,
+                conclusion=CheckRunConclusion.SKIPPED,
+                update_check_run=False,
+            )
             return False
         else:
             return _create_pull_request(repository, branch, sub_run)
@@ -108,7 +112,11 @@ def enable_auto_merge(repository: Repository, branch: str, sub_run: EventCheckRu
     if Config.pull_request_manager.enable_auto_merge:
         if branch == repository.default_branch:
             ignoring_title = f"In the default branch '{branch}', ignoring."
-            sub_run.update(title=ignoring_title, conclusion=CheckRunConclusion.SKIPPED, update_check_run=False)
+            sub_run.update(
+                title=ignoring_title,
+                conclusion=CheckRunConclusion.SKIPPED,
+                update_check_run=False,
+            )
             return False
         else:
             return _enable_auto_merge(repository, branch, sub_run)

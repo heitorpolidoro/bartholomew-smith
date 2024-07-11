@@ -1,9 +1,9 @@
-from unittest.mock import Mock, patch, call, ANY
+from unittest.mock import ANY, Mock, call, patch
 
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config
-from githubapp.event_check_run import CheckRunStatus, CheckRunConclusion
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.events import CheckSuiteRequestedEvent
 from githubapp.test_helper import TestCase
 
@@ -16,7 +16,6 @@ VERSION_FILE = """
 __version__ = $version
 
 """
-
 
 
 class TestCheckSuiteRequested(TestCase):
@@ -101,29 +100,52 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Create Pull Request",
-                [
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Pull Request created", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Auto-merge enabled", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Requests Updated", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Create Pull Request",
+                    [
+                        call(
+                            title="Creating Pull Request",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Pull Request created",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(
+                            title="Enabling auto-merge",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Auto-merge enabled",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="No Pull Requests Updated",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.SUCCESS,
@@ -145,7 +167,12 @@ class TestCheckSuiteRequested(TestCase):
         """
         pull_requests = [
             Mock(spec=PullRequest, mergeable_state="behind", number=1, title="PR Title 1"),
-            Mock(spec=PullRequest, mergeable_state="not_behind", number=2, title="PR Title 2"),
+            Mock(
+                spec=PullRequest,
+                mergeable_state="not_behind",
+                number=2,
+                title="PR Title 2",
+            ),
             Mock(spec=PullRequest, mergeable_state="behind", number=3, title="PR Title 3"),
         ]
         with (patch.object(Repository, "get_pulls", return_value=pull_requests),):
@@ -163,39 +190,47 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Create Pull Request",
-                [
-                    call(
-                        title="In the default branch 'default_branch', ignoring.",
-                        conclusion=CheckRunConclusion.SKIPPED,
-                        update_check_run=False,
-                    ),
-                ],
-            ),
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(
-                        title="In the default branch 'default_branch', ignoring.",
-                        conclusion=CheckRunConclusion.SKIPPED,
-                        update_check_run=False,
-                    ),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(
-                        title="Pull Requests Updated",
-                        summary="#1 PR Title 1\n#3 PR Title 3",
-                        conclusion=CheckRunConclusion.SUCCESS,
-                    ),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Create Pull Request",
+                    [
+                        call(
+                            title="In the default branch 'default_branch', ignoring.",
+                            conclusion=CheckRunConclusion.SKIPPED,
+                            update_check_run=False,
+                        ),
+                    ],
+                ),
+            )
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(
+                            title="In the default branch 'default_branch', ignoring.",
+                            conclusion=CheckRunConclusion.SKIPPED,
+                            update_check_run=False,
+                        ),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Pull Requests Updated",
+                            summary="#1 PR Title 1\n#3 PR Title 3",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.SUCCESS,
@@ -244,29 +279,52 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Create Pull Request",
-                [
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Pull Request already exists", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Auto-merge enabled", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Requests Updated", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Create Pull Request",
+                    [
+                        call(
+                            title="Creating Pull Request",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Pull Request already exists",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(
+                            title="Enabling auto-merge",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Auto-merge enabled",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="No Pull Requests Updated",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.SUCCESS,
@@ -309,32 +367,50 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Create Pull Request",
-                [
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
-                    call(
-                        title="Pull Request creation failure",
-                        summary="Other GithubException.",
-                        conclusion=CheckRunConclusion.FAILURE,
-                    ),
-                ],
-            ),
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(title="Cancelled", conclusion=CheckRunConclusion.CANCELLED, update_check_run=False),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Requests Updated", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Create Pull Request",
+                    [
+                        call(
+                            title="Creating Pull Request",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Pull Request creation failure",
+                            summary="Other GithubException.",
+                            conclusion=CheckRunConclusion.FAILURE,
+                        ),
+                    ],
+                ),
+            )
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(
+                            title="Cancelled",
+                            conclusion=CheckRunConclusion.CANCELLED,
+                            update_check_run=False,
+                        ),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="No Pull Requests Updated",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.FAILURE,
@@ -379,36 +455,51 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Create Pull Request",
-                [
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
-                    call(
-                        title="Pull Request creation failure",
-                        summary="Other Error",
-                        conclusion=CheckRunConclusion.FAILURE,
-                    ),
-                ],
-            ),
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(title="Cancelled", conclusion=CheckRunConclusion.CANCELLED, update_check_run=False),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(
-                        title="Pull Requests Updated",
-                        summary="#1 PR Title 1",
-                        conclusion=CheckRunConclusion.SUCCESS,
-                    ),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Create Pull Request",
+                    [
+                        call(
+                            title="Creating Pull Request",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Pull Request creation failure",
+                            summary="Other Error",
+                            conclusion=CheckRunConclusion.FAILURE,
+                        ),
+                    ],
+                ),
+            )
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(
+                            title="Cancelled",
+                            conclusion=CheckRunConclusion.CANCELLED,
+                            update_check_run=False,
+                        ),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Pull Requests Updated",
+                            summary="#1 PR Title 1",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.FAILURE,
@@ -446,21 +537,36 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Auto-merge enabled", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Requests Updated", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(
+                            title="Enabling auto-merge",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="Auto-merge enabled",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="No Pull Requests Updated",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.SUCCESS,
@@ -502,20 +608,29 @@ class TestCheckSuiteRequested(TestCase):
                 "Pull Request Manager",
                 [call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS)],
             )
-            self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Enable auto-merge",
-                [
-                    call(title="Disabled", conclusion=CheckRunConclusion.SKIPPED),
-                ],
-            ), self.assert_subrun_calls(
-                "Pull Request Manager",
-                "Auto Update Pull Requests",
-                [
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Requests Updated", conclusion=CheckRunConclusion.SUCCESS),
-                ],
-            ),
+            (
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Enable auto-merge",
+                    [
+                        call(title="Disabled", conclusion=CheckRunConclusion.SKIPPED),
+                    ],
+                ),
+                self.assert_subrun_calls(
+                    "Pull Request Manager",
+                    "Auto Update Pull Requests",
+                    [
+                        call(
+                            title="Updating Pull Requests",
+                            status=CheckRunStatus.IN_PROGRESS,
+                        ),
+                        call(
+                            title="No Pull Requests Updated",
+                            conclusion=CheckRunConclusion.SUCCESS,
+                        ),
+                    ],
+                ),
+            )
             self.assert_last_check_run_call(
                 "Pull Request Manager",
                 conclusion=CheckRunConclusion.SUCCESS,

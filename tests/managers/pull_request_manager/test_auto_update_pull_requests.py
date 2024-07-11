@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock, call
+from unittest.mock import Mock, call, patch
 
 import pytest
 from github.PullRequest import PullRequest
@@ -30,9 +30,33 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
     def test_update_only_behind(self, event_type):
         pull_requests = [
-            (Mock(spec=PullRequest, mergeable_state="behind", number=1, title="PR Title 1"), True),
-            (Mock(spec=PullRequest, mergeable_state="not_behind", number=2, title="PR Title 2"), False),
-            (Mock(spec=PullRequest, mergeable_state="behind", number=3, title="PR Title 3"), True),
+            (
+                Mock(
+                    spec=PullRequest,
+                    mergeable_state="behind",
+                    number=1,
+                    title="PR Title 1",
+                ),
+                True,
+            ),
+            (
+                Mock(
+                    spec=PullRequest,
+                    mergeable_state="not_behind",
+                    number=2,
+                    title="PR Title 2",
+                ),
+                False,
+            ),
+            (
+                Mock(
+                    spec=PullRequest,
+                    mergeable_state="behind",
+                    number=3,
+                    title="PR Title 3",
+                ),
+                True,
+            ),
         ]
         with (patch.object(Repository, "get_pulls", return_value=[pr[0] for pr in pull_requests]),):
             self.deliver(event_type, check_suite={"head_branch": "default_branch"})
@@ -41,7 +65,10 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 auto_update_pull_requests_calls=[
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Updating Pull Requests",
+                        status=CheckRunStatus.IN_PROGRESS,
+                    ),
                     call(
                         title="Pull Requests Updated",
                         summary="#1 PR Title 1\n#3 PR Title 3",
@@ -67,7 +94,17 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
     @pytest.mark.parametrize(
         "pull_requests",
         [
-            [(Mock(spec=PullRequest, mergeable_state="not_behind", number=2, title="PR Title 2"), False)],
+            [
+                (
+                    Mock(
+                        spec=PullRequest,
+                        mergeable_state="not_behind",
+                        number=2,
+                        title="PR Title 2",
+                    ),
+                    False,
+                )
+            ],
             [],
         ],
         ids=[
@@ -83,7 +120,10 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 auto_update_pull_requests_calls=[
-                    call(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Updating Pull Requests",
+                        status=CheckRunStatus.IN_PROGRESS,
+                    ),
                     call(
                         title="No Pull Requests Updated",
                         conclusion=CheckRunConclusion.SUCCESS,

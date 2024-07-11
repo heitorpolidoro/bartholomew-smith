@@ -76,12 +76,22 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
             summary="Release command found ✅",
             conclusion=CheckRunConclusion.SUCCESS,
         )
-        update_in_file(repository, event.check_suite.head_sha, head_branch, version_to_release, check_run)
+        update_in_file(
+            repository,
+            event.check_suite.head_sha,
+            head_branch,
+            version_to_release,
+            check_run,
+        )
 
 
 @Config.call_if("release_manager.update_in_file")
 def update_in_file(
-    repository: Repository, sha: str, branch: str, version_to_release: str, check_run: EventCheckRun
+    repository: Repository,
+    sha: str,
+    branch: str,
+    version_to_release: str,
+    check_run: EventCheckRun,
 ) -> None:  # pragma: no cover
     """Update the version in the file"""
     # TODO validations
@@ -99,7 +109,13 @@ def update_in_file(
         if re.search(pattern_regex, content):
             version_to_release = Template(pattern).substitute(version=version_to_release)
             content = re.sub(pattern_regex, version_to_release, content)
-            repository.update_file(file_path, f"Updating file '{file_path}' for release", content, sha, branch=branch)
+            repository.update_file(
+                file_path,
+                f"Updating file '{file_path}' for release",
+                content,
+                sha,
+                branch=branch,
+            )
             check_run.update(
                 title=f"Ready to release {version_to_release}",
                 summary="Release command found ✅\nVersion file updated ✅",
@@ -107,8 +123,8 @@ def update_in_file(
             )
         else:
             check_run.update(
-                title=f"Pattern {pattern} not found in file '{file_path}'", conclusion=CheckRunConclusion.FAILURE
+                title=f"Pattern {pattern} not found in file '{file_path}'",
+                conclusion=CheckRunConclusion.FAILURE,
             )
     except UnknownObjectException:
         check_run.update(title=f"File '{file_path}' not found", conclusion=CheckRunConclusion.FAILURE)
-

@@ -1,14 +1,14 @@
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
 
 import pytest
 from github import GithubException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config
-from githubapp.event_check_run import CheckRunStatus, CheckRunConclusion
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.events import CheckSuiteRequestedEvent, CheckSuiteRerequestedEvent
 
-from tests.managers.pull_request_manager import ManagerCheckRunTestCase, IGNORING_TITLE
+from tests.managers.pull_request_manager import IGNORING_TITLE, ManagerCheckRunTestCase
 
 
 class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
@@ -102,7 +102,11 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
         self.assert_all_check_runs_calls_asserted()
 
     def test_when_the_default_branch_is_not_protected(self, event_type):
-        with patch.object(Repository, "get_branch", return_value=Mock(name="default_branch", protected=False)):
+        with patch.object(
+            Repository,
+            "get_branch",
+            return_value=Mock(name="default_branch", protected=False),
+        ):
             self.deliver(event_type, check_suite={"head_branch": "feature_branch"})
 
             self.assert_managers_calls(
@@ -140,7 +144,10 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
     @pytest.mark.parametrize(
         "exception",
-        [GithubException(500, data={"errors": [{"message": "Error"}]}), Exception("Error")],
+        [
+            GithubException(500, data={"errors": [{"message": "Error"}]}),
+            Exception("Error"),
+        ],
     )
     def test_when_error_on_enabling_auto_merge(self, event_type, exception):
         with patch.object(self.pull_request, "enable_automerge", side_effect=exception):
@@ -153,7 +160,11 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
             self.assert_managers_check_run_calls(
                 enable_auto_merge_calls=[
                     call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Enabling auto-merge failure", summary="Error", conclusion=CheckRunConclusion.FAILURE),
+                    call(
+                        title="Enabling auto-merge failure",
+                        summary="Error",
+                        conclusion=CheckRunConclusion.FAILURE,
+                    ),
                 ]
             )
 

@@ -5,9 +5,9 @@ from githubapp import Config
 
 from src.helpers.pull_request_helper import (
     approve,
+    cache,
     get_existing_pull_request,
     update_pull_requests,
-    cache,
 )
 
 
@@ -46,7 +46,6 @@ def test_get_existing_pull_request_from_cache(repository_mock):
     repository_mock.get_pulls.return_value = [Mock(number=2)]
     pull_request = get_existing_pull_request(repository_mock, "head_branch")
     assert pull_request.number == 1
-
 
 
 @pytest.mark.parametrize("mergeable_state", ["behind", "other"])

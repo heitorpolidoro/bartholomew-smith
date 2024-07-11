@@ -1,9 +1,9 @@
-from unittest.mock import call, patch, Mock
+from unittest.mock import Mock, call, patch
 
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config
-from githubapp.event_check_run import CheckRunStatus, CheckRunConclusion
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.events import CheckSuiteRequestedEvent, CheckSuiteRerequestedEvent
 
 from tests.managers.pull_request_manager import ManagerCheckRunTestCase
@@ -50,7 +50,10 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
             [
                 call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
                 call(title="Checking for release command..."),
-                call(title="No release command found", conclusion=CheckRunConclusion.SUCCESS),
+                call(
+                    title="No release command found",
+                    conclusion=CheckRunConclusion.SUCCESS,
+                ),
             ],
         )
 
@@ -66,7 +69,10 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
                 "Release Manager",
                 [
                     call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="No Pull Request found", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="No Pull Request found",
+                        conclusion=CheckRunConclusion.SUCCESS,
+                    ),
                 ],
             )
 
@@ -103,7 +109,10 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
             [
                 call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
                 call(title="Checking for release command..."),
-                call(title="No release command found", conclusion=CheckRunConclusion.SUCCESS),
+                call(
+                    title="No release command found",
+                    conclusion=CheckRunConclusion.SUCCESS,
+                ),
             ],
         )
 

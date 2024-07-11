@@ -1,12 +1,12 @@
-from unittest.mock import Mock, patch, call, ANY
+from unittest.mock import ANY, Mock, call, patch
 
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 from githubapp import Config
-from githubapp.event_check_run import CheckRunStatus, CheckRunConclusion
+from githubapp.event_check_run import CheckRunConclusion, CheckRunStatus
 from githubapp.events import CheckSuiteRequestedEvent, CheckSuiteRerequestedEvent
 
-from tests.managers.pull_request_manager import ManagerCheckRunTestCase, IGNORING_TITLE
+from tests.managers.pull_request_manager import IGNORING_TITLE, ManagerCheckRunTestCase
 
 
 class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
@@ -47,7 +47,10 @@ class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
             self.assert_managers_check_run_calls(
                 create_pull_request_calls=[
                     call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Pull Request created", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="Pull Request created",
+                        conclusion=CheckRunConclusion.SUCCESS,
+                    ),
                 ]
             )
 
@@ -119,7 +122,10 @@ class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
             self.assert_managers_check_run_calls(
                 create_pull_request_calls=[
                     call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
-                    call(title="Pull Request already exists", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="Pull Request already exists",
+                        conclusion=CheckRunConclusion.SUCCESS,
+                    ),
                 ]
             )
 
