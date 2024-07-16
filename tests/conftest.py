@@ -10,6 +10,13 @@ from config import default_configs
 from src.helpers.db_helper import BaseModelService
 from src.models import IssueJob, IssueJobStatus
 
+
+@pytest.fixture
+def repository():
+    return Mock(full_name="repo_full_name")
+
+
+# TODO Remove?
 default_configs()
 
 

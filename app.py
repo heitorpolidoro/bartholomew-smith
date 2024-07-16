@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from multiprocessing import Process
+from typing import Union
 
 import markdown
 import sentry_sdk
@@ -60,7 +61,7 @@ default_configs()
 
 @webhook_handler.add_handler(CheckSuiteRequestedEvent)
 @webhook_handler.add_handler(CheckSuiteRerequestedEvent)
-def handle_check_suite_requested(event: CheckSuiteRequestedEvent) -> None:
+def handle_check_suite_requested(event: Union[CheckSuiteRequestedEvent, CheckSuiteRerequestedEvent]) -> None:
     """
     handle the Check Suite Request and Rerequest events
     Calling the Pull Request manager to:
