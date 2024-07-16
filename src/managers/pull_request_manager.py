@@ -43,20 +43,28 @@ def manage(event: CheckSuiteRequestedEvent) -> None:
     )
     create_pull_request_sub_run = check_run.create_sub_run("Create Pull Request")
     enable_auto_merge_sub_run = check_run.create_sub_run("Enable auto-merge")
-    auto_update_pull_requests_sub_run = check_run.create_sub_run("Auto Update Pull Requests")
+    auto_update_pull_requests_sub_run = check_run.create_sub_run(
+        "Auto Update Pull Requests"
+    )
     try:
         create_pull_request(repository, head_branch, create_pull_request_sub_run)
         enable_auto_merge(repository, head_branch, enable_auto_merge_sub_run)
     except Exception:
         if not Config.pull_request_manager.enable_auto_merge:  # pragma: no branch
-            enable_auto_merge_sub_run.update(title="Disabled", conclusion=CheckRunConclusion.SKIPPED)
+            enable_auto_merge_sub_run.update(
+                title="Disabled", conclusion=CheckRunConclusion.SKIPPED
+            )
         raise
     finally:
-        auto_update_pull_requests(repository, head_branch, auto_update_pull_requests_sub_run)  # pragma: no branch
+        auto_update_pull_requests(
+            repository, head_branch, auto_update_pull_requests_sub_run
+        )  # pragma: no branch
     check_run.finish()
 
 
-def create_pull_request(repository: Repository, branch: str, sub_run: EventCheckRun.SubRun) -> bool:
+def create_pull_request(
+    repository: Repository, branch: str, sub_run: EventCheckRun.SubRun
+) -> bool:
     """Try to create a Pull Request if is enabled and is not the default branch"""
     if Config.pull_request_manager.create_pull_request:
         if branch == repository.default_branch:
@@ -75,7 +83,9 @@ def create_pull_request(repository: Repository, branch: str, sub_run: EventCheck
         return False
 
 
-def _create_pull_request(repository: Repository, branch: str, sub_run: EventCheckRun.SubRun) -> bool:
+def _create_pull_request(
+    repository: Repository, branch: str, sub_run: EventCheckRun.SubRun
+) -> bool:
     """Try to create a Pull Request"""
     sub_run.update(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS)
     title, body = get_title_and_body_from_issue(repository, branch)
@@ -86,12 +96,17 @@ def _create_pull_request(repository: Repository, branch: str, sub_run: EventChec
             title=title,
             body=body,
         )
-        sub_run.update(title="Pull Request created", conclusion=CheckRunConclusion.SUCCESS)
+        sub_run.update(
+            title="Pull Request created", conclusion=CheckRunConclusion.SUCCESS
+        )
         return True
     except Exception as err:
         if isinstance(err, GithubException):
             error = extract_github_error(err)
-            if error == f"A pull request already exists for {repository.owner.login}:{branch}.":
+            if (
+                error
+                == f"A pull request already exists for {repository.owner.login}:{branch}."
+            ):
                 sub_run.update(
                     title="Pull Request already exists",
                     conclusion=CheckRunConclusion.SUCCESS,
@@ -107,7 +122,9 @@ def _create_pull_request(repository: Repository, branch: str, sub_run: EventChec
         raise GithubAppRuntimeException from err
 
 
-def enable_auto_merge(repository: Repository, branch: str, sub_run: EventCheckRun.SubRun) -> bool:
+def enable_auto_merge(
+    repository: Repository, branch: str, sub_run: EventCheckRun.SubRun
+) -> bool:
     """Enable the auto merge if is enabled and is not the default branch"""
     if Config.pull_request_manager.enable_auto_merge:
         if branch == repository.default_branch:
@@ -125,14 +142,20 @@ def enable_auto_merge(repository: Repository, branch: str, sub_run: EventCheckRu
     return False
 
 
-def _enable_auto_merge(repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun) -> bool:
+def _enable_auto_merge(
+    repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun
+) -> bool:
     """Enable the auto merge"""
     sub_run.update(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS)
     default_branch = repository.get_branch(repository.default_branch)
     if default_branch.protected:
-        if pull_request := pull_request_helper.get_existing_pull_request(repository, branch_name):
+        if pull_request := pull_request_helper.get_existing_pull_request(
+            repository, branch_name
+        ):
             try:
-                pull_request.enable_automerge(merge_method=Config.pull_request_manager.merge_method)
+                pull_request.enable_automerge(
+                    merge_method=Config.pull_request_manager.merge_method
+                )
                 sub_run.update(
                     title="Auto-merge enabled",
                     conclusion=CheckRunConclusion.SUCCESS,
@@ -162,14 +185,22 @@ def _enable_auto_merge(repository: Repository, branch_name: str, sub_run: EventC
         )
 
 
-def auto_update_pull_requests(repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun) -> bool:
+def auto_update_pull_requests(
+    repository: Repository, branch_name: str, sub_run: EventCheckRun.SubRun
+) -> bool:
     """Updates all the pull requests in the given branch if is updatable."""
     if Config.pull_request_manager.auto_update:
-        sub_run.update(title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS)
-        if updated_pull_requests := pull_request_helper.update_pull_requests(repository, branch_name):
+        sub_run.update(
+            title="Updating Pull Requests", status=CheckRunStatus.IN_PROGRESS
+        )
+        if updated_pull_requests := pull_request_helper.update_pull_requests(
+            repository, branch_name
+        ):
             sub_run.update(
                 title="Pull Requests Updated",
-                summary="\n".join(f"#{pr.number} {pr.title}" for pr in updated_pull_requests),
+                summary="\n".join(
+                    f"#{pr.number} {pr.title}" for pr in updated_pull_requests
+                ),
                 conclusion=CheckRunConclusion.SUCCESS,
             )
         else:

@@ -26,7 +26,9 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
 
         self.pull_request.get_commits().reversed = self.commits
         # self.patch(patch.object(Repository, "get_branch", repository_get_branch))
-        self.patch(patch.object(Repository, "get_pulls", return_value=[self.pull_request]))
+        self.patch(
+            patch.object(Repository, "get_pulls", return_value=[self.pull_request])
+        )
         compare = Mock()
         compare.commits.reversed = self.commits
         self.patch(patch.object(Repository, "compare", return_value=compare))
@@ -59,7 +61,9 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
 
         self.assert_all_check_runs_calls_asserted()
 
-    def test_when_head_branch_is_not_default_branch_and_there_is_no_pull_request(self, event_type, repository):
+    def test_when_head_branch_is_not_default_branch_and_there_is_no_pull_request(
+        self, event_type, repository
+    ):
         with patch.object(Repository, "get_pulls", return_value=[]):
             self.deliver(event_type, check_suite={"head_branch": "feature_branch"})
 
@@ -139,7 +143,9 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
 
         self.assert_all_check_runs_calls_asserted()
 
-    def test_when_has_release_command_and_not_in_default_branch(self, event_type, repository):
+    def test_when_has_release_command_and_not_in_default_branch(
+        self, event_type, repository
+    ):
         self.add_commit_with_message("[release:1.2.3]")
         self.deliver(event_type, check_suite={"head_branch": "feature_branch"})
 
@@ -160,7 +166,9 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
 
         self.assert_all_check_runs_calls_asserted()
 
-    def test_when_has_release_command_and_in_default_branch(self, event_type, repository):
+    def test_when_has_release_command_and_in_default_branch(
+        self, event_type, repository
+    ):
         self.add_commit_with_message("[release:1.2.3]")
         self.mock_request(
             "post",
@@ -187,7 +195,9 @@ class TestReleaseCheckRun(ManagerCheckRunTestCase):
 
     def test_when_has_relative_release_command(self, event_type, repository):
         self.add_commit_with_message("[release:major]")
-        with patch.object(Repository, "get_latest_release", return_value=Mock(tag_name="1.2.3")):
+        with patch.object(
+            Repository, "get_latest_release", return_value=Mock(tag_name="1.2.3")
+        ):
             self.deliver(event_type, check_suite={"head_branch": "feature_branch"})
 
             repository.create_git_release.assert_not_called()

@@ -58,7 +58,11 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
                 True,
             ),
         ]
-        with (patch.object(Repository, "get_pulls", return_value=[pr[0] for pr in pull_requests]),):
+        with (
+            patch.object(
+                Repository, "get_pulls", return_value=[pr[0] for pr in pull_requests]
+            ),
+        ):
             self.deliver(event_type, check_suite={"head_branch": "default_branch"})
 
             self.assert_managers_calls(pull_requests_auto_update=pull_requests)
@@ -113,7 +117,11 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
         ],
     )
     def test_when_there_is_no_pull_request_to_update(self, event_type, pull_requests):
-        with (patch.object(Repository, "get_pulls", return_value=[pr[0] for pr in pull_requests]),):
+        with (
+            patch.object(
+                Repository, "get_pulls", return_value=[pr[0] for pr in pull_requests]
+            ),
+        ):
             self.deliver(event_type, check_suite={"head_branch": "default_branch"})
 
             self.assert_managers_calls(pull_requests_auto_update=pull_requests)

@@ -24,8 +24,12 @@ class ManagerCheckRunTestCase(TestCase):
     def update_configs(self):
         config = Config.pull_request_manager
         self.pull_request_enabled = config.enabled
-        self.create_pull_request_enabled = self.pull_request_enabled and config.create_pull_request
-        self.enable_auto_merge_enabled = self.pull_request_enabled and config.enable_auto_merge
+        self.create_pull_request_enabled = (
+            self.pull_request_enabled and config.create_pull_request
+        )
+        self.enable_auto_merge_enabled = (
+            self.pull_request_enabled and config.enable_auto_merge
+        )
         self.auto_update_enabled = self.pull_request_enabled and config.auto_update
         self.auto_approve_enabled = self.pull_request_enabled and config.auto_approve
 
@@ -103,14 +107,18 @@ class ManagerCheckRunTestCase(TestCase):
 
     def assert_enable_auto_merge_calls(self, pull_request):
         if self.enable_auto_merge_enabled:
-            pull_request.enable_automerge.assert_called_once_with(merge_method=Config.pull_request_manager.merge_method)
+            pull_request.enable_automerge.assert_called_once_with(
+                merge_method=Config.pull_request_manager.merge_method
+            )
         else:
             pull_request.enable_automerge.assert_not_called()
 
     # noinspection PyUnresolvedReferences
     def assert_create_pull_request_calls(self, create_pull_call):
         if self.create_pull_request_enabled and create_pull_call:
-            self.event.repository.create_pull.assert_called_once_with(*create_pull_call.args, **create_pull_call.kwargs)
+            self.event.repository.create_pull.assert_called_once_with(
+                *create_pull_call.args, **create_pull_call.kwargs
+            )
         else:
             self.event.repository.create_pull.assert_not_called()
 
@@ -147,7 +155,9 @@ class ManagerCheckRunTestCase(TestCase):
             )
 
         if self.enable_auto_merge_enabled:
-            self.assert_subrun_calls("Pull Request Manager", "Enable auto-merge", enable_auto_merge_calls)
+            self.assert_subrun_calls(
+                "Pull Request Manager", "Enable auto-merge", enable_auto_merge_calls
+            )
         else:
             self.assert_subrun_calls_when_disabled(
                 "Pull Request Manager",

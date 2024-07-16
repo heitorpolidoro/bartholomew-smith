@@ -46,7 +46,9 @@ class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 create_pull_request_calls=[
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Pull Request created",
                         conclusion=CheckRunConclusion.SUCCESS,
@@ -121,7 +123,9 @@ class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 create_pull_request_calls=[
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Pull Request already exists",
                         conclusion=CheckRunConclusion.SUCCESS,
@@ -163,7 +167,9 @@ class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 create_pull_request_calls=[
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Pull Request creation failure",
                         summary="Other GithubException",
@@ -207,7 +213,9 @@ class TestCreatePullRequestCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 create_pull_request_calls=[
-                    call(title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Creating Pull Request", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Pull Request creation failure",
                         summary="Other Error",

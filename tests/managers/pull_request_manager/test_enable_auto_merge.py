@@ -27,7 +27,9 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
             user=Mock(login=Config.BOT_NAME),
         )
         self.patch(patch.object(Repository, "get_branch", repository_get_branch))
-        self.patch(patch.object(Repository, "get_pulls", return_value=[self.pull_request]))
+        self.patch(
+            patch.object(Repository, "get_pulls", return_value=[self.pull_request])
+        )
 
     @staticmethod
     def setup_config():
@@ -115,7 +117,9 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 enable_auto_merge_calls=[
-                    call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Cannot enable auto-merge in a repository with no protected branch.",
                         summary="Check [Enabling auto-merge](https://docs.github.com/en/pull-requests/collaborating-"
@@ -159,7 +163,9 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 enable_auto_merge_calls=[
-                    call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Enabling auto-merge failure",
                         summary="Error",
@@ -192,7 +198,9 @@ class TestEnableAutoMergeCheckRun(ManagerCheckRunTestCase):
 
             self.assert_managers_check_run_calls(
                 enable_auto_merge_calls=[
-                    call(title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS),
+                    call(
+                        title="Enabling auto-merge", status=CheckRunStatus.IN_PROGRESS
+                    ),
                     call(
                         title="Enabling auto-merge failure",
                         summary="There is no Pull Request for the head branch feature_branch",

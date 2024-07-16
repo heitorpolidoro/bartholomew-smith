@@ -85,7 +85,9 @@ class TestCheckSuiteRequested(TestCase):
             patch.object(Repository, "create_pull", return_value=pull_request),
             patch.object(Repository, "get_pulls", return_value=[]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
 
             event.repository.create_pull.assert_called_once_with(
                 "default_branch",
@@ -94,7 +96,9 @@ class TestCheckSuiteRequested(TestCase):
                 body="Pull Request automatically created",
                 draft=False,
             )
-            pull_request.enable_automerge.assert_called_once_with(merge_method=Config.pull_request_manager.merge_method)
+            pull_request.enable_automerge.assert_called_once_with(
+                merge_method=Config.pull_request_manager.merge_method
+            )
 
             self.assert_check_run_calls(
                 "Pull Request Manager",
@@ -166,17 +170,25 @@ class TestCheckSuiteRequested(TestCase):
         Update the Pull Requests
         """
         pull_requests = [
-            Mock(spec=PullRequest, mergeable_state="behind", number=1, title="PR Title 1"),
+            Mock(
+                spec=PullRequest, mergeable_state="behind", number=1, title="PR Title 1"
+            ),
             Mock(
                 spec=PullRequest,
                 mergeable_state="not_behind",
                 number=2,
                 title="PR Title 2",
             ),
-            Mock(spec=PullRequest, mergeable_state="behind", number=3, title="PR Title 3"),
+            Mock(
+                spec=PullRequest, mergeable_state="behind", number=3, title="PR Title 3"
+            ),
         ]
-        with (patch.object(Repository, "get_pulls", return_value=pull_requests),):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "default_branch"})
+        with (
+            patch.object(Repository, "get_pulls", return_value=pull_requests),
+        ):
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "default_branch"}
+            )
 
             event.repository.create_pull.assert_not_called()
             for pull_request in pull_requests:
@@ -263,7 +275,9 @@ class TestCheckSuiteRequested(TestCase):
             ),
             patch.object(Repository, "get_pulls", return_value=[pull_request]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
 
             event.repository.create_pull.assert_called_once_with(
                 "default_branch",
@@ -272,7 +286,9 @@ class TestCheckSuiteRequested(TestCase):
                 body="Pull Request automatically created",
                 draft=False,
             )
-            pull_request.enable_automerge.assert_called_once_with(merge_method=Config.pull_request_manager.merge_method)
+            pull_request.enable_automerge.assert_called_once_with(
+                merge_method=Config.pull_request_manager.merge_method
+            )
             pull_request.create_review.assert_not_called()
 
             self.assert_check_run_calls(
@@ -351,7 +367,9 @@ class TestCheckSuiteRequested(TestCase):
             ),
             patch.object(Repository, "get_pulls", return_value=[pull_request]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
 
             event.repository.create_pull.assert_called_once_with(
                 "default_branch",
@@ -429,7 +447,9 @@ class TestCheckSuiteRequested(TestCase):
         Cancel Enable auto merge
         Update any Pull Request
         """
-        pull_request = Mock(spec=PullRequest, mergeable_state="behind", number=1, title="PR Title 1")
+        pull_request = Mock(
+            spec=PullRequest, mergeable_state="behind", number=1, title="PR Title 1"
+        )
         with (
             patch.object(
                 Repository,
@@ -438,7 +458,9 @@ class TestCheckSuiteRequested(TestCase):
             ),
             patch.object(Repository, "get_pulls", return_value=[pull_request]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
 
             event.repository.create_pull.assert_called_once_with(
                 "default_branch",
@@ -528,9 +550,13 @@ class TestCheckSuiteRequested(TestCase):
             ),
             patch.object(Repository, "get_pulls", return_value=[pull_request]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_pull.assert_not_called()
-            pull_request.enable_automerge.assert_called_once_with(merge_method=Config.pull_request_manager.merge_method)
+            pull_request.enable_automerge.assert_called_once_with(
+                merge_method=Config.pull_request_manager.merge_method
+            )
             pull_request.create_review.assert_not_called()
 
             self.assert_check_run_calls(
@@ -599,7 +625,9 @@ class TestCheckSuiteRequested(TestCase):
             ),
             patch.object(Repository, "get_pulls", return_value=[pull_request]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_pull.assert_not_called()
             pull_request.enable_automerge.assert_not_called()
             pull_request.create_review.assert_not_called()
