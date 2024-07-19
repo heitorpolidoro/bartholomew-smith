@@ -71,7 +71,10 @@ class TestCheckSuiteRequested(TestCase):
         )
 
         if final_create_pull_request:
-            if final_create_pull_request.pop("conclusion", None) != CheckRunConclusion.SKIPPED:
+            if (
+                final_create_pull_request.pop("conclusion", None)
+                != CheckRunConclusion.SKIPPED
+            ):
                 self.assert_sub_run_call(
                     check_run_name,
                     "Create Pull Request",
@@ -84,16 +87,24 @@ class TestCheckSuiteRequested(TestCase):
             )
 
         if final_enable_auto_merge:
-            if final_enable_auto_merge.pop("conclusion", None) != CheckRunConclusion.SKIPPED:
+            if (
+                final_enable_auto_merge.pop("conclusion", None)
+                != CheckRunConclusion.SKIPPED
+            ):
                 self.assert_sub_run_call(
                     check_run_name,
                     "Enable auto-merge",
                     title="Enabling auto-merge",
                 )
-            self.assert_sub_run_call(check_run_name, "Enable auto-merge", **final_enable_auto_merge)
+            self.assert_sub_run_call(
+                check_run_name, "Enable auto-merge", **final_enable_auto_merge
+            )
 
         if final_auto_update_pull_requests:
-            if final_auto_update_pull_requests.pop("conclusion", None) != CheckRunConclusion.SKIPPED:
+            if (
+                final_auto_update_pull_requests.pop("conclusion", None)
+                != CheckRunConclusion.SKIPPED
+            ):
                 self.assert_sub_run_call(
                     check_run_name,
                     "Auto Update Pull Requests",
@@ -115,7 +126,9 @@ class TestCheckSuiteRequested(TestCase):
         )
 
     def test_when_head_branch_is_not_default_branch(self):
-        event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+        event = self.deliver(
+            self.event_type, check_suite={"head_branch": "feature_branch"}
+        )
 
         event.repository.create_pull.assert_called_once_with(
             "default_branch",
@@ -147,7 +160,9 @@ class TestCheckSuiteRequested(TestCase):
                 ),
             ),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
 
             event.repository.create_pull.assert_called_once_with(
                 "default_branch",
@@ -177,7 +192,9 @@ class TestCheckSuiteRequested(TestCase):
                 False,
             ),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_pull.assert_not_called()
             self.pull_request.enable_automerge.assert_called_once_with(
                 merge_method=Config.pull_request_manager.merge_method
@@ -203,7 +220,9 @@ class TestCheckSuiteRequested(TestCase):
             ),
             patch.object(Repository, "get_pulls", return_value=[]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_pull.assert_not_called()
             self.pull_request.enable_automerge.assert_not_called()
             self.pull_request.create_review.assert_not_called()
@@ -236,7 +255,9 @@ class TestCheckSuiteRequested(TestCase):
                 False,
             ),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_pull.assert_not_called()
             self.pull_request.enable_automerge.assert_not_called()
             self.pull_request.create_review.assert_not_called()
@@ -256,7 +277,9 @@ class TestCheckSuiteRequested(TestCase):
             self.assert_no_check_run("Releaser")
 
     def test_when_head_branch_is_default_branch(self):
-        event = self.deliver(self.event_type, check_suite={"head_branch": "default_branch"})
+        event = self.deliver(
+            self.event_type, check_suite={"head_branch": "default_branch"}
+        )
         event.repository.create_pull.assert_not_called()
         self.pull_request.enable_automerge.assert_not_called()
         self.pull_request.create_review.assert_not_called()
@@ -345,7 +368,9 @@ class TestCheckSuiteRequested(TestCase):
             self.assert_no_check_run("Releaser")
 
     def test_when_an_the_default_branch_is_not_protected(self):
-        with (patch.object(Repository, "get_branch", return_value=Mock(protected=False)),):
+        with (
+            patch.object(Repository, "get_branch", return_value=Mock(protected=False)),
+        ):
             event = self.deliver(
                 self.event_type,
                 check_suite={"head_branch": "feature_branch"},
@@ -413,7 +438,9 @@ class TestCheckSuiteRequested(TestCase):
             "get_pulls",
             return_value=[ahead_pull_request] + behind_pull_requests,
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "default_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "default_branch"}
+            )
             event.repository.create_pull.assert_not_called()
             self.pull_request.enable_automerge.assert_not_called()
             self.pull_request.create_review.assert_not_called()
@@ -442,7 +469,9 @@ class TestCheckSuiteRequested(TestCase):
             "auto_update",
             False,
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "default_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "default_branch"}
+            )
             event.repository.create_pull.assert_not_called()
             self.pull_request.enable_automerge.assert_not_called()
             self.pull_request.create_review.assert_not_called()
@@ -492,7 +521,10 @@ class TestCheckSuiteRequested(TestCase):
         ):
             event = self.deliver(
                 self.event_type,
-                check_suite={"head_branch": "default_branch", "before": "0000000000000000000000000000000000000000"},
+                check_suite={
+                    "head_branch": "default_branch",
+                    "before": "0000000000000000000000000000000000000000",
+                },
             )
             event.repository.create_git_release.assert_not_called()
             self.assert_no_check_run("Pull Request Manager")
@@ -513,7 +545,9 @@ class TestCheckSuiteRequested(TestCase):
             patch.object(Repository, "compare", return_value=compare),
         ):
             event = self.deliver(self.event_type)
-            event.repository.create_git_release.assert_called_once_with(tag="1.2.3", generate_release_notes=True)
+            event.repository.create_git_release.assert_called_once_with(
+                tag="1.2.3", generate_release_notes=True
+            )
             self.assert_no_check_run("Pull Request Manager")
             self.assert_check_run_progression(
                 "Releaser",
@@ -521,7 +555,9 @@ class TestCheckSuiteRequested(TestCase):
                     call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
                     call(title="Checking for release command..."),
                     call(title="Releasing 1.2.3..."),
-                    call(title="1.2.3 released ✅", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="1.2.3 released ✅", conclusion=CheckRunConclusion.SUCCESS
+                    ),
                 ],
             )
 
@@ -539,7 +575,9 @@ class TestCheckSuiteRequested(TestCase):
             patch.object(Repository, "compare", return_value=compare),
         ):
             event = self.deliver(self.event_type)
-            event.repository.create_git_release.assert_called_once_with(tag="3.2.1", generate_release_notes=True)
+            event.repository.create_git_release.assert_called_once_with(
+                tag="3.2.1", generate_release_notes=True
+            )
             self.assert_no_check_run("Pull Request Manager")
             self.assert_check_run_progression(
                 "Releaser",
@@ -547,7 +585,9 @@ class TestCheckSuiteRequested(TestCase):
                     call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
                     call(title="Checking for release command..."),
                     call(title="Releasing 3.2.1..."),
-                    call(title="3.2.1 released ✅", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="3.2.1 released ✅", conclusion=CheckRunConclusion.SUCCESS
+                    ),
                 ],
             )
 
@@ -558,10 +598,14 @@ class TestCheckSuiteRequested(TestCase):
             patch.object(Config.release_manager, "enabled", True),
             patch.object(Config.pull_request_manager, "enabled", False),
             patch.object(Repository, "compare", return_value=compare),
-            patch.object(Repository, "get_latest_release", return_value=Mock(tag_name="1.2.3")),
+            patch.object(
+                Repository, "get_latest_release", return_value=Mock(tag_name="1.2.3")
+            ),
         ):
             event = self.deliver(self.event_type)
-            event.repository.create_git_release.assert_called_once_with(tag="1.3.0", generate_release_notes=True)
+            event.repository.create_git_release.assert_called_once_with(
+                tag="1.3.0", generate_release_notes=True
+            )
             self.assert_no_check_run("Pull Request Manager")
             self.assert_check_run_progression(
                 "Releaser",
@@ -569,7 +613,9 @@ class TestCheckSuiteRequested(TestCase):
                     call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
                     call(title="Checking for release command..."),
                     call(title="Releasing 1.3.0..."),
-                    call(title="1.3.0 released ✅", conclusion=CheckRunConclusion.SUCCESS),
+                    call(
+                        title="1.3.0 released ✅", conclusion=CheckRunConclusion.SUCCESS
+                    ),
                 ],
             )
 
@@ -580,7 +626,9 @@ class TestCheckSuiteRequested(TestCase):
             patch.object(Config.release_manager, "enabled", True),
             patch.object(Config.pull_request_manager, "enabled", False),
             patch.object(Repository, "compare", return_value=compare),
-            patch.object(Repository, "get_latest_release", return_value=Mock(tag_name="1.2.3")),
+            patch.object(
+                Repository, "get_latest_release", return_value=Mock(tag_name="1.2.3")
+            ),
         ):
             event = self.deliver(self.event_type)
             event.repository.create_git_release.assert_not_called()
@@ -599,12 +647,16 @@ class TestCheckSuiteRequested(TestCase):
             )
 
     def test_release_manager_with_command_in_feature_branch(self):
-        self.pull_request.get_commits().reversed = [Mock(commit=Mock(message="[release:1.2.3]"))]
+        self.pull_request.get_commits().reversed = [
+            Mock(commit=Mock(message="[release:1.2.3]"))
+        ]
         with (
             patch.object(Config.release_manager, "enabled", True),
             patch.object(Config.pull_request_manager, "enabled", False),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_git_release.assert_not_called()
             self.assert_no_check_run("Pull Request Manager")
             self.assert_check_run_progression(
@@ -626,7 +678,9 @@ class TestCheckSuiteRequested(TestCase):
             patch.object(Config.pull_request_manager, "enabled", False),
             patch.object(Repository, "get_pulls", return_value=[]),
         ):
-            event = self.deliver(self.event_type, check_suite={"head_branch": "feature_branch"})
+            event = self.deliver(
+                self.event_type, check_suite={"head_branch": "feature_branch"}
+            )
             event.repository.create_git_release.assert_not_called()
             self.assert_no_check_run("Pull Request Manager")
             self.assert_check_run_progression(
