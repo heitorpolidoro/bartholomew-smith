@@ -485,6 +485,25 @@ class TestCheckSuiteRequested(TestCase):
                 ],
             )
 
+    def test_when_head_branch_is_first_commits(self):
+        with (
+            patch.object(Config.release_manager, "enabled", True),
+            patch.object(Config.pull_request_manager, "enabled", False),
+        ):
+            event = self.deliver(
+                self.event_type,
+                check_suite={"head_branch": "default_branch", "before": "0000000000000000000000000000000000000000"},
+            )
+            event.repository.create_git_release.assert_not_called()
+            self.assert_no_check_run("Pull Request Manager")
+            self.assert_check_run_progression(
+                "Releaser",
+                [
+                    call(title="Initializing...", status=CheckRunStatus.IN_PROGRESS),
+                    call(title="First commit", conclusion=CheckRunConclusion.SUCCESS),
+                ],
+            )
+
     def test_release_manager_with_command(self):
         compare = Mock()
         compare.commits.reversed = [Mock(commit=Mock(message="[release:1.2.3]"))]
