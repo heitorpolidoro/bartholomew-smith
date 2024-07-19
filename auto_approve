@@ -1,0 +1,40 @@
+
+@Config.call_if("pull_request_manager.auto_approve")
+def auto_approve(repository: Repository, branch_name: str) -> None:
+    """Call auto_approve if enabled """
+    pull_requests = repository.get_pulls(
+        state="open",
+        base=repository.default_branch,
+        head=f"{repository.owner.login}:{branch_name}",
+    )
+    for pull_request in pull_requests:
+        _auto_approve(pull_request, repository)
+
+
+def _auto_approve(pull_request, repository):
+    """Approve the Pull Request if the branch creator is the same of the repository owner"""
+    pr_commits = pull_request.get_commits()
+    first_commit = pr_commits[0]
+
+    branch_owner = first_commit.author
+    repository_owner_login = repository.owner.login
+    branch_owner_login = branch_owner.login
+    allowed_logins = Config.pull_request_manager.auto_approve_logins + [repository_owner_login]
+    if branch_owner_login not in allowed_logins:
+        logger.info(
+            'The branch "%s" owner, "%s", is not the same as the repository owner, "%s" '
+            "and is not in the auto approve logins list",
+            pull_request.head.ref,
+            branch_owner_login,
+            repository_owner_login,
+        )
+        return
+    if any(review.state == "APPROVED" for review in pull_request.get_reviews()):
+        logger.info(
+            "Pull Request %s#%d already approved",
+            repository.full_name,
+            pull_request.number,
+        )
+        return
+    pull_request_helper.approve(Config.AUTO_APPROVE_PAT, repository, pull_request)
+    logger.info("Pull Request %s#%d approved", repository.full_name, pull_request.number)

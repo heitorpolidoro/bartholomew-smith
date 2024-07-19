@@ -1,8 +1,6 @@
 """Module to create the githubapp Configs"""
 
-from typing import NoReturn
-
-from githubapp import Config
+from githubapp import Config, EventCheckRun
 
 
 def default_configs() -> None:
@@ -17,11 +15,11 @@ def default_configs() -> None:
         link_issue=True,
         enable_auto_merge=True,
         merge_method="SQUASH",
+        auto_update=True,
         auto_approve=False,
         auto_approve_logins=[],
-        auto_update=True,
     )
-    Config.create_config("release_manager", enabled=True)
+    Config.create_config("release_manager", enabled=True, update_in_file=False)
     Config.create_config(
         "issue_manager",
         enabled=True,

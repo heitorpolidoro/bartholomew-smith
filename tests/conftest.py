@@ -10,6 +10,13 @@ from config import default_configs
 from src.helpers.db_helper import BaseModelService
 from src.models import IssueJob, IssueJobStatus
 
+
+@pytest.fixture
+def repository():
+    return Mock(full_name="repo_full_name")
+
+
+# TODO Remove?
 default_configs()
 
 
@@ -86,7 +93,9 @@ def base_model_service_stub():
             ExpressionAttributeValues = ExpressionAttributeValues or {}
             items = []
             for item in self.items:
-                if all(item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()):
+                if all(
+                    item.get(k[1:]) == v for k, v in ExpressionAttributeValues.items()
+                ):
                     items.append(item)
 
             return {"Items": items}
@@ -97,7 +106,9 @@ def base_model_service_stub():
         def update_item(self, Key, ExpressionAttributeValues, **kw):
             for item in self.items:
                 if all(item.get(k) == v for k, v in Key.items()):
-                    item.update({k[1:]: v for k, v in ExpressionAttributeValues.items()})
+                    item.update(
+                        {k[1:]: v for k, v in ExpressionAttributeValues.items()}
+                    )
                     return
 
         @contextmanager
@@ -108,7 +119,9 @@ def base_model_service_stub():
         resource = Mock(Table=TableStub)
 
     with (
-        patch("src.helpers.db_helper.BaseModelService", new_callable=BaseModelServiceStub) as base_model_service_stub,
+        patch(
+            "src.helpers.db_helper.BaseModelService", new_callable=BaseModelServiceStub
+        ) as base_model_service_stub,
     ):
         yield base_model_service_stub
         for sub_service in BaseModelService.__subclasses__():
