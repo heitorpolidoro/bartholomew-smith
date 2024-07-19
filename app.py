@@ -112,7 +112,7 @@ def index() -> str:  # pragma: no cover
     """Return the index homepage"""
     with open("README.md") as f:
         md = f.read()
-    body = markdown.markdown(md)
+    body = markdown.markdown(md) + f"\n\n{sys.version}"
     title = "Bartholomew Smith"
     return render_template("index.html", title=title, body=body)
 
