@@ -1,8 +1,8 @@
 github-app-handler==0.28.4
 PyGithub==2.3.0
 sentry-sdk==2.8.0
-flask==3.0.3
-pymdown-extensions==10.8.1
+flask==3.1.3
+pymdown-extensions==11.0
 boto3==1.34.123
 pydantic==2.7.3
 cachetools==5.3.3
